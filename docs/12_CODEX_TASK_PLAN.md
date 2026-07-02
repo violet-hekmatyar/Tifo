@@ -498,6 +498,19 @@ seed.sql 可执行
 
 实现用户注册、登录、JWT 鉴权、当前用户和管理员基础权限。
 
+当前 T03 状态：
+
+```text
+已实现 POST /api/auth/register
+已实现 POST /api/auth/login
+已实现 GET /api/auth/me
+已实现 JWT 生成、解析、过滤器和当前用户上下文
+已实现 /api/admin/health 管理员权限占位
+已实现 Redis 登录失败防刷
+已新增 scripts/windows/smoke-auth.ps1 和 check-t03.ps1
+当前仍不实现首次登录偏好、关注、内容、评论、足球数据或后台业务管理
+```
+
 ### 7.2 重点参考文档
 
 ```text

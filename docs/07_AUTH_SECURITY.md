@@ -62,6 +62,15 @@ sys_user.password_hash
 
 第一版只做 Access Token，不做 Refresh Token。
 
+当前 T03 实现中，JWT Secret 必须通过环境变量读取：
+
+```text
+JWT_SECRET
+JWT_ACCESS_TOKEN_EXPIRE_SECONDS
+```
+
+开发环境提供占位默认值，生产环境必须由 Linux 本地 `.env` 或 shell 环境覆盖。
+
 Token 有效期建议：
 
 | 端 | 有效期 |
@@ -348,3 +357,11 @@ Refresh Token
 | 日志 | 日志中无密码和完整 Token |
 | Git | 仓库中无 `.env` 和真实密钥 |
 | 文件上传 | 非图片文件被拒绝 |
+
+T03 当前验收脚本：
+
+```powershell
+.\scripts\windows\check-t03.ps1
+```
+
+该脚本覆盖注册、登录、当前用户、无 Token、普通用户访问后台、管理员访问后台和登录失败防刷。

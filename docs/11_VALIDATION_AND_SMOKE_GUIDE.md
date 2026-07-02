@@ -153,6 +153,40 @@ target/south-stand-server.jar 存在
 DB / Redis health 的 data.status=UP
 ```
 
+### 3.4 T03 登录鉴权与用户闭环检查
+
+T03 实现注册、登录、JWT、当前用户、管理员权限占位和登录失败防刷。
+
+必须执行：
+
+```powershell
+cd D:\Football-APP
+.\scripts\windows\check-t03.ps1
+```
+
+脚本覆盖：
+
+```text
+.\scripts\windows\reset-dev-db.ps1
+mvn clean test
+mvn clean package
+java -jar target\south-stand-server.jar
+.\scripts\windows\smoke-auth.ps1
+```
+
+通过标准：
+
+```text
+注册唯一测试用户成功
+登录返回 accessToken
+GET /api/auth/me 带 token 成功
+GET /api/auth/me 不带 token 返回 40101
+普通 USER 访问 /api/admin/health 返回 40301
+seed 管理员访问 /api/admin/health 成功
+连续错误密码触发 40103
+T03 check passed
+```
+
 ## 4. 后端编译检查
 
 ```powershell

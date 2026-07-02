@@ -39,6 +39,13 @@ REDIS_HOST=127.0.0.1
 MYSQL_PASSWORD、REDIS_PASSWORD 从本地环境或 /opt/south-stand/.env 读取
 ```
 
+T03 起后端会启用 JWT 鉴权。Linux jar 直跑时必须通过本地环境或 `/opt/south-stand/.env` 设置：
+
+```text
+JWT_SECRET=至少 32 字节的随机字符串
+JWT_ACCESS_TOKEN_EXPIRE_SECONDS=604800
+```
+
 健康检查：
 
 ```text

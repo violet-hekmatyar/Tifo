@@ -2,10 +2,12 @@ USE south_stand;
 
 SET NAMES utf8mb4;
 
+-- Local development smoke accounts use password: password
+-- These BCrypt hashes are only for reset-dev local seed data.
 INSERT INTO sys_user (id, username, phone, password_hash, role_type, onboarding_completed, status)
 VALUES
-  (10001, 'admin', NULL, '$2a$10$7EqJtq98hPqEX7fNZaFWoOHIhi8ei8dYffyQlr5cHka2oK4W6/On2', 'ADMIN', 1, 'ACTIVE'),
-  (10002, 'test_user', '13900000001', '$2a$10$7EqJtq98hPqEX7fNZaFWoOHIhi8ei8dYffyQlr5cHka2oK4W6/On2', 'USER', 1, 'ACTIVE');
+  (10001, 'admin', NULL, '$2a$10$5A.dJ/Qi0uBgG.o5Vp2mFubNFFjRd6U59788aQriHIRYWI5uZn7za', 'ADMIN', 1, 'ACTIVE'),
+  (10002, 'test_user', '13900000001', '$2a$10$5A.dJ/Qi0uBgG.o5Vp2mFubNFFjRd6U59788aQriHIRYWI5uZn7za', 'USER', 1, 'ACTIVE');
 
 INSERT INTO user_profile (id, user_id, nickname, main_team_id, team_follow_count, player_follow_count, status)
 VALUES

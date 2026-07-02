@@ -18,6 +18,7 @@ fi
 export SPRING_PROFILES_ACTIVE="${SPRING_PROFILES_ACTIVE:-prod}"
 export MYSQL_HOST="${MYSQL_HOST:-127.0.0.1}"
 export REDIS_HOST="${REDIS_HOST:-127.0.0.1}"
+export JWT_SECRET="${JWT_SECRET:-dev_only_change_me_jwt_secret_please_override_in_prod_2026}"
 export UPLOAD_DIR="${UPLOAD_DIR:-/opt/south-stand/uploads}"
 
 if [[ ! -f "$APP_JAR" ]]; then

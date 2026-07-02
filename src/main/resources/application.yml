@@ -20,6 +20,10 @@ server:
 
 app:
   version: 0.1.0-SNAPSHOT
+  security:
+    jwt:
+      secret: ${JWT_SECRET:dev_only_change_me_jwt_secret_please_override_in_prod_2026}
+      access-token-expire-seconds: ${JWT_ACCESS_TOKEN_EXPIRE_SECONDS:604800}
 
 knife4j:
   enable: true

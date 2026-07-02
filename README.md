@@ -2,7 +2,7 @@
 
 南看台 / Tifo 是一个卡片化足球内容流 + 赛事数据 + 社区互动 APP。
 
-当前阶段：T01 Spring Boot 后端骨架与基础配置，已具备最小编译、打包、启动和健康检查闭环。
+当前阶段：T03 登录鉴权与用户闭环，已具备注册、登录、JWT、当前用户和管理员权限 smoke 闭环。
 
 当前技术路线：
 
@@ -96,4 +96,28 @@ T02 验收：
 ```text
 MYSQL_HOST / MYSQL_PORT / MYSQL_DATABASE / MYSQL_USERNAME / MYSQL_PASSWORD
 REDIS_HOST / REDIS_PORT / REDIS_PASSWORD
+```
+
+## T03 登录鉴权检查
+
+T03 已提供：
+
+```text
+POST /api/auth/register
+POST /api/auth/login
+GET /api/auth/me
+GET /api/admin/health
+```
+
+JWT 配置通过环境变量覆盖：
+
+```text
+JWT_SECRET
+JWT_ACCESS_TOKEN_EXPIRE_SECONDS
+```
+
+T03 验收：
+
+```powershell
+.\scripts\windows\check-t03.ps1
 ```

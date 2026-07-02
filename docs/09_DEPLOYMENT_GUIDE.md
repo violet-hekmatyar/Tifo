@@ -66,6 +66,8 @@ MYSQL_PASSWORD=从服务器本地环境或 /opt/south-stand/.env 读取
 REDIS_HOST=127.0.0.1
 REDIS_PORT=6379
 REDIS_PASSWORD=如有密码则从本地环境读取
+JWT_SECRET=从服务器本地环境或 /opt/south-stand/.env 读取
+JWT_ACCESS_TOKEN_EXPIRE_SECONDS=604800
 ```
 
 不要把真实密码写入 Git。
@@ -95,7 +97,7 @@ java -jar south-stand-server.jar
 如果需要指定环境变量，可使用：
 
 ```bash
-MYSQL_HOST=127.0.0.1 REDIS_HOST=127.0.0.1 java -jar south-stand-server.jar
+MYSQL_HOST=127.0.0.1 REDIS_HOST=127.0.0.1 JWT_SECRET=change_me_to_long_random_secret_at_least_32_bytes java -jar south-stand-server.jar
 ```
 
 Docker 镜像部署方案继续保留为后续可选方案。当前阶段只新增 jar 直跑路径，不删除原 Docker 方案。
