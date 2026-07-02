@@ -2,17 +2,16 @@ package com.southstand;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
 import org.springframework.boot.autoconfigure.security.servlet.UserDetailsServiceAutoConfiguration;
+import org.mybatis.spring.annotation.MapperScan;
 
 /**
- * T01 temporarily excludes datasource auto-configuration.
- * T02 will remove this exclusion when MySQL/Redis health checks are connected.
+ * South Stand backend application.
  */
 @SpringBootApplication(exclude = {
-        DataSourceAutoConfiguration.class,
         UserDetailsServiceAutoConfiguration.class
 })
+@MapperScan("com.southstand.**.mapper")
 public class SouthStandApplication {
 
     public static void main(String[] args) {

@@ -6,8 +6,19 @@ spring:
     name: south-stand-server
   profiles:
     active: ${SPRING_PROFILES_ACTIVE:dev}
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://${MYSQL_HOST:localhost}:${MYSQL_PORT:3306}/${MYSQL_DATABASE:south_stand}?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true
+    username: ${MYSQL_USERNAME:root}
+    password: ${MYSQL_PASSWORD:change_me}
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+      database: ${REDIS_DATABASE:0}
 
 app:
   version: ${APP_VERSION:0.1.0-SNAPSHOT}
 
-# T01 does not connect MySQL/Redis. T02 will add datasource and Redis health checks.
+# T02 connects MySQL/Redis. Use environment variables for real local or server values.

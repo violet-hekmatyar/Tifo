@@ -55,6 +55,21 @@ T01 固定 jar 名称：
 south-stand-server.jar
 ```
 
+T02 起后端已接入 MySQL / Redis，jar 启动前需要准备环境变量：
+
+```text
+MYSQL_HOST=127.0.0.1
+MYSQL_PORT=3306
+MYSQL_DATABASE=south_stand
+MYSQL_USERNAME=按服务器实际账号填写
+MYSQL_PASSWORD=从服务器本地环境或 /opt/south-stand/.env 读取
+REDIS_HOST=127.0.0.1
+REDIS_PORT=6379
+REDIS_PASSWORD=如有密码则从本地环境读取
+```
+
+不要把真实密码写入 Git。
+
 Linux 上 MySQL / Redis 已准备好，后端 jar 直跑时使用本机回环地址连接：
 
 ```text
@@ -428,6 +443,8 @@ docker load -i redis-7.tar
 
 ```bash
 curl http://server_ip:8080/api/public/health
+curl http://server_ip:8080/api/public/health/db
+curl http://server_ip:8080/api/public/health/redis
 curl http://server_ip:8080/doc.html
 curl http://server_ip:8080/api/app/feed
 curl http://server_ip:8080/api/app/football/leagues

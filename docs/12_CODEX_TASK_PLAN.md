@@ -367,6 +367,19 @@ schema.sql
 seed.sql
 ```
 
+当前 T02 状态：
+
+```text
+恢复 MySQL DataSource 自动配置
+接入 Redis 基础配置
+完善 Result / PageResult / ErrorCode / BusinessException / GlobalExceptionHandler
+加入 X-Trace-Id / X-Request-Id 基础 traceId 能力
+新增 /api/public/health/db 和 /api/public/health/redis
+新增 scripts/sql/schema.sql、seed.sql、reset-dev.sql
+新增 scripts/windows/reset-dev-db.ps1 和 check-t02.ps1
+当前仍不实现注册、登录、JWT Filter 或业务接口
+```
+
 ### 6.2 重点参考文档
 
 ```text
@@ -450,6 +463,12 @@ admin_operation_log
 ```powershell
 mvn clean test
 mvn clean package
+```
+
+当前 T02 标准验收命令：
+
+```powershell
+.\scripts\windows\check-t02.ps1
 ```
 
 接口：

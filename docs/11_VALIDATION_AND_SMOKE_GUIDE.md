@@ -118,6 +118,41 @@ Redis health
 Docker 构建
 ```
 
+### 3.3 T02 通用基础设施与 MySQL / Redis 检查
+
+T02 接入通用返回、分页、错误码、业务异常、全局异常处理、traceId、MySQL、Redis 和基础 SQL。
+
+必须执行：
+
+```powershell
+cd D:\Football-APP
+.\scripts\windows\check-t02.ps1
+```
+
+脚本覆盖：
+
+```text
+.\scripts\windows\reset-dev-db.ps1
+mvn clean test
+mvn clean package
+java -jar target\south-stand-server.jar
+GET /api/public/health
+GET /api/public/health/db
+GET /api/public/health/redis
+```
+
+通过标准：
+
+```text
+reset-dev-db.ps1 成功
+schema.sql / seed.sql 可执行
+mvn clean test 成功
+mvn clean package 成功
+target/south-stand-server.jar 存在
+三个 health 接口均返回 code=0
+DB / Redis health 的 data.status=UP
+```
+
 ## 4. 后端编译检查
 
 ```powershell
@@ -500,6 +535,8 @@ docker logs -f south-stand-backend
 ```text
 scripts/windows/check-repo.ps1
 scripts/windows/check-t01.ps1
+scripts/windows/check-t02.ps1
+scripts/windows/reset-dev-db.ps1
 scripts/check-backend.ps1
 scripts/check-smoke.ps1
 scripts/check-docker-build.ps1
@@ -526,6 +563,19 @@ mvn clean package
 jar 产物检查
 java -jar 启动
 /api/public/health smoke
+```
+
+`scripts/windows/check-t02.ps1` 覆盖：
+
+```text
+本地开发库重置
+schema / seed 执行
+mvn clean test
+mvn clean package
+jar 启动
+/api/public/health
+/api/public/health/db
+/api/public/health/redis
 ```
 
 `check-backend.ps1` 覆盖：

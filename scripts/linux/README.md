@@ -30,3 +30,19 @@ REDIS_HOST=127.0.0.1
 ```
 
 真实环境变量应从 Linux 本地 `.env` 或 shell 环境读取，不提交到 Git。
+
+T02 起后端会连接 MySQL / Redis。Linux jar 直跑时建议确认：
+
+```text
+MYSQL_HOST=127.0.0.1
+REDIS_HOST=127.0.0.1
+MYSQL_PASSWORD、REDIS_PASSWORD 从本地环境或 /opt/south-stand/.env 读取
+```
+
+健康检查：
+
+```text
+/api/public/health
+/api/public/health/db
+/api/public/health/redis
+```

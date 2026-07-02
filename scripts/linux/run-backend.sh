@@ -4,12 +4,21 @@ set -euo pipefail
 APP_JAR="${APP_JAR:-/opt/south-stand/backend/south-stand-server.jar}"
 LOG_DIR="${LOG_DIR:-/opt/south-stand/logs/backend}"
 PID_FILE="${PID_FILE:-/opt/south-stand/backend/south-stand-server.pid}"
+ENV_FILE="${ENV_FILE:-/opt/south-stand/.env}"
 
 mkdir -p "$LOG_DIR"
+
+if [[ -f "$ENV_FILE" ]]; then
+  set -a
+  # shellcheck disable=SC1090
+  source "$ENV_FILE"
+  set +a
+fi
 
 export SPRING_PROFILES_ACTIVE="${SPRING_PROFILES_ACTIVE:-prod}"
 export MYSQL_HOST="${MYSQL_HOST:-127.0.0.1}"
 export REDIS_HOST="${REDIS_HOST:-127.0.0.1}"
+export UPLOAD_DIR="${UPLOAD_DIR:-/opt/south-stand/uploads}"
 
 if [[ ! -f "$APP_JAR" ]]; then
   echo "Jar not found: $APP_JAR" >&2

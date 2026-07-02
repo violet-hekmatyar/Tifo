@@ -1,6 +1,7 @@
 package com.southstand.common.result;
 
-import java.util.UUID;
+import com.southstand.common.config.TraceIdHolder;
+import com.southstand.common.enums.ErrorCode;
 
 public class Result<T> {
 
@@ -20,7 +21,15 @@ public class Result<T> {
     }
 
     public static <T> Result<T> success(T data) {
-        return new Result<>(0, "success", data, UUID.randomUUID().toString());
+        return new Result<>(ErrorCode.SUCCESS.getCode(), ErrorCode.SUCCESS.getMessage(), data, TraceIdHolder.getOrCreate());
+    }
+
+    public static <T> Result<T> failure(ErrorCode errorCode) {
+        return failure(errorCode, errorCode.getMessage());
+    }
+
+    public static <T> Result<T> failure(ErrorCode errorCode, String message) {
+        return new Result<>(errorCode.getCode(), message, null, TraceIdHolder.getOrCreate());
     }
 
     public Integer getCode() {

@@ -1,0 +1,350 @@
+# 南看台登录鉴权与基础安全规范
+
+> 版本：v0.2-tifo-revised  
+> 定位：定义南看台第一版登录、鉴权、密码加密、接口权限和基础安全规范。第一版目标是快速保证基础安全，不做复杂企业级权限系统。
+
+## 1. 第一版安全目标
+
+必须保证：
+
+1. 密码不明文存储；
+2. 登录后使用 JWT 鉴权；
+3. 普通用户不能访问管理后台；
+4. 被禁用用户不能登录；
+5. 敏感配置不提交 Git；
+6. 密码、Token、密钥不打印日志；
+7. 基础接口有参数校验；
+8. 登录失败有简单防刷；
+9. 文件上传只允许安全类型；
+10. 业务约束能被后端校验，例如最多关注 5 支球队。
+
+## 2. 用户角色
+
+| 角色 | 说明 |
+|---|---|
+| `USER` | 普通用户 |
+| `ADMIN` | 管理员 |
+
+第一版不做复杂 RBAC，不设计 `sys_role`、`sys_permission`、`sys_role_permission`。
+
+## 3. 密码加密
+
+使用：
+
+```text
+BCrypt
+```
+
+禁止：
+
+```text
+明文密码
+MD5
+SHA1
+自定义弱加密
+```
+
+数据库字段：
+
+```text
+sys_user.password_hash
+```
+
+校验流程：
+
+```text
+用户输入密码
+-> BCrypt matches(rawPassword, passwordHash)
+-> 校验通过生成 JWT
+```
+
+## 4. JWT 鉴权
+
+第一版只做 Access Token，不做 Refresh Token。
+
+Token 有效期建议：
+
+| 端 | 有效期 |
+|---|---:|
+| App 端 | 7 天 |
+| 管理后台 | 1 天 |
+
+JWT payload 建议包含：
+
+```json
+{
+  "userId": 10002,
+  "username": "test_user",
+  "roleType": "USER"
+}
+```
+
+不要包含密码、手机号完整信息、身份证、敏感配置。
+
+请求头：
+
+```http
+Authorization: Bearer <access_token>
+```
+
+## 5. 接口权限
+
+### 5.1 公共接口
+
+不需要登录：
+
+```text
+POST /api/auth/register
+POST /api/auth/login
+GET  /api/public/**
+GET  /api/app/feed
+GET  /api/app/contents/{contentId}
+GET  /api/app/football/**
+```
+
+### 5.2 登录用户接口
+
+需要登录：
+
+```text
+POST /api/app/onboarding/preferences
+POST /api/app/comments
+POST /api/app/likes/toggle
+POST /api/app/favorites/toggle
+POST /api/app/follows/toggle
+POST /api/app/football/matches/*/players/*/rating
+GET  /api/app/users/me/**
+GET  /api/app/messages/**
+POST /api/app/pickup-activities/**
+```
+
+### 5.3 管理员接口
+
+需要 `ADMIN`：
+
+```text
+/api/admin/**
+```
+
+## 6. 当前用户上下文
+
+建议封装：
+
+```text
+LoginUserContext
+```
+
+包含：
+
+```text
+userId
+username
+roleType
+```
+
+Service 层获取当前用户，不要在 Controller 到处解析 JWT。
+
+## 7. 首次登录安全与业务校验
+
+首次登录偏好设置需要校验：
+
+```text
+mainTeamId 必须是有效球队 ID
+followTeamIds 不超过 5 个
+followPlayerIds 不允许重复
+被禁用的球队/球员不能被关注
+```
+
+`sys_user.onboarding_completed` 与 `user_onboarding.completed` 要保持一致。
+
+## 8. 关注业务约束
+
+后端必须强制校验：
+
+```text
+每个用户最多关注 5 支球队。
+```
+
+当超过限制时返回：
+
+```json
+{
+  "code": 40902,
+  "message": "关注球队数量已达上限",
+  "data": null
+}
+```
+
+前端弹窗属于 UI 行为，但后端必须返回明确错误码。
+
+## 9. 评分业务约束
+
+球员评分需要校验：
+
+```text
+用户必须登录
+比赛必须存在
+球员必须属于该场比赛相关球队或名单
+评分范围必须合法，例如 0~10 或 1~10
+同一用户对同一比赛同一球员只能有一条有效评分
+重复评分覆盖原评分
+```
+
+## 10. 登录失败防刷
+
+第一版简单实现：
+
+```text
+Redis Key: login:fail:{username_or_ip}
+规则：5 分钟内失败 5 次，锁定 10 分钟。
+```
+
+返回：
+
+```json
+{
+  "code": 40103,
+  "message": "登录失败次数过多，请稍后再试",
+  "data": null
+}
+```
+
+## 11. 敏感配置管理
+
+不提交 Git：
+
+```text
+.env
+application-prod.yml
+*.local
+docker/data/
+uploads/
+```
+
+可以提交：
+
+```text
+.env.example
+application-dev.yml
+application-template.yml
+docker-compose.example.yml
+```
+
+不得提交：
+
+```text
+数据库密码
+Redis 密码
+JWT Secret
+服务器 IP 和密码
+第三方 API Key
+对象存储密钥
+```
+
+## 12. 日志安全
+
+禁止打印：
+
+```text
+明文密码
+password_hash
+完整 JWT
+JWT Secret
+数据库密码
+第三方 API Key
+```
+
+允许打印：
+
+```text
+userId
+username
+roleType
+接口路径
+错误码
+traceId
+```
+
+Token 如果必须排查，只打印前后各 6 位。
+
+## 13. 参数校验
+
+Controller 请求 DTO 必须使用基础校验：
+
+```text
+@NotBlank
+@NotNull
+@Size
+@Pattern
+@Min
+@Max
+```
+
+## 14. CORS
+
+开发阶段允许：
+
+```text
+http://localhost:3000
+http://localhost:5173
+```
+
+生产阶段不要直接允许 `*`。
+
+## 15. 文件上传安全
+
+限制：
+
+| 项 | 规则 |
+|---|---|
+| 文件类型 | jpg、jpeg、png、webp、gif |
+| 单文件大小 | 默认 10MB |
+| 文件名 | 后端生成，不使用原始文件名作为存储名 |
+| 存储目录 | uploads 按日期分目录 |
+| 访问路径 | 只暴露相对 URL |
+
+禁止上传：
+
+```text
+exe
+sh
+bat
+jar
+html
+js
+php
+```
+
+视频第一版不上传到本系统，只允许保存外部链接占位。
+
+## 16. 第一版不做
+
+```text
+OAuth2
+Refresh Token
+多端设备管理
+扫码登录
+短信验证码
+邮箱验证
+复杂 RBAC
+细粒度权限点
+内容风控系统
+设备指纹
+行为风控
+完整私信安全模型
+```
+
+## 17. 安全验收清单
+
+| 检查项 | 标准 |
+|---|---|
+| 密码 | 数据库中看不到明文密码 |
+| Token | 无 Token 不能访问需要登录的接口 |
+| 管理后台 | USER 访问 `/api/admin/**` 返回无权限 |
+| 禁用用户 | 禁用后不能登录 |
+| 首次登录 | 非法球队/球员 ID 被拒绝 |
+| 关注限制 | 第 6 支球队关注失败 |
+| 评分 | 重复评分覆盖而不是新增多条有效记录 |
+| 日志 | 日志中无密码和完整 Token |
+| Git | 仓库中无 `.env` 和真实密钥 |
+| 文件上传 | 非图片文件被拒绝 |

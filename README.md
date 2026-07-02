@@ -68,3 +68,32 @@ http://localhost:8080/doc.html
 ```
 
 该脚本会执行 `mvn clean test`、`mvn clean package`、启动 jar，并请求 `/api/public/health`。
+
+## T02 本地数据库与 Redis 检查
+
+T02 已接入 MySQL / Redis 基础连接，并提供：
+
+```text
+GET /api/public/health
+GET /api/public/health/db
+GET /api/public/health/redis
+```
+
+重置本地开发库：
+
+```powershell
+.\scripts\windows\reset-dev-db.ps1
+```
+
+T02 验收：
+
+```powershell
+.\scripts\windows\check-t02.ps1
+```
+
+本地连接参数通过环境变量覆盖：
+
+```text
+MYSQL_HOST / MYSQL_PORT / MYSQL_DATABASE / MYSQL_USERNAME / MYSQL_PASSWORD
+REDIS_HOST / REDIS_PORT / REDIS_PASSWORD
+```
