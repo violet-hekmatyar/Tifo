@@ -1,0 +1,25 @@
+server:
+  port: ${SERVER_PORT:8080}
+
+spring:
+  application:
+    name: south-stand-server
+
+app:
+  version: ${APP_VERSION:0.1.0-SNAPSHOT}
+
+# Production secrets must come from Linux local .env or shell environment.
+# Do not create or commit application-prod.yml.
+datasource:
+  mysql-host: ${MYSQL_HOST:127.0.0.1}
+  mysql-port: ${MYSQL_PORT:3306}
+  mysql-database: ${MYSQL_DATABASE:south_stand}
+  mysql-username: ${MYSQL_USERNAME:change_me}
+  mysql-password: ${MYSQL_PASSWORD:change_me}
+
+redis:
+  host: ${REDIS_HOST:127.0.0.1}
+  port: ${REDIS_PORT:6379}
+
+jwt:
+  secret: ${JWT_SECRET:change_me_to_long_random_secret}

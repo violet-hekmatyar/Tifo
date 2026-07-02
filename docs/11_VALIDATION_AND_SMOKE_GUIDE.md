@@ -83,6 +83,41 @@ tmp 下文件未被 Git 跟踪
 未创建 pom.xml、src/** 或业务代码
 ```
 
+### 3.2 T01 Spring Boot 骨架检查
+
+T01 创建最小 Spring Boot 后端骨架，但不连接 MySQL / Redis，不创建数据库脚本，不实现登录或业务接口。
+
+必须执行：
+
+```powershell
+cd D:\Football-APP
+.\scripts\windows\check-t01.ps1
+```
+
+脚本覆盖：
+
+```text
+pom.xml 存在
+SouthStandApplication 存在
+不存在 application-prod.yml、Dockerfile、docker-compose.yml
+不存在 schema.sql / seed.sql
+mvn clean test 通过
+mvn clean package 通过
+target/south-stand-server.jar 存在
+java -jar 启动成功
+GET /api/public/health 返回 code=0、message=success、data.status=UP
+```
+
+T01 不要求：
+
+```text
+DB health
+Redis health
+登录鉴权
+业务接口
+Docker 构建
+```
+
 ## 4. 后端编译检查
 
 ```powershell
@@ -464,6 +499,7 @@ docker logs -f south-stand-backend
 
 ```text
 scripts/windows/check-repo.ps1
+scripts/windows/check-t01.ps1
 scripts/check-backend.ps1
 scripts/check-smoke.ps1
 scripts/check-docker-build.ps1
@@ -479,6 +515,17 @@ jar 直跑部署文档
 T00 任务计划
 .env 和 tmp Git 跟踪状态
 T00 禁止创建的 pom.xml、src/**
+```
+
+`scripts/windows/check-t01.ps1` 覆盖：
+
+```text
+T01 项目骨架文件检查
+mvn clean test
+mvn clean package
+jar 产物检查
+java -jar 启动
+/api/public/health smoke
 ```
 
 `check-backend.ps1` 覆盖：

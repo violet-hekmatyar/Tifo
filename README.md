@@ -2,7 +2,7 @@
 
 南看台 / Tifo 是一个卡片化足球内容流 + 赛事数据 + 社区互动 APP。
 
-当前阶段：后端 P0 可演示闭环开发前准备，先稳定仓库、文档、忽略规则和检查脚本。
+当前阶段：T01 Spring Boot 后端骨架与基础配置，已具备最小编译、打包、启动和健康检查闭环。
 
 当前技术路线：
 
@@ -29,3 +29,42 @@ docs/00_DOCUMENT_MAP.md
 ```text
 不要提交真实密码、真实服务器 IP、真实 Token、JWT Secret、.env 或 application-prod.yml。
 ```
+
+## 本地构建
+
+```powershell
+mvn clean test
+mvn clean package
+```
+
+打包产物：
+
+```text
+target/south-stand-server.jar
+```
+
+## 本地运行
+
+```powershell
+java -jar .\target\south-stand-server.jar
+```
+
+健康检查：
+
+```powershell
+Invoke-RestMethod http://localhost:8080/api/public/health
+```
+
+Knife4j 页面：
+
+```text
+http://localhost:8080/doc.html
+```
+
+## T01 验收脚本
+
+```powershell
+.\scripts\windows\check-t01.ps1
+```
+
+该脚本会执行 `mvn clean test`、`mvn clean package`、启动 jar，并请求 `/api/public/health`。

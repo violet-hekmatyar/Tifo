@@ -1,0 +1,13 @@
+server:
+  port: ${SERVER_PORT:8080}
+
+spring:
+  application:
+    name: south-stand-server
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:dev}
+
+app:
+  version: ${APP_VERSION:0.1.0-SNAPSHOT}
+
+# T01 does not connect MySQL/Redis. T02 will add datasource and Redis health checks.

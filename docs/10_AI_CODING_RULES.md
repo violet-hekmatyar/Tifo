@@ -146,6 +146,14 @@ Docker 部署闭环
 
 如果本轮没有 Maven / Spring Boot 项目，不要求执行 `mvn test` 或 `mvn package`，但必须提供与本轮目标匹配的检查脚本。
 
+从 T01 开始，每轮应优先提供并执行 `scripts/windows/check-*.ps1`。T01 骨架验收脚本为：
+
+```powershell
+.\scripts\windows\check-t01.ps1
+```
+
+该脚本必须覆盖编译、测试、打包、jar 启动和 health smoke。
+
 ## 5. 标准 Prompt 模板
 
 ```text

@@ -1,0 +1,14 @@
+spring:
+  application:
+    name: south-stand-server
+  profiles:
+    active: dev
+
+server:
+  port: 8080
+
+app:
+  version: 0.1.0-SNAPSHOT
+
+knife4j:
+  enable: true

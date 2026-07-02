@@ -38,7 +38,7 @@ Linux 只负责运行
 
 ### 2.1 当前阶段 jar 直跑方案
 
-当前 T00/T01 前置阶段，后端优先采用 jar 直跑，不做后端 Docker 容器运行。
+当前 T01 骨架阶段，后端优先采用 jar 直跑，不做后端 Docker 容器运行。
 
 当前流程：
 
@@ -47,6 +47,12 @@ Windows 本地开发
 -> Windows 本地执行 mvn package 生成 jar
 -> 上传 jar 到 Linux 后端运行目录
 -> Linux 使用 java -jar 运行后端服务
+```
+
+T01 固定 jar 名称：
+
+```text
+south-stand-server.jar
 ```
 
 Linux 上 MySQL / Redis 已准备好，后端 jar 直跑时使用本机回环地址连接：

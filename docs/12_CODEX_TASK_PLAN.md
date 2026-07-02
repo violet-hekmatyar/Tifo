@@ -242,6 +242,18 @@ application-template.yml
 Knife4j 接口文档入口
 ```
 
+当前 T01 状态：
+
+```text
+初始化 Spring Boot 3.2.4 + JDK 17 Maven 项目
+固定 jar 名称 south-stand-server.jar
+提供 /api/public/health 最小健康检查
+提供 scripts/windows/check-t01.ps1 验收脚本
+当前不连接 MySQL / Redis
+当前不创建 Dockerfile / docker-compose.yml
+当前不创建 schema.sql / seed.sql
+```
+
 ### 5.2 重点参考文档
 
 ```text
@@ -308,6 +320,12 @@ your_server_host
 mvn clean test
 mvn clean package
 mvn spring-boot:run
+```
+
+当前 T01 标准验收命令：
+
+```powershell
+.\scripts\windows\check-t01.ps1
 ```
 
 接口：
