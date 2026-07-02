@@ -192,7 +192,7 @@ GOAL / YELLOW_CARD / RED_CARD / SUBSTITUTION / VAR / PENALTY / OWN_GOAL
 | `post_count` | `INT` | 是 | `0` | 发布数 |
 | `follower_count` | `INT` | 是 | `0` | 粉丝数 |
 | `following_count` | `INT` | 是 | `0` | 关注用户数 |
-| `team_follow_count` | `INT` | 是 | `0` | 关注球队数，最多 5 |
+| `team_follow_count` | `INT` | 是 | `0` | 关注球队数，第一版暂不设置数量上限 |
 | `player_follow_count` | `INT` | 是 | `0` | 关注球员数 |
 | 通用字段 | - | - | - | `status` / `is_deleted` / `extra_json` / 时间字段 |
 
@@ -411,7 +411,7 @@ idx_user_type(user_id, follow_type)
 业务约束：
 
 ```text
-follow_type=TEAM 且 status=ACTIVE 的记录最多 5 条。
+follow_type=TEAM 暂不设置数量上限。
 主队 main_team_id 同步写入 user_profile。
 ```
 

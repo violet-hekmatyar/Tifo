@@ -121,3 +121,22 @@ T03 验收：
 ```powershell
 .\scripts\windows\check-t03.ps1
 ```
+
+## T04 首次登录与关注检查
+
+T04 已提供：
+
+```text
+GET /api/app/onboarding/options
+POST /api/app/onboarding/preferences
+POST /api/app/follows/toggle
+GET /api/app/users/me/profile
+```
+
+当前关注球队不设置数量上限。首次登录保存偏好时，`mainTeamId` 会自动加入关注球队。
+
+T04 验收：
+
+```powershell
+.\scripts\windows\check-t04.ps1
+```

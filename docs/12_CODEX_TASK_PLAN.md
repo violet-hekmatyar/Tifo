@@ -150,7 +150,7 @@ Kubernetes 部署
 | T01 | 项目骨架与基础配置 | 项目能启动、能编译、基础配置模板齐全 | 是 |
 | T02 | 通用后端基础设施 | 统一返回、异常、错误码、分页、健康检查、基础 SQL | 是 |
 | T03 | 登录鉴权与用户闭环 | 注册、登录、JWT、当前用户、管理员权限 | 是 |
-| T04 | 首次登录与关注闭环 | 主队、关注球队、关注球员、关注上限 | 是 |
+| T04 | 首次登录与关注闭环 | 主队、关注球队、关注球员、当前无关注上限 | 是 |
 | T05 | 内容与互动闭环 | 内容、详情、评论、回复、点赞、收藏 | 是 |
 | T06 | 足球数据闭环 | 联赛、球队、球员、比赛、事件、战报基础接口 | 是 |
 | T07 | 首页卡片流与规则推荐 | CONTENT_CARD、MATCH_CARD、recommend/news/following/team | 是 |
@@ -598,7 +598,20 @@ JWT 可访问登录接口
 关注球队
 关注球员
 首次登录完成状态
-关注球队上限
+关注球队数量当前不设上限
+```
+
+当前 T04 状态：
+
+```text
+已实现 GET /api/app/onboarding/options
+已实现 POST /api/app/onboarding/preferences
+已实现 POST /api/app/follows/toggle
+已实现 GET /api/app/users/me/profile
+已补充 seed 到 3 个赛事、6 支球队、10 名球员和 10 条 team_player 关系
+已新增 scripts/windows/smoke-onboarding.ps1 和 check-t04.ps1
+当前关注球队不设置数量上限
+当前仍不实现首页 feed、内容详情、评论、点赞、收藏、足球数据详情或后台 CRUD
 ```
 
 ### 8.2 重点参考文档
@@ -635,7 +648,7 @@ GET  /api/app/users/me/profile
 
 ```text
 mainTeamId 必须是有效球队
-followTeamIds 不超过 5 个
+followTeamIds 去重处理，当前不设置数量上限
 followPlayerIds 不重复
 重复关注要幂等
 被禁用球队/球员不能关注
@@ -660,7 +673,7 @@ sys_user.onboarding_completed 与 user_onboarding.completed 保持一致
 保存主队、关注球队、关注球员
 查询当前用户资料
 验证 onboardingCompleted=true
-验证关注第 6 支球队返回 40902
+验证第 6 支球队仍可关注成功
 ```
 
 ---
@@ -1233,7 +1246,7 @@ logs/test/TEST_REPORT_YYYYMMDD.md
 JWT 鉴权
 管理员权限
 首次登录偏好
-关注球队上限
+关注球队数量无上限
 首页 feed
 内容详情
 评论回复

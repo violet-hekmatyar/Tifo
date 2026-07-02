@@ -187,6 +187,41 @@ seed 管理员访问 /api/admin/health 成功
 T03 check passed
 ```
 
+### 3.5 T04 首次登录与关注闭环检查
+
+T04 实现首次登录推荐选项、保存偏好、关注 toggle 和当前用户资料。
+
+必须执行：
+
+```powershell
+cd D:\Football-APP
+.\scripts\windows\check-t04.ps1
+```
+
+脚本覆盖：
+
+```text
+.\scripts\windows\reset-dev-db.ps1
+mvn clean test
+mvn clean package
+java -jar target\south-stand-server.jar
+.\scripts\windows\smoke-auth.ps1
+.\scripts\windows\smoke-onboarding.ps1
+```
+
+通过标准：
+
+```text
+T03 smoke-auth.ps1 仍通过
+GET /api/app/onboarding/options 返回球队和球员选项
+POST /api/app/onboarding/preferences 保存主队、关注球队和关注球员
+GET /api/app/users/me/profile 返回 onboardingCompleted=true
+POST /api/app/follows/toggle 支持 TEAM 取消关注和重新关注
+第 6 支球队关注成功，当前不设置关注球队数量上限
+无 Token 访问偏好保存或 profile 返回 40101
+T04 check passed
+```
+
 ## 4. 后端编译检查
 
 ```powershell
@@ -223,7 +258,7 @@ BUILD SUCCESS
 | 关注球队 | 生成 follow_record |
 | 关注球员 | 生成 follow_record |
 | 重复选择 | 不生成重复关注 |
-| 关注球队上限 | 超过 5 支球队返回错误 |
+| 关注球队数量 | 当前不设置数量上限，第 6 支球队仍可关注成功 |
 | 完成状态 | `onboarding_completed` 更新为 true |
 
 ### 5.3 评论排序
@@ -446,13 +481,13 @@ POST /api/admin/football/matches
 -> 验证排序符合热度 + 时间衰减规则
 ```
 
-### 7.4 关注球队上限场景
+### 7.4 关注球队数量场景
 
 ```text
 用户已关注 5 支球队
 -> 尝试关注第 6 支球队
--> 返回 40902
--> 前端提示关注球队数量已达上限
+-> 关注成功
+-> 当前第一版不设置关注球队数量上限
 ```
 
 ### 7.5 粉丝关注状态场景
