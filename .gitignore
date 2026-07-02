@@ -1,0 +1,17 @@
+tmp/
+.env
+*.local
+application-prod.yml
+application-*.local.yml
+target/
+logs/
+uploads/
+.idea/
+*.iml
+.DS_Store
+Thumbs.db
+
+# Local sensitive notes should not enter Git.
+*password*
+*secret*
+*密码*
