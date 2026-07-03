@@ -367,3 +367,22 @@ POST /api/app/favorites/toggle requires login.
 ```
 
 No-token write requests must return `40101`. Public reads may include an optional bearer token; when absent, user-specific interaction flags are false.
+
+## T08 Permission Notes
+
+T08 keeps user-center and admin permissions explicit:
+
+```text
+GET  /api/app/users/me/summary requires login.
+PUT  /api/app/users/me/profile requires login.
+GET  /api/app/users/me/contents requires login.
+GET  /api/app/users/me/favorites requires login.
+GET  /api/app/users/me/comments requires login.
+GET  /api/admin/dashboard/summary requires ADMIN.
+GET  /api/admin/users requires ADMIN.
+PUT  /api/admin/users/{userId}/status requires ADMIN.
+GET  /api/admin/contents requires ADMIN.
+PUT  /api/admin/contents/{contentId}/status requires ADMIN.
+```
+
+No-token protected requests return `40101`; ordinary USER requests to admin endpoints return `40301`. User and admin response VOs do not expose password hashes, full JWTs, secrets, or unmasked phone numbers. Users disabled after token issuance are rejected by the T08 user-center service on subsequent `/api/app/users/me/**` requests; broader DB revalidation for every legacy endpoint remains a later hardening item.

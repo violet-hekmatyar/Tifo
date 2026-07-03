@@ -7,12 +7,16 @@ SET NAMES utf8mb4;
 INSERT INTO sys_user (id, username, phone, password_hash, role_type, onboarding_completed, status)
 VALUES
   (10001, 'admin', NULL, '$2a$10$5A.dJ/Qi0uBgG.o5Vp2mFubNFFjRd6U59788aQriHIRYWI5uZn7za', 'ADMIN', 1, 'ACTIVE'),
-  (10002, 'test_user', '13900000001', '$2a$10$5A.dJ/Qi0uBgG.o5Vp2mFubNFFjRd6U59788aQriHIRYWI5uZn7za', 'USER', 1, 'ACTIVE');
+  (10002, 'test_user', '13900000001', '$2a$10$5A.dJ/Qi0uBgG.o5Vp2mFubNFFjRd6U59788aQriHIRYWI5uZn7za', 'USER', 1, 'ACTIVE'),
+  (10003, 'disabled_user', '13900000002', '$2a$10$5A.dJ/Qi0uBgG.o5Vp2mFubNFFjRd6U59788aQriHIRYWI5uZn7za', 'USER', 0, 'DISABLED'),
+  (10004, 'demo_user_2', '13900000003', '$2a$10$5A.dJ/Qi0uBgG.o5Vp2mFubNFFjRd6U59788aQriHIRYWI5uZn7za', 'USER', 0, 'ACTIVE');
 
 INSERT INTO user_profile (id, user_id, nickname, avatar_url, main_team_id, team_follow_count, player_follow_count, post_count, status)
 VALUES
   (11001, 10001, 'South Stand Editorial', '/uploads/avatar/admin.png', NULL, 0, 0, 0, 'ACTIVE'),
-  (11002, 10002, 'Demo Fan', '/uploads/avatar/demo-fan.png', 30001, 1, 1, 1, 'ACTIVE');
+  (11002, 10002, 'Demo Fan', '/uploads/avatar/demo-fan.png', 30001, 1, 1, 2, 'ACTIVE'),
+  (11003, 10003, 'Disabled Fan', '/uploads/avatar/disabled-fan.png', NULL, 0, 0, 0, 'ACTIVE'),
+  (11004, 10004, 'Second Demo Fan', '/uploads/avatar/demo-fan-2.png', NULL, 0, 0, 0, 'ACTIVE');
 
 INSERT INTO user_onboarding (id, user_id, main_team_id, selected_team_ids, selected_player_ids, completed, completed_time)
 VALUES
@@ -84,7 +88,8 @@ VALUES
   (20002, 'POST', 'POST_FORMAT', 'CONTENT_CARD', 'The right side looked sharp today', 'A demo fan post about Barcelona wing play.', 'I think the key was creating space on the right side and attacking the half-space early.', '/uploads/content/demo-post-1.jpg', 10002, 'USER', NULL, 0, 45, 3, 0, 1, 31.00, '2026-07-03 10:00:00', 'PUBLISHED'),
   (20003, 'ARTICLE', 'ARTICLE_FORMAT', 'CONTENT_CARD', 'How high pressing changed the rhythm', 'A short tactical article for smoke testing.', 'The pressing trigger came from the forward line and forced rushed passes into midfield.', '/uploads/content/demo-article-cover.jpg', 10001, 'ADMIN', 'South Stand Editorial', 1, 78, 6, 0, 1, 65.00, '2026-07-03 11:00:00', 'PUBLISHED'),
   (20004, 'REPORT', 'ARTICLE_FORMAT', 'CONTENT_CARD', 'Barcelona 2-1 Bayern demo report', 'A demo match report linked to match 50001.', 'Barcelona won the demo match 2-1 with a late spell of pressure after the 60th minute.', '/uploads/content/demo-report-cover.jpg', 10001, 'ADMIN', 'South Stand Editorial', 1, 160, 8, 0, 2, 120.00, '2026-07-03 12:00:00', 'PUBLISHED'),
-  (20005, 'REPORT', 'ARTICLE_FORMAT', 'CONTENT_CARD', 'Liverpool 0-2 Manchester City demo report', 'A demo match report linked to match 50004.', 'Manchester City controlled the second half and closed out the demo match away from home.', '/uploads/content/demo-report-2-cover.jpg', 10001, 'ADMIN', 'South Stand Editorial', 1, 132, 7, 0, 1, 104.00, '2026-07-03 13:00:00', 'PUBLISHED');
+  (20005, 'REPORT', 'ARTICLE_FORMAT', 'CONTENT_CARD', 'Liverpool 0-2 Manchester City demo report', 'A demo match report linked to match 50004.', 'Manchester City controlled the second half and closed out the demo match away from home.', '/uploads/content/demo-report-2-cover.jpg', 10001, 'ADMIN', 'South Stand Editorial', 1, 132, 7, 0, 1, 104.00, '2026-07-03 13:00:00', 'PUBLISHED'),
+  (20006, 'POST', 'POST_FORMAT', 'CONTENT_CARD', 'Second demo fan post for my page', 'Another user-authored post for the my contents page.', 'This second seed post makes the personal content list useful during smoke testing.', '/uploads/content/demo-post-2.jpg', 10002, 'USER', NULL, 0, 22, 1, 1, 1, 24.00, '2026-07-03 14:00:00', 'PUBLISHED');
 
 INSERT INTO content_media (id, content_id, media_type, media_url, thumbnail_url, width, height, sort_order)
 VALUES
@@ -112,11 +117,13 @@ INSERT INTO comment (id, target_type, target_id, parent_id, user_id, content_tex
 VALUES
   (60001, 'CONTENT', 20001, 0, 10002, 'This piece has a useful rhythm note.', 2, 1, 6.00, '2026-07-03 09:10:00'),
   (60002, 'CONTENT', 20001, 0, 10001, 'The team relation is useful for the app demo.', 1, 0, 2.00, '2026-07-03 09:20:00'),
-  (60003, 'CONTENT', 20001, 60001, 10001, 'Agreed, the right-side build-up is the key.', 1, 0, 1.00, '2026-07-03 09:30:00');
+  (60003, 'CONTENT', 20001, 60001, 10001, 'Agreed, the right-side build-up is the key.', 1, 0, 1.00, '2026-07-03 09:30:00'),
+  (60004, 'CONTENT', 20006, 0, 10002, 'Keeping this note here for the personal comments page.', 0, 0, 1.00, '2026-07-03 14:10:00');
 
 INSERT INTO follow_record (id, user_id, follow_type, target_id, is_main, status)
 VALUES
-  (80001, 10002, 'TEAM', 30001, 1, 'ACTIVE');
+  (80001, 10002, 'TEAM', 30001, 1, 'ACTIVE'),
+  (80002, 10002, 'PLAYER', 40001, 0, 'ACTIVE');
 
 INSERT INTO like_record (id, user_id, target_type, target_id, status)
 VALUES
@@ -125,4 +132,9 @@ VALUES
 
 INSERT INTO favorite_record (id, user_id, target_type, target_id, status)
 VALUES
-  (91001, 10002, 'CONTENT', 20001, 'ACTIVE');
+  (91001, 10002, 'CONTENT', 20001, 'ACTIVE'),
+  (91002, 10002, 'CONTENT', 20003, 'ACTIVE');
+
+INSERT INTO admin_operation_log (id, admin_user_id, operation_type, target_type, target_id, operation_desc, status)
+VALUES
+  (92001, 10001, 'SEED_READY', 'SYSTEM', NULL, 'T08 admin operation log seed row', 'ACTIVE');

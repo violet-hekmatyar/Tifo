@@ -833,3 +833,42 @@ Admin CRUD.
 Realtime score push.
 Third-party sports API.
 ```
+
+# T08 Current Implementation Notes
+
+Implemented in T08:
+
+```http
+GET  /api/app/users/me/summary
+PUT  /api/app/users/me/profile
+GET  /api/app/users/me/contents
+GET  /api/app/users/me/favorites
+GET  /api/app/users/me/comments
+GET  /api/admin/dashboard/summary
+GET  /api/admin/users
+PUT  /api/admin/users/{userId}/status
+GET  /api/admin/contents
+PUT  /api/admin/contents/{contentId}/status
+```
+
+Current scope:
+
+```text
+User summary aggregates profile, main team, follow counts, post count, favorite count, comment count, and three recent lists.
+Profile update only writes user_profile fields: nickname, avatarUrl, bio, and mainTeamId.
+My contents returns current-user authored content with PageResult.
+My favorites returns current-user active CONTENT favorites and filters hidden/deleted content from user-side output.
+My comments returns current-user active comments with target title when the target is CONTENT.
+Admin dashboard returns realtime MySQL counters.
+Admin users returns PageResult user VOs with masked phone and no password hash.
+Admin user status supports ACTIVE and DISABLED.
+Admin contents returns PageResult content VOs without body.
+Admin content status supports PUBLISHED and HIDDEN.
+```
+
+Out of scope for T08:
+
+```text
+Full RBAC, menu permissions, button permissions, departments, and org trees.
+Rich text editor, content audit workflow, file upload, export, dashboard screens, notifications, third-party login, and refresh tokens.
+```

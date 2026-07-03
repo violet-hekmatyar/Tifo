@@ -199,3 +199,28 @@ T07 validation:
 ```powershell
 .\scripts\windows\check-t07.ps1
 ```
+
+## T08 User Center And Admin Basic Check
+
+T08 provides:
+
+```text
+GET /api/app/users/me/summary
+PUT /api/app/users/me/profile
+GET /api/app/users/me/contents
+GET /api/app/users/me/favorites
+GET /api/app/users/me/comments
+GET /api/admin/dashboard/summary
+GET /api/admin/users
+PUT /api/admin/users/{userId}/status
+GET /api/admin/contents
+PUT /api/admin/contents/{contentId}/status
+```
+
+All `/api/app/users/me/**` endpoints require login. All `/api/admin/**` endpoints require an ADMIN token. Admin status changes write best-effort operation logs.
+
+T08 validation:
+
+```powershell
+.\scripts\windows\check-t08.ps1
+```

@@ -484,8 +484,8 @@ POST /api/admin/football/matches
 ### 7.4 关注球队数量场景
 
 ```text
-用户已关注 5 支球队
--> 尝试关注第 6 支球队
+用户已关注多支球队
+-> 继续关注更多球队
 -> 关注成功
 -> 当前第一版不设置关注球队数量上限
 ```
@@ -787,3 +787,29 @@ smoke-feed.ps1
 ```
 
 `smoke-feed.ps1` verifies default feed, recommend/news/match/mixed tabs, hot leagues, token-based recommend and following feeds, team and league filters, and `pageSize` capped at 100.
+
+## T08 User Center And Admin Validation
+
+Run:
+
+```powershell
+cd D:\Football-APP
+.\scripts\windows\check-t08.ps1
+```
+
+The T08 check covers:
+
+```text
+reset-dev-db.ps1
+mvn clean test
+mvn clean package
+jar startup
+smoke-auth.ps1
+smoke-onboarding.ps1
+smoke-content.ps1
+smoke-football.ps1
+smoke-feed.ps1
+smoke-user-admin.ps1
+```
+
+`smoke-user-admin.ps1` verifies my summary/profile/contents/favorites/comments, no-token `40101`, admin dashboard/users/contents, user disable and enable, content hide and restore, hidden content detail returning `40401`, ordinary USER admin access returning `40301`, and admin no-token access returning `40101`.

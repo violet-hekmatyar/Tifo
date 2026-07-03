@@ -1622,3 +1622,34 @@ Admin CRUD
 Realtime score push
 Third-party sports API
 ```
+
+## T08 Current Completion Notes
+
+T08 user center and admin basic closure is implemented with the following scope:
+
+```text
+User-center summary endpoint
+User profile update endpoint
+My contents, my favorites, and my comments endpoints
+Admin dashboard summary
+Admin user list and ACTIVE/DISABLED status update
+Admin content list and PUBLISHED/HIDDEN status update
+Best-effort admin operation logs
+Seed data for admin, active users, disabled user, profiles, user-authored content, favorites, comments, follows, and operation logs
+Windows smoke-user-admin.ps1 and check-t08.ps1
+```
+
+Still out of scope for T08:
+
+```text
+Complex RBAC
+Menu/button permissions
+Department org structure
+Content audit workflow
+Rich text editor
+File upload
+Excel export
+Notifications
+Third-party login
+Refresh token
+```

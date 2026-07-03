@@ -8,10 +8,13 @@ import static org.mockito.Mockito.when;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.southstand.auth.security.CurrentUserHolder;
 import com.southstand.auth.security.LoginUserContext;
+import com.southstand.content.mapper.ContentMapper;
 import com.southstand.follow.service.FollowService;
 import com.southstand.football.player.mapper.FootballPlayerMapper;
 import com.southstand.football.player.mapper.TeamPlayerMapper;
 import com.southstand.football.team.mapper.FootballTeamMapper;
+import com.southstand.interaction.mapper.CommentMapper;
+import com.southstand.interaction.mapper.FavoriteRecordMapper;
 import com.southstand.user.entity.SysUser;
 import com.southstand.user.entity.UserProfile;
 import com.southstand.user.mapper.SysUserMapper;
@@ -60,7 +63,10 @@ class UserProfileServiceTests {
                 mock(FootballTeamMapper.class),
                 mock(FootballPlayerMapper.class),
                 mock(TeamPlayerMapper.class),
-                followService
+                followService,
+                mock(ContentMapper.class),
+                mock(FavoriteRecordMapper.class),
+                mock(CommentMapper.class)
         ).me();
 
         String json = new ObjectMapper().writeValueAsString(vo);
