@@ -732,3 +732,27 @@ Content-Type: multipart/form-data
 ```
 
 第一版文件存储：Docker volume / 本地 uploads 目录。后期可替换为 MinIO / OSS。
+# T05 Current Implementation Notes
+
+Implemented in T05:
+
+```http
+GET  /api/app/contents/{contentId}
+POST /api/app/contents/posts
+GET  /api/app/comments
+POST /api/app/comments
+POST /api/app/likes/toggle
+POST /api/app/favorites/toggle
+```
+
+Current scope:
+
+```text
+Content detail returns VO data, author, mediaList, relationList, counts, liked and favorited.
+Anonymous content detail and comment list are public; liked/favorited/comment liked flags default to false.
+Post creation creates POST / POST_FORMAT / CONTENT_CARD / USER / PUBLISHED records.
+Post body may be blank only when mediaUrls contains at least one URL.
+Comment list supports CONTENT targets, root comments, second-level replies, hot/time sorting, PageResult.
+Like toggle supports CONTENT and COMMENT.
+Favorite toggle supports CONTENT only.
+```

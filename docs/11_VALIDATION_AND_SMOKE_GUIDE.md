@@ -716,3 +716,25 @@ mvn package
 | 管理后台 | 管理员能维护内容和足球数据 |
 | 部署 | Linux Docker Compose 运行成功 |
 | 文档 | 12 个主线文档存在并与代码一致 |
+## T05 Content And Interaction Validation
+
+Run:
+
+```powershell
+cd D:\Football-APP
+.\scripts\windows\check-t05.ps1
+```
+
+The T05 check covers:
+
+```text
+reset-dev-db.ps1
+mvn clean test
+mvn clean package
+jar startup
+smoke-auth.ps1
+smoke-onboarding.ps1
+smoke-content.ps1
+```
+
+`smoke-content.ps1` verifies seed content `20001`, seed comments, post creation, content detail, root comment, reply, content like/unlike, comment like, content favorite/unfavorite, and no-token write rejection with `40101`.

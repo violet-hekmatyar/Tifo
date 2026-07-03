@@ -1540,3 +1540,28 @@ GPT 负责拆任务和写 Prompt。
 Codex 负责执行代码修改。
 人负责验收、运行、提交。
 ```
+## T05 Current Completion Notes
+
+T05 content and interaction closure is implemented with the following scope:
+
+```text
+Content detail
+User post creation
+Comment list with hot/time sorting
+Root comment and second-level reply creation
+Content/comment like toggle
+Content favorite toggle
+Seed content/media/relation/comment/like/favorite data
+Windows smoke-content.ps1 and check-t05.ps1
+```
+
+Still out of scope for T05:
+
+```text
+Home feed
+Complex recommendation
+Admin content CRUD
+File upload
+Content audit workflow
+Football detail pages
+```

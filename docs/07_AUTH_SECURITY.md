@@ -353,3 +353,17 @@ T03 当前验收脚本：
 ```
 
 该脚本覆盖注册、登录、当前用户、无 Token、普通用户访问后台、管理员访问后台和登录失败防刷。
+## T05 Permission Notes
+
+T05 keeps read/write boundaries explicit:
+
+```text
+GET  /api/app/contents/{contentId} is public.
+GET  /api/app/comments is public.
+POST /api/app/contents/posts requires login.
+POST /api/app/comments requires login.
+POST /api/app/likes/toggle requires login.
+POST /api/app/favorites/toggle requires login.
+```
+
+No-token write requests must return `40101`. Public reads may include an optional bearer token; when absent, user-specific interaction flags are false.

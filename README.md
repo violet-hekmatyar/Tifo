@@ -140,3 +140,23 @@ T04 验收：
 ```powershell
 .\scripts\windows\check-t04.ps1
 ```
+## T05 Content And Interaction Check
+
+T05 provides:
+
+```text
+GET /api/app/contents/{contentId}
+POST /api/app/contents/posts
+GET /api/app/comments
+POST /api/app/comments
+POST /api/app/likes/toggle
+POST /api/app/favorites/toggle
+```
+
+Public reads are allowed for content detail and comment list. Post creation, comment creation, like toggle, and favorite toggle require JWT login.
+
+T05 validation:
+
+```powershell
+.\scripts\windows\check-t05.ps1
+```
