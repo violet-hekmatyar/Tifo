@@ -792,3 +792,44 @@ Lineups, ratings, standings, ranks, and complex match stats.
 Admin football CRUD.
 Realtime scores, WebSocket, or third-party sports API integration.
 ```
+
+# T07 Current Implementation Notes
+
+Implemented in T07:
+
+```http
+GET /api/app/feed
+GET /api/app/feed/hot-leagues
+```
+
+`GET /api/app/feed` supports:
+
+```text
+tab=recommend|following|news|match|mixed
+pageNum, pageSize, cursor
+leagueId, teamId
+```
+
+Current scope:
+
+```text
+CONTENT and MATCH cards are returned in one feed response.
+Anonymous recommend/mixed returns hot content and important matches.
+JWT recommend adds main-team, followed-team, and followed-player rule boosts.
+following without JWT returns an empty page; following with JWT returns related content and matches.
+news returns NEWS, ARTICLE, and REPORT content only.
+match returns MATCH cards only.
+hot-leagues returns active leagues with live/upcoming match counts and a simple hotScore.
+pageSize is capped at 100.
+```
+
+Out of scope for T07:
+
+```text
+Algorithm service integration.
+Vector search or machine learning recommendation.
+Search API.
+Admin CRUD.
+Realtime score push.
+Third-party sports API.
+```

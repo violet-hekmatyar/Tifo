@@ -47,6 +47,7 @@ public class SecurityConfig {
                 )
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.POST, "/api/auth/register", "/api/auth/login").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/app/feed", "/api/app/feed/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/app/contents/**", "/api/app/comments").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/app/football/matches/following-teams").authenticated()
                         .requestMatchers(

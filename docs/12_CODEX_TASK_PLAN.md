@@ -1595,3 +1595,30 @@ Admin CRUD
 Realtime score push
 Third-party sports API
 ```
+
+## T07 Current Completion Notes
+
+T07 feed rule recommendation closure is implemented with the following scope:
+
+```text
+Unified feed endpoint
+Hot leagues endpoint
+CONTENT and MATCH card VO protocol
+recommend/following/news/match/mixed tabs
+Rule scores for hot content, time boost, main team, followed teams, followed players, live matches, scheduled matches, finished reports, and important matches
+Optional JWT personalization
+Seed relation coverage for Barcelona team feed
+Windows smoke-feed.ps1 and check-t07.ps1
+```
+
+Still out of scope for T07:
+
+```text
+Complex recommendation algorithm
+Vector retrieval
+Search API
+Recommendation service integration
+Admin CRUD
+Realtime score push
+Third-party sports API
+```

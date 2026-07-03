@@ -182,3 +182,20 @@ T06 validation:
 ```powershell
 .\scripts\windows\check-t06.ps1
 ```
+
+## T07 Feed Rule Recommendation Check
+
+T07 provides:
+
+```text
+GET /api/app/feed
+GET /api/app/feed/hot-leagues
+```
+
+The feed is public and supports optional JWT personalization. The first version uses simple rule scores across content cards and match cards for `recommend`, `following`, `news`, `match`, and `mixed` tabs.
+
+T07 validation:
+
+```powershell
+.\scripts\windows\check-t07.ps1
+```
