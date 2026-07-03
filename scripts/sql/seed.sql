@@ -20,9 +20,9 @@ VALUES
 
 INSERT INTO football_league (id, league_name, league_name_en, country, season, league_type, sort_order)
 VALUES
-  (20001, 'Premier League', 'Premier League', 'England', '2026', 'LEAGUE', 1),
-  (20002, 'UEFA Champions League', 'UEFA Champions League', 'Europe', '2026', 'CUP', 2),
-  (20003, 'La Liga', 'La Liga', 'Spain', '2026', 'LEAGUE', 3);
+  (10001, 'Premier League', 'Premier League', 'England', '2026', 'LEAGUE', 1),
+  (10002, 'UEFA Champions League', 'UEFA Champions League', 'Europe', '2026', 'CUP', 2),
+  (10003, 'La Liga', 'La Liga', 'Spain', '2026', 'LEAGUE', 3);
 
 INSERT INTO football_team (id, team_name, team_name_en, short_name, logo_url, country, city, home_stadium, founded_year, coach_name, market_value, follower_count)
 VALUES
@@ -61,36 +61,51 @@ VALUES
 
 INSERT INTO match_info (id, league_id, season, round_name, home_team_id, away_team_id, home_score, away_score, match_time, venue, match_status, important_level, has_report)
 VALUES
-  (50001, 20002, '2026', 'Group A', 30001, 30003, 2, 1, '2026-07-10 20:00:00', 'Demo Stadium One', 'FINISHED', 5, 1),
-  (50002, 20001, '2026', 'Round 1', 30004, 30005, NULL, NULL, '2026-07-12 21:00:00', 'Demo Stadium Two', 'SCHEDULED', 3, 0);
+  (50001, 10002, '2026', 'Group A', 30001, 30003, 2, 1, '2026-07-10 20:00:00', 'Demo Stadium One', 'FINISHED', 5, 1),
+  (50002, 10001, '2026', 'Round 1', 30004, 30005, NULL, NULL, '2026-07-12 21:00:00', 'Demo Stadium Two', 'SCHEDULED', 3, 0),
+  (50003, 10003, '2026', 'Round 2', 30002, 30001, 1, 1, '2026-07-13 22:00:00', 'Demo Stadium Three', 'LIVE', 5, 0),
+  (50004, 10001, '2026', 'Round 2', 30006, 30004, 0, 2, '2026-07-08 20:30:00', 'Demo Stadium Four', 'FINISHED', 4, 1),
+  (50005, 10003, '2026', 'Round 3', 30001, 30002, NULL, NULL, '2026-07-18 22:00:00', 'Demo Stadium Five', 'SCHEDULED', 4, 0),
+  (50006, 10002, '2026', 'Group B', 30005, 30003, 3, 2, '2026-07-06 19:45:00', 'Demo Stadium Six', 'FINISHED', 2, 0);
 
-INSERT INTO match_event (id, match_id, team_id, player_id, event_type, minute, score_after, description)
+INSERT INTO match_event (id, match_id, team_id, player_id, assist_player_id, event_type, minute, extra_minute, score_after, description, has_debate)
 VALUES
-  (51001, 50001, 30001, 40001, 'GOAL', 63, '2-1', 'Demo goal event');
+  (51001, 50001, 30001, 40001, 40002, 'GOAL', 63, NULL, '2-1', 'Demo winning goal', 0),
+  (51002, 50001, 30003, 40005, NULL, 'YELLOW_CARD', 70, NULL, '2-1', 'Demo tactical foul', 0),
+  (51003, 50001, 30001, 40002, NULL, 'SUBSTITUTION', 82, NULL, '2-1', 'Demo midfield substitution', 0),
+  (51004, 50003, 30002, 40003, 40004, 'GOAL', 35, NULL, '1-0', 'Demo live opening goal', 0),
+  (51005, 50003, 30001, 40001, NULL, 'VAR', 54, NULL, '1-1', 'Demo VAR check confirmed equalizer', 1),
+  (51006, 50004, 30006, 40009, NULL, 'RED_CARD', 76, NULL, '0-2', 'Demo late red card', 0),
+  (51007, 50006, 30005, 40008, NULL, 'PENALTY', 88, NULL, '3-2', 'Demo decisive penalty', 1);
 
 INSERT INTO content (id, content_type, content_format, card_type, title, summary, body, cover_url, author_id, source_type, source_name, is_official, view_count, like_count, comment_count, favorite_count, hot_score, publish_time, status)
 VALUES
   (20001, 'NEWS', 'ARTICLE_FORMAT', 'CONTENT_CARD', 'Barcelona training update', 'Barcelona completed an open training session before the next match.', 'Barcelona focused on wing progression and transition defense in the open session.', '/uploads/content/demo-news-cover.jpg', 10001, 'ADMIN', 'South Stand Editorial', 1, 120, 10, 3, 2, 98.50, '2026-07-03 09:00:00', 'PUBLISHED'),
   (20002, 'POST', 'POST_FORMAT', 'CONTENT_CARD', 'The right side looked sharp today', 'A demo fan post about Barcelona wing play.', 'I think the key was creating space on the right side and attacking the half-space early.', '/uploads/content/demo-post-1.jpg', 10002, 'USER', NULL, 0, 45, 3, 0, 1, 31.00, '2026-07-03 10:00:00', 'PUBLISHED'),
   (20003, 'ARTICLE', 'ARTICLE_FORMAT', 'CONTENT_CARD', 'How high pressing changed the rhythm', 'A short tactical article for smoke testing.', 'The pressing trigger came from the forward line and forced rushed passes into midfield.', '/uploads/content/demo-article-cover.jpg', 10001, 'ADMIN', 'South Stand Editorial', 1, 78, 6, 0, 1, 65.00, '2026-07-03 11:00:00', 'PUBLISHED'),
-  (20004, 'REPORT', 'ARTICLE_FORMAT', 'CONTENT_CARD', 'Barcelona 2-1 Bayern demo report', 'A demo match report linked to match 50001.', 'Barcelona won the demo match 2-1 with a late spell of pressure after the 60th minute.', '/uploads/content/demo-report-cover.jpg', 10001, 'ADMIN', 'South Stand Editorial', 1, 160, 8, 0, 2, 120.00, '2026-07-03 12:00:00', 'PUBLISHED');
+  (20004, 'REPORT', 'ARTICLE_FORMAT', 'CONTENT_CARD', 'Barcelona 2-1 Bayern demo report', 'A demo match report linked to match 50001.', 'Barcelona won the demo match 2-1 with a late spell of pressure after the 60th minute.', '/uploads/content/demo-report-cover.jpg', 10001, 'ADMIN', 'South Stand Editorial', 1, 160, 8, 0, 2, 120.00, '2026-07-03 12:00:00', 'PUBLISHED'),
+  (20005, 'REPORT', 'ARTICLE_FORMAT', 'CONTENT_CARD', 'Liverpool 0-2 Manchester City demo report', 'A demo match report linked to match 50004.', 'Manchester City controlled the second half and closed out the demo match away from home.', '/uploads/content/demo-report-2-cover.jpg', 10001, 'ADMIN', 'South Stand Editorial', 1, 132, 7, 0, 1, 104.00, '2026-07-03 13:00:00', 'PUBLISHED');
 
 INSERT INTO content_media (id, content_id, media_type, media_url, thumbnail_url, width, height, sort_order)
 VALUES
   (62001, 20001, 'IMAGE', '/uploads/content/demo-news-1.jpg', '/uploads/content/demo-news-1-thumb.jpg', 1200, 800, 1),
   (62002, 20003, 'IMAGE', '/uploads/content/demo-article-1.jpg', '/uploads/content/demo-article-1-thumb.jpg', 1200, 800, 1),
-  (62003, 20004, 'IMAGE', '/uploads/content/demo-report-1.jpg', '/uploads/content/demo-report-1-thumb.jpg', 1200, 800, 1);
+  (62003, 20004, 'IMAGE', '/uploads/content/demo-report-1.jpg', '/uploads/content/demo-report-1-thumb.jpg', 1200, 800, 1),
+  (62004, 20005, 'IMAGE', '/uploads/content/demo-report-2.jpg', '/uploads/content/demo-report-2-thumb.jpg', 1200, 800, 1);
 
 INSERT INTO content_relation (id, content_id, relation_type, relation_id, confidence, source_type)
 VALUES
   (61001, 20001, 'TEAM', 30001, 1.0000, 'MANUAL'),
   (61002, 20002, 'PLAYER', 40001, 1.0000, 'MANUAL'),
   (61003, 20004, 'MATCH', 50001, 1.0000, 'MANUAL'),
-  (61004, 20004, 'TEAM', 30003, 1.0000, 'MANUAL');
+  (61004, 20004, 'TEAM', 30003, 1.0000, 'MANUAL'),
+  (61005, 20005, 'MATCH', 50004, 1.0000, 'MANUAL'),
+  (61006, 20005, 'TEAM', 30004, 1.0000, 'MANUAL');
 
 INSERT INTO match_report (id, match_id, content_id, report_type)
 VALUES
-  (63001, 50001, 20004, 'REPORT');
+  (63001, 50001, 20004, 'REPORT'),
+  (63002, 50004, 20005, 'REPORT');
 
 INSERT INTO comment (id, target_type, target_id, parent_id, user_id, content_text, like_count, reply_count, hot_score, create_time)
 VALUES

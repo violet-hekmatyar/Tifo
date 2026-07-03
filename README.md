@@ -160,3 +160,25 @@ T05 validation:
 ```powershell
 .\scripts\windows\check-t05.ps1
 ```
+
+## T06 Football Data Check
+
+T06 provides:
+
+```text
+GET /api/app/football/leagues
+GET /api/app/football/matches/important
+GET /api/app/football/matches/following-teams
+GET /api/app/football/matches
+GET /api/app/football/teams/{teamId}
+GET /api/app/football/players/{playerId}
+GET /api/app/football/matches/{matchId}
+```
+
+League, match list, team detail, player detail, and match detail reads are public. Following-team match schedule requires JWT login.
+
+T06 validation:
+
+```powershell
+.\scripts\windows\check-t06.ps1
+```

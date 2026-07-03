@@ -756,3 +756,39 @@ Comment list supports CONTENT targets, root comments, second-level replies, hot/
 Like toggle supports CONTENT and COMMENT.
 Favorite toggle supports CONTENT only.
 ```
+
+# T06 Current Implementation Notes
+
+Implemented in T06:
+
+```http
+GET /api/app/football/leagues
+GET /api/app/football/matches/important
+GET /api/app/football/matches/following-teams
+GET /api/app/football/matches
+GET /api/app/football/teams/{teamId}
+GET /api/app/football/players/{playerId}
+GET /api/app/football/matches/{matchId}
+```
+
+Current scope:
+
+```text
+League list returns active leagues.
+Important match list uses important_level and returns PageResult records.
+Following-team schedule requires login and uses the current user's active TEAM follow records.
+Match list supports leagueId, teamId, date, and status filters.
+Team detail returns basic info, followed flag, recent matches, and upcoming matches.
+Player detail returns basic info, current team, age, and followed flag.
+Match detail returns basic match data, sorted eventList, and report entry when present.
+```
+
+Out of scope for T06:
+
+```text
+Home feed or recommendation.
+Full team/player tabs.
+Lineups, ratings, standings, ranks, and complex match stats.
+Admin football CRUD.
+Realtime scores, WebSocket, or third-party sports API integration.
+```

@@ -738,3 +738,27 @@ smoke-content.ps1
 ```
 
 `smoke-content.ps1` verifies seed content `20001`, seed comments, post creation, content detail, root comment, reply, content like/unlike, comment like, content favorite/unfavorite, and no-token write rejection with `40101`.
+
+## T06 Football Data Validation
+
+Run:
+
+```powershell
+cd D:\Football-APP
+.\scripts\windows\check-t06.ps1
+```
+
+The T06 check covers:
+
+```text
+reset-dev-db.ps1
+mvn clean test
+mvn clean package
+jar startup
+smoke-auth.ps1
+smoke-onboarding.ps1
+smoke-content.ps1
+smoke-football.ps1
+```
+
+`smoke-football.ps1` verifies league list, important matches, match filters by team and league, team detail, player detail, match detail eventList and report entry, following-team schedule with token, and following-team schedule without token returning `40101`.

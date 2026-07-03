@@ -16,6 +16,9 @@ public class FootballTeam {
     private String country;
     private String city;
     private String homeStadium;
+    private Integer foundedYear;
+    private String coachName;
+    private String marketValue;
     private Integer followerCount;
     private String status;
     private Integer isDeleted;
@@ -82,6 +85,30 @@ public class FootballTeam {
 
     public void setHomeStadium(String homeStadium) {
         this.homeStadium = homeStadium;
+    }
+
+    public Integer getFoundedYear() {
+        return foundedYear;
+    }
+
+    public void setFoundedYear(Integer foundedYear) {
+        this.foundedYear = foundedYear;
+    }
+
+    public String getCoachName() {
+        return coachName;
+    }
+
+    public void setCoachName(String coachName) {
+        this.coachName = coachName;
+    }
+
+    public String getMarketValue() {
+        return marketValue;
+    }
+
+    public void setMarketValue(String marketValue) {
+        this.marketValue = marketValue;
     }
 
     public Integer getFollowerCount() {

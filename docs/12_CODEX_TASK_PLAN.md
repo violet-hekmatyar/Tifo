@@ -1565,3 +1565,33 @@ File upload
 Content audit workflow
 Football detail pages
 ```
+
+## T06 Current Completion Notes
+
+T06 football data closure is implemented with the following scope:
+
+```text
+League list
+Important match list
+Following-team match schedule
+Match list filters
+Team basic detail
+Player basic detail
+Match basic detail
+Match event list
+Match report entry
+Seed football data for leagues, teams, players, matches, events, and reports
+Windows smoke-football.ps1 and check-t06.ps1
+```
+
+Still out of scope for T06:
+
+```text
+Home feed and recommendation
+Full team detail tabs
+Player career or complex statistics
+Match lineups, ratings, standings, ranks, and complex stats
+Admin CRUD
+Realtime score push
+Third-party sports API
+```

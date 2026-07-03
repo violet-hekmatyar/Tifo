@@ -48,6 +48,15 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.POST, "/api/auth/register", "/api/auth/login").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/app/contents/**", "/api/app/comments").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/app/football/matches/following-teams").authenticated()
+                        .requestMatchers(
+                                HttpMethod.GET,
+                                "/api/app/football/leagues",
+                                "/api/app/football/matches",
+                                "/api/app/football/matches/**",
+                                "/api/app/football/teams/**",
+                                "/api/app/football/players/**"
+                        ).permitAll()
                         .requestMatchers(
                                 "/api/public/**",
                                 "/doc.html",
