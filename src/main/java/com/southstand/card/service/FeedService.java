@@ -28,8 +28,12 @@ import com.southstand.football.team.entity.FootballTeam;
 import com.southstand.football.team.mapper.FootballTeamMapper;
 import com.southstand.interaction.entity.FavoriteRecord;
 import com.southstand.interaction.entity.LikeRecord;
+import com.southstand.interaction.entity.Comment;
+import com.southstand.interaction.mapper.CommentMapper;
 import com.southstand.interaction.mapper.FavoriteRecordMapper;
 import com.southstand.interaction.mapper.LikeRecordMapper;
+import com.southstand.interaction.service.CommentService;
+import com.southstand.interaction.vo.HotCommentVO;
 import com.southstand.user.entity.UserProfile;
 import com.southstand.user.mapper.UserProfileMapper;
 import java.math.BigDecimal;
@@ -76,6 +80,7 @@ public class FeedService {
     private final UserProfileMapper userProfileMapper;
     private final LikeRecordMapper likeRecordMapper;
     private final FavoriteRecordMapper favoriteRecordMapper;
+    private final CommentMapper commentMapper;
 
     public FeedService(
             ContentMapper contentMapper,
@@ -89,7 +94,8 @@ public class FeedService {
             FollowRecordMapper followRecordMapper,
             UserProfileMapper userProfileMapper,
             LikeRecordMapper likeRecordMapper,
-            FavoriteRecordMapper favoriteRecordMapper
+            FavoriteRecordMapper favoriteRecordMapper,
+            CommentMapper commentMapper
     ) {
         this.contentMapper = contentMapper;
         this.contentRelationMapper = contentRelationMapper;
@@ -103,6 +109,7 @@ public class FeedService {
         this.userProfileMapper = userProfileMapper;
         this.likeRecordMapper = likeRecordMapper;
         this.favoriteRecordMapper = favoriteRecordMapper;
+        this.commentMapper = commentMapper;
     }
 
     public FeedPageResult feed(String tab, Long leagueId, Long teamId, long pageNum, long pageSize, String cursor) {
@@ -236,6 +243,7 @@ public class FeedService {
         card.setLikeCount(nvl(content.getLikeCount()));
         card.setCommentCount(nvl(content.getCommentCount()));
         card.setFavoriteCount(nvl(content.getFavoriteCount()));
+        card.setHotComment(hotComment(content.getId()));
         card.setLiked(isLiked(user.userId, content.getId()));
         card.setFavorited(isFavorited(user.userId, content.getId()));
         card.setPublishTime(content.getPublishTime());
@@ -455,6 +463,38 @@ public class FeedService {
         vo.setNickname(profile == null ? null : profile.getNickname());
         vo.setAvatarUrl(profile == null ? null : profile.getAvatarUrl());
         vo.setVerified(false);
+        return vo;
+    }
+
+    private HotCommentVO hotComment(Long contentId) {
+        List<Comment> comments = commentMapper.selectList(new QueryWrapper<Comment>()
+                .eq("target_type", "CONTENT")
+                .eq("target_id", contentId)
+                .eq("parent_id", 0)
+                .eq("status", ACTIVE)
+                .eq("is_deleted", NOT_DELETED)
+                .orderByDesc("create_time")
+                .last("LIMIT 200"));
+        if (comments.isEmpty()) {
+            return null;
+        }
+        LocalDateTime now = LocalDateTime.now();
+        comments.sort(Comparator
+                .comparing((Comment c) -> CommentService.calculateHotScore(nvl(c.getLikeCount()), nvl(c.getReplyCount()), c.getCreateTime(), now))
+                .reversed()
+                .thenComparing(Comment::getCreateTime, Comparator.nullsLast(Comparator.reverseOrder())));
+        Comment comment = comments.get(0);
+        AuthorVO author = author(comment.getUserId());
+        HotCommentVO vo = new HotCommentVO();
+        vo.setCommentId(comment.getId());
+        vo.setContentId(contentId);
+        vo.setUserId(comment.getUserId());
+        vo.setNickname(author.getNickname());
+        vo.setAvatarUrl(author.getAvatarUrl());
+        vo.setContent(comment.getContentText());
+        vo.setLikeCount(nvl(comment.getLikeCount()));
+        vo.setReplyCount(nvl(comment.getReplyCount()));
+        vo.setHotScore(CommentService.calculateHotScore(nvl(comment.getLikeCount()), nvl(comment.getReplyCount()), comment.getCreateTime(), now));
         return vo;
     }
 

@@ -888,3 +888,30 @@ smoke-user-social.ps1
 ```
 
 `smoke-user-social.ps1` verifies public user profile, token-aware relationStatus, follow/unfollow, mutual relationship, followers/followings pages, public user contents, my stand, following feed after following a user, other-user favorites returning `40301`, and self follow returning `40001`.
+
+## T12 Comment Hot Validation
+
+Run:
+
+```powershell
+cd D:\Football-APP
+.\scripts\windows\check-t12.ps1
+```
+
+The T12 check covers:
+
+```text
+reset-dev-db.ps1
+mvn test
+mvn clean package
+jar startup with APP_FILE_STORAGE_TYPE=LOCAL and temp APP_FILE_LOCAL_STORAGE_ROOT
+smoke-auth.ps1
+smoke-football.ps1
+smoke-feed.ps1
+smoke-file-upload.ps1
+smoke-storage-media.ps1
+smoke-user-social.ps1
+smoke-comment-hot.ps1
+```
+
+`smoke-comment-hot.ps1` verifies post creation, root comment creation, reply creation, comment like toggle, hot/latest comment lists, replies endpoint, hot comments endpoint, feed `hotComment`, comment soft delete, deleted comments disappearing from normal lists, and deleted comment like returning `40401`.

@@ -405,9 +405,13 @@ public class UserProfileService {
         vo.setTargetId(comment.getTargetId());
         vo.setTargetTitle(resolveTargetTitle(comment.getTargetType(), comment.getTargetId()));
         vo.setParentId(comment.getParentId());
+        vo.setRootId(comment.getRootId() == null && (comment.getParentId() == null || comment.getParentId() == 0) ? comment.getId() : comment.getRootId());
+        vo.setReplyToUserId(comment.getReplyToUserId());
+        vo.setReplyToNickname(replyToNickname(comment.getReplyToUserId()));
         vo.setContentText(comment.getContentText());
         vo.setLikeCount(nvl(comment.getLikeCount()));
         vo.setReplyCount(nvl(comment.getReplyCount()));
+        vo.setStatus(comment.getStatus());
         vo.setCreateTime(comment.getCreateTime());
         return vo;
     }
@@ -418,6 +422,18 @@ public class UserProfileService {
         }
         Content content = contentMapper.selectById(targetId);
         return content == null ? null : content.getTitle();
+    }
+
+    private String replyToNickname(Long userId) {
+        if (userId == null) {
+            return null;
+        }
+        UserProfile profile = profileOf(userId);
+        if (profile != null && profile.getNickname() != null) {
+            return profile.getNickname();
+        }
+        SysUser user = sysUserMapper.selectById(userId);
+        return user == null ? null : user.getUsername();
     }
 
     private TeamBriefVO toTeamBrief(FootballTeam team) {

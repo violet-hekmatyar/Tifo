@@ -467,3 +467,30 @@ DISABLED or deleted current users cannot actively follow and receive 40101 from 
 Self follow/unfollow returns 40001.
 Other users' favorites/comments return 40301.
 ```
+
+## T12 Comment Permission Notes
+
+Public reads:
+
+```text
+GET /api/app/comments
+GET /api/app/comments/{commentId}/replies
+GET /api/app/comments/hot
+```
+
+Protected writes:
+
+```text
+POST   /api/app/comments requires login.
+POST   /api/app/comments/{commentId}/likes/toggle requires login.
+DELETE /api/app/comments/{commentId} requires login.
+```
+
+Deletion:
+
+```text
+The comment author can delete their own comment.
+ADMIN can delete any comment.
+Other users receive 40301.
+Deleted comments return 40401 for like/reply flows and are not shown in normal lists.
+```

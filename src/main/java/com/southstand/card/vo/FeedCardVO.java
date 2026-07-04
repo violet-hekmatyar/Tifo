@@ -2,6 +2,7 @@ package com.southstand.card.vo;
 
 import com.southstand.content.vo.AuthorVO;
 import com.southstand.football.match.vo.MatchTeamVO;
+import com.southstand.interaction.vo.HotCommentVO;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -19,6 +20,7 @@ public class FeedCardVO {
     private Integer likeCount;
     private Integer commentCount;
     private Integer favoriteCount;
+    private HotCommentVO hotComment;
     private Boolean liked;
     private Boolean favorited;
     private LocalDateTime publishTime;
@@ -60,6 +62,8 @@ public class FeedCardVO {
     public void setCommentCount(Integer commentCount) { this.commentCount = commentCount; }
     public Integer getFavoriteCount() { return favoriteCount; }
     public void setFavoriteCount(Integer favoriteCount) { this.favoriteCount = favoriteCount; }
+    public HotCommentVO getHotComment() { return hotComment; }
+    public void setHotComment(HotCommentVO hotComment) { this.hotComment = hotComment; }
     public Boolean getLiked() { return liked; }
     public void setLiked(Boolean liked) { this.liked = liked; }
     public Boolean getFavorited() { return favorited; }

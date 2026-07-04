@@ -283,3 +283,25 @@ T11 validation:
 ```powershell
 .\scripts\windows\check-t11.ps1
 ```
+
+## T12 Comment Hot Check
+
+T12 provides:
+
+```text
+GET    /api/app/comments?contentId={contentId}&sort=hot
+GET    /api/app/comments?contentId={contentId}&sort=latest
+GET    /api/app/comments/{commentId}/replies
+GET    /api/app/comments/hot?contentId={contentId}&limit=3
+POST   /api/app/comments
+POST   /api/app/comments/{commentId}/likes/toggle
+DELETE /api/app/comments/{commentId}
+```
+
+Hot score uses `(likeCount + replyCount * 2) * timeFactor`, where the time factor is `1.5` for comments up to 2 hours old, `1.0` up to 12 hours, `0.7` up to 24 hours, and `0.3` after 24 hours. Feed content cards now include `hotComment` when one is available.
+
+T12 validation:
+
+```powershell
+.\scripts\windows\check-t12.ps1
+```

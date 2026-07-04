@@ -982,3 +982,58 @@ User follows reuse `follow_record` with `follow_type=USER`; there is no user fol
 `relationStatus` values: `SELF`, `NONE`, `FOLLOWING`, `FOLLOWED_BY`, `MUTUAL`.
 
 `GET /api/app/feed?tab=following` now includes content authored by followed users in addition to followed teams, followed players, and related matches. If no personalized cards are found, it falls back to the normal mixed feed behavior.
+
+# T12 Current Implementation Notes
+
+Implemented in T12:
+
+```http
+GET    /api/app/comments?contentId={contentId}&sort=hot&pageNum=1&pageSize=20
+GET    /api/app/comments?contentId={contentId}&sort=latest&pageNum=1&pageSize=20
+GET    /api/app/comments/{commentId}/replies?pageNum=1&pageSize=20&sort=latest
+GET    /api/app/comments/hot?contentId={contentId}&limit=3
+POST   /api/app/comments
+POST   /api/app/comments/{commentId}/likes/toggle
+DELETE /api/app/comments/{commentId}
+```
+
+Compatibility:
+
+```text
+The old list format targetType=CONTENT&targetId=... still works.
+The old create format targetType/targetId/contentText still works.
+The new create format contentId/content/replyToUserId is supported.
+```
+
+Comment sorting:
+
+```text
+sort=latest orders by create_time DESC.
+sort=hot uses heatScore = likeCount + replyCount * 2.
+finalScore = heatScore * timeFactor.
+timeFactor: <=2h 1.5, <=12h 1.0, <=24h 0.7, >24h 0.3.
+```
+
+Replies:
+
+```text
+rootId points to the root comment.
+parentId stores the directly replied comment.
+replyToUserId/replyToNickname identify the displayed reply target.
+Root comment list includes a small reply preview. The replies endpoint returns paged second-level replies under the root.
+```
+
+Hot comment:
+
+```text
+GET /api/app/comments/hot returns ACTIVE root comments sorted by hot score.
+Feed content cards include hotComment when an ACTIVE root comment exists.
+```
+
+Soft delete:
+
+```text
+Authors can delete their own comments. ADMIN can delete any comment.
+Delete sets status=DELETED and is_deleted=1.
+Deleted comments are excluded from normal lists, cannot be liked, and cannot be replied to.
+```

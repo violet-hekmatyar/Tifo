@@ -184,6 +184,8 @@ CREATE TABLE comment (
   target_type VARCHAR(32) NOT NULL,
   target_id BIGINT NOT NULL,
   parent_id BIGINT NOT NULL DEFAULT 0,
+  root_id BIGINT NULL,
+  reply_to_user_id BIGINT NULL,
   user_id BIGINT NOT NULL,
   content_text VARCHAR(2000) NOT NULL,
   like_count INT NOT NULL DEFAULT 0,
@@ -200,6 +202,7 @@ CREATE TABLE comment (
   KEY idx_target_time (target_type, target_id, create_time),
   KEY idx_target_hot (target_type, target_id, hot_score),
   KEY idx_parent_id (parent_id),
+  KEY idx_root_id (root_id),
   KEY idx_user_time (user_id, create_time)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 

@@ -113,12 +113,12 @@ VALUES
   (63001, 50001, 20004, 'REPORT'),
   (63002, 50004, 20005, 'REPORT');
 
-INSERT INTO comment (id, target_type, target_id, parent_id, user_id, content_text, like_count, reply_count, hot_score, create_time)
+INSERT INTO comment (id, target_type, target_id, parent_id, root_id, reply_to_user_id, user_id, content_text, like_count, reply_count, hot_score, create_time)
 VALUES
-  (60001, 'CONTENT', 20001, 0, 10002, 'This piece has a useful rhythm note.', 2, 1, 6.00, '2026-07-03 09:10:00'),
-  (60002, 'CONTENT', 20001, 0, 10001, 'The team relation is useful for the app demo.', 1, 0, 2.00, '2026-07-03 09:20:00'),
-  (60003, 'CONTENT', 20001, 60001, 10001, 'Agreed, the right-side build-up is the key.', 1, 0, 1.00, '2026-07-03 09:30:00'),
-  (60004, 'CONTENT', 20006, 0, 10002, 'Keeping this note here for the personal comments page.', 0, 0, 1.00, '2026-07-03 14:10:00');
+  (60001, 'CONTENT', 20001, 0, 60001, NULL, 10002, 'This piece has a useful rhythm note.', 2, 1, 6.00, '2026-07-03 09:10:00'),
+  (60002, 'CONTENT', 20001, 0, 60002, NULL, 10001, 'The team relation is useful for the app demo.', 1, 0, 2.00, '2026-07-03 09:20:00'),
+  (60003, 'CONTENT', 20001, 60001, 60001, 10002, 10001, 'Agreed, the right-side build-up is the key.', 1, 0, 1.00, '2026-07-03 09:30:00'),
+  (60004, 'CONTENT', 20006, 0, 60004, NULL, 10002, 'Keeping this note here for the personal comments page.', 0, 0, 1.00, '2026-07-03 14:10:00');
 
 INSERT INTO follow_record (id, user_id, follow_type, target_id, is_main, status)
 VALUES

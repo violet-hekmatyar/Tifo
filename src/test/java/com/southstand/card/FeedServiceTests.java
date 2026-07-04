@@ -246,7 +246,8 @@ class FeedServiceTests {
                     followMapper,
                     userProfileMapper,
                     likeMapper,
-                    favoriteMapper
+                    favoriteMapper,
+                    mock(com.southstand.interaction.mapper.CommentMapper.class)
             );
         }
     }

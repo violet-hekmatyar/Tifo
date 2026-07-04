@@ -789,6 +789,27 @@ user_profile.follower_count is synced from ACTIVE USER follows targeting that us
 No hard cap is applied to USER, TEAM, or PLAYER follows.
 ```
 
+## T12 Comment Hot Schema Notes
+
+T12 reuses `comment` and `like_record`.
+
+Added comment columns:
+
+```text
+root_id BIGINT NULL
+reply_to_user_id BIGINT NULL
+idx_root_id(root_id)
+```
+
+Meaning:
+
+```text
+parent_id is the directly replied comment, or 0 for root comments.
+root_id is the root comment id. For root comments, root_id equals id.
+reply_to_user_id is optional and used for "reply to user" display.
+like_record stores comment likes with target_type=COMMENT and target_id=comment.id.
+```
+
 目标：
 
 ```text

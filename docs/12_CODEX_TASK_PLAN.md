@@ -1710,6 +1710,33 @@ Complex privacy settings
 Real recommendation model training
 ```
 
+## T12 Current Completion Notes
+
+T12 comment hot is implemented with the following scope:
+
+```text
+Comment list sort=hot/latest
+Hot score calculation: (likeCount + replyCount * 2) * timeFactor
+Comment like/unlike endpoint reusing like_record target_type=COMMENT
+Reply structure with rootId, parentId, replyToUserId, replyToNickname
+Hot comments endpoint
+Feed hotComment on content cards
+Comment soft delete by author or ADMIN
+User comment VO fields for root/reply/status
+Windows smoke-comment-hot.ps1 and check-t12.ps1
+```
+
+Still out of scope for T12:
+
+```text
+WebSocket realtime comments
+Private messages
+Notification fanout
+Complex moderation
+AI review
+Search or Redis hot ranking
+```
+
 ## T10 Current Completion Notes
 
 T10 storage abstraction and media business integration is implemented with the following scope:

@@ -31,9 +31,12 @@ class CommentServiceTests {
 
     @Test
     void hotScoreUsesTimeCoefficient() {
-        BigDecimal score = CommentService.calculateHotScore(2, 2, LocalDateTime.now().minusHours(1), LocalDateTime.now());
+        LocalDateTime now = LocalDateTime.now();
 
-        assertThat(score).isEqualByComparingTo("9.00");
+        assertThat(CommentService.calculateHotScore(2, 2, now.minusHours(1), now)).isEqualByComparingTo("9.00");
+        assertThat(CommentService.calculateHotScore(2, 2, now.minusHours(6), now)).isEqualByComparingTo("6.00");
+        assertThat(CommentService.calculateHotScore(2, 2, now.minusHours(18), now)).isEqualByComparingTo("4.20");
+        assertThat(CommentService.calculateHotScore(2, 2, now.minusHours(30), now)).isEqualByComparingTo("1.80");
     }
 
     @Test
