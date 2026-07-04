@@ -20,6 +20,7 @@ import com.southstand.content.service.ContentService;
 import com.southstand.content.vo.CreatePostResponse;
 import com.southstand.football.player.mapper.FootballPlayerMapper;
 import com.southstand.football.team.mapper.FootballTeamMapper;
+import com.southstand.file.service.FileBindingService;
 import com.southstand.interaction.mapper.FavoriteRecordMapper;
 import com.southstand.interaction.mapper.LikeRecordMapper;
 import com.southstand.user.mapper.SysUserMapper;
@@ -68,6 +69,8 @@ class ContentServiceTests {
     }
 
     private ContentService service(ContentMapper contentMapper, UserProfileMapper profileMapper) {
+        FileBindingService fileBindingService = mock(FileBindingService.class);
+        when(fileBindingService.validateContentImages(any(), any())).thenReturn(List.of());
         return new ContentService(
                 contentMapper,
                 mock(ContentMediaMapper.class),
@@ -77,7 +80,8 @@ class ContentServiceTests {
                 mock(SysUserMapper.class),
                 profileMapper,
                 mock(FootballTeamMapper.class),
-                mock(FootballPlayerMapper.class)
+                mock(FootballPlayerMapper.class),
+                fileBindingService
         );
     }
 }

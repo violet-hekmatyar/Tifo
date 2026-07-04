@@ -107,6 +107,9 @@ try {
     if ($null -eq $upload.data.fileId -or [string]::IsNullOrWhiteSpace($upload.data.url)) {
         throw "upload did not return fileId/url"
     }
+    if ($upload.data.storageType -and $upload.data.storageType -ne "LOCAL") {
+        throw "upload expected storageType=LOCAL when present, actual=$($upload.data.storageType)"
+    }
     if ($upload.data.url -like "*:\*" -or $upload.data.url -like "/*/*:*") {
         throw "upload returned suspicious local path: $($upload.data.url)"
     }

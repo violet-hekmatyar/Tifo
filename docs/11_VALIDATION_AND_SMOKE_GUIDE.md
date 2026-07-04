@@ -837,3 +837,28 @@ smoke-file-upload.ps1
 ```
 
 `smoke-file-upload.ps1` registers and logs in a user, generates a local 1x1 PNG in a temp directory, uploads it, verifies `/api/public/files/{fileId}` returns 200 and `nosniff`, verifies no-token upload returns `40101`, and verifies `.txt` upload returns `40001`.
+
+## T10 Storage Abstraction And Media Binding Validation
+
+Run:
+
+```powershell
+cd D:\Football-APP
+.\scripts\windows\check-t10.ps1
+```
+
+The T10 check covers:
+
+```text
+reset-dev-db.ps1
+mvn test
+mvn clean package
+jar startup with APP_FILE_STORAGE_TYPE=LOCAL and temp APP_FILE_LOCAL_STORAGE_ROOT
+smoke-auth.ps1
+smoke-football.ps1
+smoke-feed.ps1
+smoke-file-upload.ps1
+smoke-storage-media.ps1
+```
+
+`smoke-storage-media.ps1` verifies LOCAL storageType in upload responses, avatar binding by fileId, content post creation with mediaFileIds, content detail mediaList containing uploaded URLs, file soft delete, and deleted public file access returning 404.

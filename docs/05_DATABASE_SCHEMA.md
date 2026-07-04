@@ -706,6 +706,11 @@ url
 content_type
 extension
 size_bytes
+storage_type
+bucket
+endpoint
+public_domain
+etag
 status
 created_at
 updated_at
@@ -720,6 +725,7 @@ idx_file_user_id(user_id)
 idx_file_biz_type(biz_type)
 idx_file_created_at(created_at)
 idx_file_status(status)
+idx_file_storage_type(storage_type)
 ```
 
 Notes:
@@ -728,6 +734,7 @@ Notes:
 relative_path is always relative, for example 2026/07/04/uuid.png.
 url is public API form, for example /api/public/files/{fileId}.
 Local absolute storage paths are never returned to the frontend.
+storage_type is LOCAL by default; cloud placeholder values can be stored later for historical files.
 ```
 
 ---

@@ -9,6 +9,8 @@ public class FileUploadVO {
     private String contentType;
     private String extension;
     private Long sizeBytes;
+    private String storageType;
+    private String objectKey;
 
     public Long getFileId() { return fileId; }
     public void setFileId(Long fileId) { this.fileId = fileId; }
@@ -24,4 +26,8 @@ public class FileUploadVO {
     public void setExtension(String extension) { this.extension = extension; }
     public Long getSizeBytes() { return sizeBytes; }
     public void setSizeBytes(Long sizeBytes) { this.sizeBytes = sizeBytes; }
+    public String getStorageType() { return storageType; }
+    public void setStorageType(String storageType) { this.storageType = storageType; }
+    public String getObjectKey() { return objectKey; }
+    public void setObjectKey(String objectKey) { this.objectKey = objectKey; }
 }

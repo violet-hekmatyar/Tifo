@@ -23,7 +23,7 @@ public class PublicFileController {
 
     @GetMapping("/{fileId}")
     public ResponseEntity<Resource> get(@PathVariable Long fileId) {
-        Optional<FileStorageService.StoredFile> storedFile = fileStorageService.findPublicFile(fileId);
+        Optional<FileStorageService.StoredPublicFile> storedFile = fileStorageService.findPublicFile(fileId);
         if (storedFile.isEmpty()) {
             return ResponseEntity.notFound().build();
         }

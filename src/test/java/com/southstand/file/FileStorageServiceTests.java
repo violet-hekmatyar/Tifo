@@ -12,9 +12,12 @@ import com.southstand.file.domain.FileResourceEntity;
 import com.southstand.file.mapper.FileResourceMapper;
 import com.southstand.file.service.FileStorageService;
 import com.southstand.file.service.FileValidationService;
+import com.southstand.file.service.LocalStorageService;
+import com.southstand.file.service.StorageServiceResolver;
 import com.southstand.file.vo.FileUploadVO;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -57,6 +60,7 @@ class FileStorageServiceTests {
         FileResourceEntity entity = new FileResourceEntity();
         entity.setId(1L);
         entity.setRelativePath("../evil.png");
+        entity.setStorageType("LOCAL");
         entity.setContentType("image/png");
         entity.setStatus("ACTIVE");
         entity.setDeleted(0);
@@ -68,9 +72,11 @@ class FileStorageServiceTests {
 
     private FileStorageService service(FileResourceMapper mapper) {
         FileProperties properties = new FileProperties();
-        properties.setStorageRoot(tempDir.toString());
+        properties.getLocal().setStorageRoot(tempDir.toString());
         FileValidationService validationService = new FileValidationService(properties);
-        return new FileStorageService(properties, validationService, mapper);
+        LocalStorageService localStorageService = new LocalStorageService(properties);
+        StorageServiceResolver resolver = new StorageServiceResolver(properties, List.of(localStorageService));
+        return new FileStorageService(properties, validationService, mapper, resolver);
     }
 
     private MockMultipartFile png(String name) {

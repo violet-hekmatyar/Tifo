@@ -20,6 +20,11 @@ public class FileResourceEntity {
     private String contentType;
     private String extension;
     private Long sizeBytes;
+    private String storageType;
+    private String bucket;
+    private String endpoint;
+    private String publicDomain;
+    private String etag;
     private String status;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
@@ -47,6 +52,16 @@ public class FileResourceEntity {
     public void setExtension(String extension) { this.extension = extension; }
     public Long getSizeBytes() { return sizeBytes; }
     public void setSizeBytes(Long sizeBytes) { this.sizeBytes = sizeBytes; }
+    public String getStorageType() { return storageType; }
+    public void setStorageType(String storageType) { this.storageType = storageType; }
+    public String getBucket() { return bucket; }
+    public void setBucket(String bucket) { this.bucket = bucket; }
+    public String getEndpoint() { return endpoint; }
+    public void setEndpoint(String endpoint) { this.endpoint = endpoint; }
+    public String getPublicDomain() { return publicDomain; }
+    public void setPublicDomain(String publicDomain) { this.publicDomain = publicDomain; }
+    public String getEtag() { return etag; }
+    public void setEtag(String etag) { this.etag = etag; }
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
     public LocalDateTime getCreatedAt() { return createdAt; }

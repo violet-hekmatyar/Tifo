@@ -17,6 +17,9 @@ public class CreatePostRequest {
     @Size(max = 9)
     private List<@Size(max = 512) String> mediaUrls;
 
+    @Size(max = 9)
+    private List<Long> mediaFileIds;
+
     @Valid
     @Size(max = 10)
     private List<ContentRelationRequest> relationList;
@@ -27,6 +30,8 @@ public class CreatePostRequest {
     public void setBody(String body) { this.body = body; }
     public List<String> getMediaUrls() { return mediaUrls; }
     public void setMediaUrls(List<String> mediaUrls) { this.mediaUrls = mediaUrls; }
+    public List<Long> getMediaFileIds() { return mediaFileIds; }
+    public void setMediaFileIds(List<Long> mediaFileIds) { this.mediaFileIds = mediaFileIds; }
     public List<ContentRelationRequest> getRelationList() { return relationList; }
     public void setRelationList(List<ContentRelationRequest> relationList) { this.relationList = relationList; }
 }

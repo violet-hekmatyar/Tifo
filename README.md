@@ -241,3 +241,21 @@ T09 validation:
 ```powershell
 .\scripts\windows\check-t09.ps1
 ```
+
+## T10 Storage Abstraction And Media Binding Check
+
+T10 keeps the T09 upload API compatible and adds:
+
+```text
+POST /api/app/users/me/avatar
+DELETE /api/app/files/{fileId}
+POST /api/app/contents/posts with mediaFileIds
+```
+
+File storage now goes through `StorageService`. `LOCAL` is the default implementation; `ALIYUN_OSS`, `QINIU_KODO`, and `MINIO` are registered placeholders without SDK dependencies.
+
+T10 validation:
+
+```powershell
+.\scripts\windows\check-t10.ps1
+```

@@ -23,6 +23,8 @@ import com.southstand.football.player.entity.FootballPlayer;
 import com.southstand.football.player.mapper.FootballPlayerMapper;
 import com.southstand.football.team.entity.FootballTeam;
 import com.southstand.football.team.mapper.FootballTeamMapper;
+import com.southstand.file.domain.FileResourceEntity;
+import com.southstand.file.service.FileBindingService;
 import com.southstand.interaction.entity.FavoriteRecord;
 import com.southstand.interaction.entity.LikeRecord;
 import com.southstand.interaction.mapper.FavoriteRecordMapper;
@@ -58,6 +60,7 @@ public class ContentService {
     private final UserProfileMapper userProfileMapper;
     private final FootballTeamMapper footballTeamMapper;
     private final FootballPlayerMapper footballPlayerMapper;
+    private final FileBindingService fileBindingService;
 
     public ContentService(ContentMapper contentMapper,
             ContentMediaMapper contentMediaMapper,
@@ -67,7 +70,8 @@ public class ContentService {
             SysUserMapper sysUserMapper,
             UserProfileMapper userProfileMapper,
             FootballTeamMapper footballTeamMapper,
-            FootballPlayerMapper footballPlayerMapper) {
+            FootballPlayerMapper footballPlayerMapper,
+            FileBindingService fileBindingService) {
         this.contentMapper = contentMapper;
         this.contentMediaMapper = contentMediaMapper;
         this.contentRelationMapper = contentRelationMapper;
@@ -77,6 +81,7 @@ public class ContentService {
         this.userProfileMapper = userProfileMapper;
         this.footballTeamMapper = footballTeamMapper;
         this.footballPlayerMapper = footballPlayerMapper;
+        this.fileBindingService = fileBindingService;
     }
 
     public ContentDetailVO detail(Long contentId) {
@@ -96,8 +101,9 @@ public class ContentService {
     @Transactional(rollbackFor = Exception.class)
     public CreatePostResponse createPost(CreatePostRequest request) {
         Long userId = CurrentUserHolder.get().getUserId();
-        if (isBlank(request.getBody()) && (request.getMediaUrls() == null || request.getMediaUrls().isEmpty())) {
-            throw new BusinessException(ErrorCode.PARAM_ERROR, "body or mediaUrls required");
+        List<FileResourceEntity> mediaFiles = fileBindingService.validateContentImages(userId, request.getMediaFileIds());
+        if (isBlank(request.getBody()) && isEmpty(request.getMediaUrls()) && mediaFiles.isEmpty()) {
+            throw new BusinessException(ErrorCode.PARAM_ERROR, "body or media required");
         }
         validateRelations(request.getRelationList());
 
@@ -109,7 +115,7 @@ public class ContentService {
         content.setTitle(request.getTitle().trim());
         content.setSummary(summaryOf(request.getBody()));
         content.setBody(request.getBody());
-        content.setCoverUrl(firstMediaUrl(request.getMediaUrls()));
+        content.setCoverUrl(firstMediaUrl(request.getMediaUrls(), mediaFiles));
         content.setAuthorId(userId);
         content.setSourceType("USER");
         content.setIsOfficial(0);
@@ -123,7 +129,7 @@ public class ContentService {
         content.setIsDeleted(0);
         contentMapper.insert(content);
 
-        insertMedia(content.getId(), request.getMediaUrls());
+        insertMedia(content.getId(), request.getMediaUrls(), mediaFiles);
         insertRelations(content.getId(), request.getRelationList());
         userProfileMapper.update(null, new UpdateWrapper<UserProfile>()
                 .eq("user_id", userId)
@@ -270,24 +276,53 @@ public class ContentService {
         }
     }
 
-    private void insertMedia(Long contentId, List<String> mediaUrls) {
-        if (mediaUrls == null) {
+    private void insertMedia(Long contentId, List<String> mediaUrls, List<FileResourceEntity> mediaFiles) {
+        int sortOrder = 1;
+        if (mediaUrls != null) {
+            for (String url : mediaUrls) {
+                if (isBlank(url)) {
+                    continue;
+                }
+                insertMediaUrl(contentId, url, sortOrder++);
+            }
+        }
+        if (mediaFiles != null) {
+            for (FileResourceEntity file : mediaFiles) {
+                insertMediaUrl(contentId, file.getUrl(), sortOrder++);
+            }
+        }
+    }
+
+    private void insertMediaUrl(Long contentId, String url, int sortOrder) {
+        if (isBlank(url)) {
             return;
         }
-        for (int i = 0; i < mediaUrls.size(); i++) {
-            String url = mediaUrls.get(i);
-            if (isBlank(url)) {
-                continue;
+        ContentMedia media = new ContentMedia();
+        media.setContentId(contentId);
+        media.setMediaType("IMAGE");
+        media.setMediaUrl(url);
+        media.setSortOrder(sortOrder);
+        media.setStatus(STATUS_ACTIVE);
+        media.setIsDeleted(0);
+        contentMediaMapper.insert(media);
+    }
+
+    private boolean isEmpty(List<?> values) {
+        return values == null || values.isEmpty();
+    }
+
+    private static String firstMediaUrl(List<String> mediaUrls, List<FileResourceEntity> mediaFiles) {
+        if (mediaUrls != null) {
+            for (String url : mediaUrls) {
+                if (!isBlank(url)) {
+                    return url;
+                }
             }
-            ContentMedia media = new ContentMedia();
-            media.setContentId(contentId);
-            media.setMediaType("IMAGE");
-            media.setMediaUrl(url);
-            media.setSortOrder(i + 1);
-            media.setStatus(STATUS_ACTIVE);
-            media.setIsDeleted(0);
-            contentMediaMapper.insert(media);
         }
+        if (mediaFiles != null && !mediaFiles.isEmpty()) {
+            return mediaFiles.get(0).getUrl();
+        }
+        return null;
     }
 
     private void insertRelations(Long contentId, List<ContentRelationRequest> relations) {
@@ -336,18 +371,6 @@ public class ContentService {
 
     private static int nvl(Integer value) {
         return value == null ? 0 : value;
-    }
-
-    private static String firstMediaUrl(List<String> mediaUrls) {
-        if (mediaUrls == null) {
-            return null;
-        }
-        for (String url : mediaUrls) {
-            if (!isBlank(url)) {
-                return url;
-            }
-        }
-        return null;
     }
 
     private static String summaryOf(String body) {

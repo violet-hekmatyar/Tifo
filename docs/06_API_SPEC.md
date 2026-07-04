@@ -912,3 +912,50 @@ OSS / MinIO / object storage
 Image crop/compress/watermark
 Private file authorization
 ```
+
+# T10 Current Implementation Notes
+
+Implemented in T10:
+
+```http
+POST   /api/app/users/me/avatar
+DELETE /api/app/files/{fileId}
+POST   /api/app/contents/posts
+```
+
+Storage abstraction:
+
+```text
+StorageService defines store/load/delete.
+LocalStorageService is the default LOCAL implementation.
+AliyunOssStorageService, QiniuKodoStorageService, and MinioStorageService are placeholders and do not introduce SDK dependencies.
+StorageServiceResolver chooses the upload storage by app.file.storage-type and historical file reads by file_resource.storage_type.
+Switching to an unimplemented storage type returns a clear server-side capability error instead of silently falling back to LOCAL.
+```
+
+Avatar binding:
+
+```text
+POST /api/app/users/me/avatar
+Body: {"fileId": 90001}
+The file must be ACTIVE, owned by the current user, and bizType AVATAR or GENERAL_IMAGE.
+The service updates user_profile.avatar_url to file.url.
+```
+
+Content media binding:
+
+```text
+POST /api/app/contents/posts supports mediaFileIds in addition to mediaUrls.
+Each media file must be ACTIVE, owned by the current user, and bizType CONTENT_IMAGE or GENERAL_IMAGE.
+The service writes content_media rows using file.url.
+```
+
+Soft delete:
+
+```text
+DELETE /api/app/files/{fileId}
+Only the owning user can delete.
+Sets file_resource.status=DELETED and deleted=1.
+Physical files are retained for later cleanup.
+Deleted public files return 404.
+```

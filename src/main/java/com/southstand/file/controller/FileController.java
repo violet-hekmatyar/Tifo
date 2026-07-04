@@ -4,6 +4,8 @@ import com.southstand.common.result.Result;
 import com.southstand.file.service.FileStorageService;
 import com.southstand.file.vo.FileUploadVO;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -23,5 +25,10 @@ public class FileController {
     public Result<FileUploadVO> upload(@RequestParam("file") MultipartFile file,
             @RequestParam(required = false, defaultValue = "GENERAL_IMAGE") String bizType) {
         return Result.success(fileStorageService.upload(file, bizType));
+    }
+
+    @DeleteMapping("/{fileId}")
+    public Result<Boolean> delete(@PathVariable Long fileId) {
+        return Result.success(fileStorageService.softDelete(fileId));
     }
 }

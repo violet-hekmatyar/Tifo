@@ -57,6 +57,11 @@ CREATE TABLE file_resource (
   content_type VARCHAR(128) NOT NULL,
   extension VARCHAR(16) NOT NULL,
   size_bytes BIGINT NOT NULL,
+  storage_type VARCHAR(32) NOT NULL DEFAULT 'LOCAL',
+  bucket VARCHAR(128) NULL,
+  endpoint VARCHAR(255) NULL,
+  public_domain VARCHAR(255) NULL,
+  etag VARCHAR(128) NULL,
   status VARCHAR(32) NOT NULL DEFAULT 'ACTIVE',
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -65,7 +70,8 @@ CREATE TABLE file_resource (
   KEY idx_file_user_id (user_id),
   KEY idx_file_biz_type (biz_type),
   KEY idx_file_created_at (created_at),
-  KEY idx_file_status (status)
+  KEY idx_file_status (status),
+  KEY idx_file_storage_type (storage_type)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE user_profile (

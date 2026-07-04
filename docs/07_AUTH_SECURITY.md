@@ -418,3 +418,22 @@ Cache-Control: no-store
 ```
 
 CORS is configurable through `app.cors.*` and environment variables. With credentials enabled, the default allowed origins are explicit local frontend origins rather than `*`.
+
+## T10 Storage And Media Security Notes
+
+Storage configuration:
+
+```text
+APP_FILE_STORAGE_TYPE=LOCAL
+APP_FILE_LOCAL_STORAGE_ROOT=uploads
+```
+
+Cloud storage placeholders exist for `ALIYUN_OSS`, `QINIU_KODO`, and `MINIO`, but no SDKs or real credentials are included. Placeholder secret settings must remain environment-only and default to empty values.
+
+Media ownership rules:
+
+```text
+Avatar binding requires the file to belong to the current user and use AVATAR or GENERAL_IMAGE.
+Content media binding requires the file to belong to the current user and use CONTENT_IMAGE or GENERAL_IMAGE.
+File soft delete requires ownership and does not physically remove local files.
+```

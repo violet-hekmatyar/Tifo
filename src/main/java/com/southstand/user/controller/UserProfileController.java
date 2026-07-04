@@ -2,6 +2,9 @@ package com.southstand.user.controller;
 
 import com.southstand.common.result.Result;
 import com.southstand.common.result.PageResult;
+import com.southstand.file.dto.BindAvatarRequest;
+import com.southstand.file.service.FileBindingService;
+import com.southstand.file.vo.BindAvatarVO;
 import com.southstand.user.dto.UpdateMyProfileRequest;
 import com.southstand.user.service.UserProfileService;
 import com.southstand.user.vo.MyCommentVO;
@@ -11,6 +14,7 @@ import com.southstand.user.vo.MyProfileUpdateVO;
 import com.southstand.user.vo.UserProfileVO;
 import com.southstand.user.vo.UserSummaryVO;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -22,9 +26,11 @@ import org.springframework.web.bind.annotation.RestController;
 public class UserProfileController {
 
     private final UserProfileService userProfileService;
+    private final FileBindingService fileBindingService;
 
-    public UserProfileController(UserProfileService userProfileService) {
+    public UserProfileController(UserProfileService userProfileService, FileBindingService fileBindingService) {
         this.userProfileService = userProfileService;
+        this.fileBindingService = fileBindingService;
     }
 
     @GetMapping("/profile")
@@ -64,5 +70,10 @@ public class UserProfileController {
             @RequestParam(required = false, defaultValue = "10") Long pageSize,
             @RequestParam(required = false, defaultValue = "CONTENT") String targetType) {
         return Result.success(userProfileService.myComments(pageNum, pageSize, targetType));
+    }
+
+    @PostMapping("/avatar")
+    public Result<BindAvatarVO> bindAvatar(@RequestBody BindAvatarRequest request) {
+        return Result.success(fileBindingService.bindAvatar(request == null ? null : request.getFileId()));
     }
 }

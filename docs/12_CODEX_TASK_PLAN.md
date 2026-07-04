@@ -1682,3 +1682,31 @@ Image crop
 Watermarking
 Private file authorization
 ```
+
+## T10 Current Completion Notes
+
+T10 storage abstraction and media business integration is implemented with the following scope:
+
+```text
+StorageService abstraction
+LocalStorageService as default LOCAL storage
+StorageServiceResolver for configured upload storage and historical file reads
+ALIYUN_OSS / QINIU_KODO / MINIO placeholder services without SDK dependencies
+file_resource storage metadata fields
+Upload response storageType and objectKey
+Avatar binding by fileId
+Content image binding by mediaFileIds
+File soft delete endpoint
+Windows smoke-storage-media.ps1 and check-t10.ps1
+StorageServiceResolverTests and LocalStorageServiceTests
+```
+
+Still out of scope for T10:
+
+```text
+Real Aliyun OSS SDK integration
+Real Qiniu Kodo SDK integration
+Real MinIO SDK integration
+Physical file cleanup scheduler
+Private file authorization
+```
