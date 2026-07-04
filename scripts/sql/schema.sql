@@ -4,6 +4,7 @@ SET NAMES utf8mb4;
 SET FOREIGN_KEY_CHECKS = 0;
 
 DROP TABLE IF EXISTS admin_operation_log;
+DROP TABLE IF EXISTS file_resource;
 DROP TABLE IF EXISTS match_report;
 DROP TABLE IF EXISTS match_event;
 DROP TABLE IF EXISTS match_info;
@@ -42,6 +43,29 @@ CREATE TABLE sys_user (
   UNIQUE KEY uk_username (username),
   UNIQUE KEY uk_phone (phone),
   KEY idx_role_status (role_type, status)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE file_resource (
+  id BIGINT NOT NULL PRIMARY KEY,
+  user_id BIGINT NULL,
+  biz_type VARCHAR(32) NOT NULL,
+  original_name VARCHAR(255) NOT NULL,
+  storage_name VARCHAR(128) NOT NULL,
+  object_key VARCHAR(255) NOT NULL,
+  relative_path VARCHAR(255) NOT NULL,
+  url VARCHAR(512) NOT NULL,
+  content_type VARCHAR(128) NOT NULL,
+  extension VARCHAR(16) NOT NULL,
+  size_bytes BIGINT NOT NULL,
+  status VARCHAR(32) NOT NULL DEFAULT 'ACTIVE',
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  deleted TINYINT NOT NULL DEFAULT 0,
+  UNIQUE KEY uk_file_object_key (object_key),
+  KEY idx_file_user_id (user_id),
+  KEY idx_file_biz_type (biz_type),
+  KEY idx_file_created_at (created_at),
+  KEY idx_file_status (status)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE user_profile (

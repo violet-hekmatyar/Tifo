@@ -224,3 +224,20 @@ T08 validation:
 ```powershell
 .\scripts\windows\check-t08.ps1
 ```
+
+## T09 File Upload Security Check
+
+T09 provides:
+
+```text
+POST /api/app/files/upload
+GET /api/public/files/{fileId}
+```
+
+The first version supports local disk image uploads only: `jpg`, `jpeg`, `png`, `webp`, and `gif`, default max size 10MB. Uploaded files are stored under `uploads/` or `APP_FILE_STORAGE_ROOT`; `uploads/` is ignored by Git. Public responses expose only `/api/public/files/{fileId}`, never a local disk path.
+
+T09 validation:
+
+```powershell
+.\scripts\windows\check-t09.ps1
+```

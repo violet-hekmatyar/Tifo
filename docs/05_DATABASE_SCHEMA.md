@@ -688,6 +688,48 @@ SYSTEM / COMMENT / LIKE / FOLLOW / RATING
 
 字段：`admin_user_id`、`operation_type`、`target_type`、`target_id`、`operation_desc`、`request_ip`、通用字段。
 
+## 14.6 `file_resource`
+
+Purpose: local uploaded image metadata for T09.
+
+Fields:
+
+```text
+id
+user_id
+biz_type
+original_name
+storage_name
+object_key
+relative_path
+url
+content_type
+extension
+size_bytes
+status
+created_at
+updated_at
+deleted
+```
+
+Indexes:
+
+```text
+uk_file_object_key(object_key)
+idx_file_user_id(user_id)
+idx_file_biz_type(biz_type)
+idx_file_created_at(created_at)
+idx_file_status(status)
+```
+
+Notes:
+
+```text
+relative_path is always relative, for example 2026/07/04/uuid.png.
+url is public API form, for example /api/public/files/{fileId}.
+Local absolute storage paths are never returned to the frontend.
+```
+
 ---
 
 # 15. seed 数据建议

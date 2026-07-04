@@ -813,3 +813,27 @@ smoke-user-admin.ps1
 ```
 
 `smoke-user-admin.ps1` verifies my summary/profile/contents/favorites/comments, no-token `40101`, admin dashboard/users/contents, user disable and enable, content hide and restore, hidden content detail returning `40401`, ordinary USER admin access returning `40301`, and admin no-token access returning `40101`.
+
+## T09 File Upload Security Validation
+
+Run:
+
+```powershell
+cd D:\Football-APP
+.\scripts\windows\check-t09.ps1
+```
+
+The T09 check covers:
+
+```text
+reset-dev-db.ps1
+mvn test
+mvn clean package
+jar startup with APP_FILE_STORAGE_ROOT pointing to a temp directory
+smoke-auth.ps1
+smoke-football.ps1
+smoke-feed.ps1
+smoke-file-upload.ps1
+```
+
+`smoke-file-upload.ps1` registers and logs in a user, generates a local 1x1 PNG in a temp directory, uploads it, verifies `/api/public/files/{fileId}` returns 200 and `nosniff`, verifies no-token upload returns `40101`, and verifies `.txt` upload returns `40001`.

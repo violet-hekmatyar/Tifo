@@ -872,3 +872,43 @@ Out of scope for T08:
 Full RBAC, menu permissions, button permissions, departments, and org trees.
 Rich text editor, content audit workflow, file upload, export, dashboard screens, notifications, third-party login, and refresh tokens.
 ```
+
+# T09 Current Implementation Notes
+
+Implemented in T09:
+
+```http
+POST /api/app/files/upload
+GET  /api/public/files/{fileId}
+```
+
+Upload scope:
+
+```text
+Requires login.
+multipart/form-data parameters: file, bizType.
+bizType values: AVATAR, CONTENT_IMAGE, COMMENT_IMAGE, GENERAL_IMAGE.
+Returns fileId, url, bizType, originalName, contentType, extension, and sizeBytes.
+Default max size: 10MB.
+Allowed extensions: jpg, jpeg, png, webp, gif.
+Allowed content types: image/jpeg, image/png, image/webp, image/gif.
+```
+
+Public file access:
+
+```text
+Public binary response.
+Reads metadata by fileId, then resolves relative_path under storage-root.
+Returns 404 when metadata is missing, deleted, non-ACTIVE, outside storage-root, or missing on disk.
+Sets Content-Type and X-Content-Type-Options: nosniff.
+```
+
+Out of scope for T09:
+
+```text
+Video upload
+Chunk upload
+OSS / MinIO / object storage
+Image crop/compress/watermark
+Private file authorization
+```

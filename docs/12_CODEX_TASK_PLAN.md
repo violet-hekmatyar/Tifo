@@ -1653,3 +1653,32 @@ Notifications
 Third-party login
 Refresh token
 ```
+
+## T09 Current Completion Notes
+
+T09 file upload and basic security hardening is implemented with the following scope:
+
+```text
+Local disk image upload
+file_resource metadata table
+FileProperties and CORS configuration externalization
+POST /api/app/files/upload
+GET /api/public/files/{fileId}
+Extension, MIME, size, file name, magic number, and path traversal validation
+UUID storage file names under date directories
+Basic security response headers
+Windows smoke-file-upload.ps1 and check-t09.ps1
+FileValidationServiceTests and FileStorageServiceTests
+```
+
+Still out of scope for T09:
+
+```text
+Video upload
+Chunk upload
+OSS / MinIO
+Image compression
+Image crop
+Watermarking
+Private file authorization
+```

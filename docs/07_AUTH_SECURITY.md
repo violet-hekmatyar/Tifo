@@ -386,3 +386,35 @@ PUT  /api/admin/contents/{contentId}/status requires ADMIN.
 ```
 
 No-token protected requests return `40101`; ordinary USER requests to admin endpoints return `40301`. User and admin response VOs do not expose password hashes, full JWTs, secrets, or unmasked phone numbers. Users disabled after token issuance are rejected by the T08 user-center service on subsequent `/api/app/users/me/**` requests; broader DB revalidation for every legacy endpoint remains a later hardening item.
+
+## T09 File Upload Security Notes
+
+Upload protection:
+
+```text
+POST /api/app/files/upload requires login and returns 40101 without token.
+GET /api/public/files/{fileId} is public and returns binary data, not unified JSON.
+Only AVATAR, CONTENT_IMAGE, COMMENT_IMAGE, and GENERAL_IMAGE biz types are accepted.
+```
+
+Validation strategy:
+
+```text
+Original file name is recorded only for display and metadata.
+Disk file name is generated with UUID and never uses the original name.
+Dangerous file names containing path separators, traversal, or shell-sensitive characters are rejected.
+Extension, Content-Type, size, and magic number must all pass.
+Allowed image types: jpg, jpeg, png, webp, gif.
+Unsupported types such as svg, html, js, exe, sh, jar, and txt are rejected with 40001.
+```
+
+Response hardening:
+
+```text
+X-Content-Type-Options: nosniff
+X-Frame-Options: DENY
+Referrer-Policy: no-referrer
+Cache-Control: no-store
+```
+
+CORS is configurable through `app.cors.*` and environment variables. With credentials enabled, the default allowed origins are explicit local frontend origins rather than `*`.
