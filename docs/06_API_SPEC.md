@@ -959,3 +959,26 @@ Sets file_resource.status=DELETED and deleted=1.
 Physical files are retained for later cleanup.
 Deleted public files return 404.
 ```
+
+# T11 Current Implementation Notes
+
+Implemented in T11:
+
+```http
+GET    /api/app/users/{userId}/profile
+POST   /api/app/users/{userId}/follow
+DELETE /api/app/users/{userId}/follow
+GET    /api/app/users/{userId}/followings
+GET    /api/app/users/{userId}/followers
+GET    /api/app/users/{userId}/contents
+GET    /api/app/users/{userId}/favorites
+GET    /api/app/users/{userId}/comments
+GET    /api/app/users/me/stand
+GET    /api/app/feed?tab=following
+```
+
+User follows reuse `follow_record` with `follow_type=USER`; there is no user follow cap. Public profile/list/content reads are available without login; when a bearer token is present, `relationStatus` is calculated for that viewer. Favorites and comments under `/api/app/users/{userId}/...` are self-only in this version and return `40301` for other users. DISABLED or deleted users are not visible and cannot actively follow.
+
+`relationStatus` values: `SELF`, `NONE`, `FOLLOWING`, `FOLLOWED_BY`, `MUTUAL`.
+
+`GET /api/app/feed?tab=following` now includes content authored by followed users in addition to followed teams, followed players, and related matches. If no personalized cards are found, it falls back to the normal mixed feed behavior.

@@ -862,3 +862,29 @@ smoke-storage-media.ps1
 ```
 
 `smoke-storage-media.ps1` verifies LOCAL storageType in upload responses, avatar binding by fileId, content post creation with mediaFileIds, content detail mediaList containing uploaded URLs, file soft delete, and deleted public file access returning 404.
+
+## T11 User Social Validation
+
+Run:
+
+```powershell
+cd D:\Football-APP
+.\scripts\windows\check-t11.ps1
+```
+
+The T11 check covers:
+
+```text
+reset-dev-db.ps1
+mvn test
+mvn clean package
+jar startup with APP_FILE_STORAGE_TYPE=LOCAL and temp APP_FILE_LOCAL_STORAGE_ROOT
+smoke-auth.ps1
+smoke-football.ps1
+smoke-feed.ps1
+smoke-file-upload.ps1
+smoke-storage-media.ps1
+smoke-user-social.ps1
+```
+
+`smoke-user-social.ps1` verifies public user profile, token-aware relationStatus, follow/unfollow, mutual relationship, followers/followings pages, public user contents, my stand, following feed after following a user, other-user favorites returning `40301`, and self follow returning `40001`.

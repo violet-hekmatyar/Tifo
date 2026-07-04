@@ -49,6 +49,13 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/auth/register", "/api/auth/login").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/app/feed", "/api/app/feed/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/app/contents/**", "/api/app/comments").permitAll()
+                        .requestMatchers(
+                                HttpMethod.GET,
+                                "/api/app/users/*/profile",
+                                "/api/app/users/*/contents",
+                                "/api/app/users/*/followings",
+                                "/api/app/users/*/followers"
+                        ).permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/app/football/matches/following-teams").authenticated()
                         .requestMatchers(
                                 HttpMethod.GET,

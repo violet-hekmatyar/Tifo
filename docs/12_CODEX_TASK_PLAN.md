@@ -1683,6 +1683,33 @@ Watermarking
 Private file authorization
 ```
 
+## T11 Current Completion Notes
+
+T11 user social is implemented with the following scope:
+
+```text
+Public user profile by userId
+User follow and unfollow through follow_record follow_type=USER
+Follower and following lists
+relationStatus values: SELF, NONE, FOLLOWING, FOLLOWED_BY, MUTUAL
+Public user content list
+Self-only favorites/comments under /api/app/users/{userId}
+My stand endpoint
+Following feed enhancement for followed users' content
+Windows smoke-user-social.ps1 and check-t11.ps1
+```
+
+Still out of scope for T11:
+
+```text
+Private messages
+Chat rooms
+WebSocket
+Notification fanout
+Complex privacy settings
+Real recommendation model training
+```
+
 ## T10 Current Completion Notes
 
 T10 storage abstraction and media business integration is implemented with the following scope:

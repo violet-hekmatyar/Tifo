@@ -61,6 +61,7 @@ public class FeedService {
     private static final String CARD_MATCH = "MATCH";
     private static final String TEAM = "TEAM";
     private static final String PLAYER = "PLAYER";
+    private static final String USER = "USER";
     private static final String MATCH = "MATCH";
 
     private final ContentMapper contentMapper;
@@ -155,7 +156,7 @@ public class FeedService {
         List<FeedCardVO> cards = new ArrayList<>();
         cards.addAll(contentCards(user, leagueId, teamId, false, true));
         cards.addAll(matchCards(user, leagueId, teamId, true));
-        return cards;
+        return cards.isEmpty() ? mixedCards(user, leagueId, teamId, false) : cards;
     }
 
     private List<FeedCardVO> mixedCards(UserContext user, Long leagueId, Long teamId, boolean personalized) {
@@ -270,6 +271,9 @@ public class FeedService {
                 + nvl(content.getFavoriteCount()) * 4D
                 + timeBoost(content.getPublishTime());
         if (personalized || user.userId != null) {
+            if (content.getAuthorId() != null && user.followedUserIds.contains(content.getAuthorId())) {
+                score += 45D;
+            }
             for (ContentRelation relation : relations) {
                 if (TEAM.equals(relation.getRelationType()) && Objects.equals(relation.getRelationId(), user.mainTeamId)) {
                     score += 50D;
@@ -333,6 +337,7 @@ public class FeedService {
             relationIds.addAll(contentIdsByRelation(TEAM, teamIds));
         }
         relationIds.addAll(contentIdsByRelation(PLAYER, user.followedPlayerIds));
+        relationIds.addAll(contentIdsByAuthors(user.followedUserIds));
         if (leagueId != null) {
             relationIds.retainAll(filteredContentIds(leagueId, null));
         }
@@ -356,6 +361,21 @@ public class FeedService {
             ids.addAll(contentIdsByRelation(MATCH, matchIds));
         }
         return ids;
+    }
+
+    private Set<Long> contentIdsByAuthors(Set<Long> authorIds) {
+        if (authorIds == null || authorIds.isEmpty()) {
+            return Set.of();
+        }
+        return contentMapper.selectList(new QueryWrapper<Content>()
+                        .in("author_id", authorIds)
+                        .eq("status", PUBLISHED)
+                        .eq("is_deleted", NOT_DELETED)
+                        .orderByDesc("publish_time")
+                        .last("LIMIT 100"))
+                .stream()
+                .map(Content::getId)
+                .collect(Collectors.toCollection(LinkedHashSet::new));
     }
 
     private Set<Long> contentIdsByRelation(String relationType, Set<Long> relationIds) {
@@ -559,6 +579,8 @@ public class FeedService {
                 context.followedTeamIds.add(follow.getTargetId());
             } else if (PLAYER.equals(follow.getFollowType())) {
                 context.followedPlayerIds.add(follow.getTargetId());
+            } else if (USER.equals(follow.getFollowType())) {
+                context.followedUserIds.add(follow.getTargetId());
             }
         }
         context.leagueIds.addAll(leaguesForTeams(context.followedTeamIds));
@@ -592,6 +614,7 @@ public class FeedService {
         private Long mainTeamId;
         private final Set<Long> followedTeamIds = new HashSet<>();
         private final Set<Long> followedPlayerIds = new HashSet<>();
+        private final Set<Long> followedUserIds = new HashSet<>();
         private final Set<Long> leagueIds = new HashSet<>();
 
         private static UserContext anonymous() {

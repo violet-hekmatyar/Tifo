@@ -766,6 +766,29 @@ scripts/sql/schema.sql
 scripts/sql/seed.sql
 ```
 
+## T11 User Social Schema Notes
+
+T11 does not add tables or columns.
+
+```text
+follow_record.follow_type=USER stores user-to-user follows.
+follow_record.user_id is the follower.
+follow_record.target_id is the followed user.
+status=ACTIVE means currently following.
+status=CANCELLED means previously followed and now unfollowed.
+uk_user_follow(user_id, follow_type, target_id) keeps follow/unfollow idempotent.
+idx_target_follow(follow_type, target_id) supports follower lists.
+idx_user_type(user_id, follow_type) supports following lists.
+```
+
+Counts:
+
+```text
+user_profile.following_count is synced from ACTIVE USER follows by the current user.
+user_profile.follower_count is synced from ACTIVE USER follows targeting that user.
+No hard cap is applied to USER, TEAM, or PLAYER follows.
+```
+
 目标：
 
 ```text

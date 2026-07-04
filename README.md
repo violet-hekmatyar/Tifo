@@ -259,3 +259,27 @@ T10 validation:
 ```powershell
 .\scripts\windows\check-t10.ps1
 ```
+
+## T11 User Social Check
+
+T11 provides:
+
+```text
+GET    /api/app/users/{userId}/profile
+POST   /api/app/users/{userId}/follow
+DELETE /api/app/users/{userId}/follow
+GET    /api/app/users/{userId}/followings
+GET    /api/app/users/{userId}/followers
+GET    /api/app/users/{userId}/contents
+GET    /api/app/users/{userId}/favorites
+GET    /api/app/users/{userId}/comments
+GET    /api/app/users/me/stand
+```
+
+User follows reuse `follow_record` with `follow_type=USER`; there is no user follow cap. Public profile/list/content endpoints are readable without login and calculate `relationStatus` when a token is provided. Other users' favorites/comments are private in this version. `tab=following` feed now includes followed users' content.
+
+T11 validation:
+
+```powershell
+.\scripts\windows\check-t11.ps1
+```

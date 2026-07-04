@@ -7,12 +7,14 @@ import com.southstand.file.service.FileBindingService;
 import com.southstand.file.vo.BindAvatarVO;
 import com.southstand.user.dto.UpdateMyProfileRequest;
 import com.southstand.user.service.UserProfileService;
+import com.southstand.user.service.UserSocialService;
 import com.southstand.user.vo.MyCommentVO;
 import com.southstand.user.vo.MyContentVO;
 import com.southstand.user.vo.MyFavoriteVO;
 import com.southstand.user.vo.MyProfileUpdateVO;
 import com.southstand.user.vo.UserProfileVO;
 import com.southstand.user.vo.UserSummaryVO;
+import com.southstand.user.vo.UserStandVO;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -27,10 +29,16 @@ public class UserProfileController {
 
     private final UserProfileService userProfileService;
     private final FileBindingService fileBindingService;
+    private final UserSocialService userSocialService;
 
-    public UserProfileController(UserProfileService userProfileService, FileBindingService fileBindingService) {
+    public UserProfileController(
+            UserProfileService userProfileService,
+            FileBindingService fileBindingService,
+            UserSocialService userSocialService
+    ) {
         this.userProfileService = userProfileService;
         this.fileBindingService = fileBindingService;
+        this.userSocialService = userSocialService;
     }
 
     @GetMapping("/profile")
@@ -41,6 +49,11 @@ public class UserProfileController {
     @GetMapping("/summary")
     public Result<UserSummaryVO> summary() {
         return Result.success(userProfileService.summary());
+    }
+
+    @GetMapping("/stand")
+    public Result<UserStandVO> stand() {
+        return Result.success(userSocialService.stand());
     }
 
     @PutMapping("/profile")

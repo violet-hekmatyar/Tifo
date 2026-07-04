@@ -437,3 +437,33 @@ Avatar binding requires the file to belong to the current user and use AVATAR or
 Content media binding requires the file to belong to the current user and use CONTENT_IMAGE or GENERAL_IMAGE.
 File soft delete requires ownership and does not physically remove local files.
 ```
+
+## T11 User Social Permission Notes
+
+Public reads:
+
+```text
+GET /api/app/users/{userId}/profile is public.
+GET /api/app/users/{userId}/contents is public.
+GET /api/app/users/{userId}/followings is public.
+GET /api/app/users/{userId}/followers is public.
+```
+
+Protected writes and private reads:
+
+```text
+POST   /api/app/users/{userId}/follow requires login.
+DELETE /api/app/users/{userId}/follow requires login.
+GET    /api/app/users/me/stand requires login.
+GET    /api/app/users/{userId}/favorites requires login and only allows self.
+GET    /api/app/users/{userId}/comments requires login and only allows self.
+```
+
+Visibility:
+
+```text
+DISABLED or deleted users return 40401 on public profile and list endpoints.
+DISABLED or deleted current users cannot actively follow and receive 40101 from the user social service.
+Self follow/unfollow returns 40001.
+Other users' favorites/comments return 40301.
+```
