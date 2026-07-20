@@ -98,6 +98,12 @@ VALUES
   (62003, 20004, 'IMAGE', '/uploads/content/demo-report-1.jpg', '/uploads/content/demo-report-1-thumb.jpg', 1200, 800, 1),
   (62004, 20005, 'IMAGE', '/uploads/content/demo-report-2.jpg', '/uploads/content/demo-report-2-thumb.jpg', 1200, 800, 1);
 
+INSERT INTO content_block (id, content_id, block_type, text_content, media_file_id, media_url, sort_order)
+VALUES
+  (62501, 20003, 'TEXT', 'The opening spell showed how the first press guided the ball wide.', NULL, NULL, 1),
+  (62502, 20003, 'IMAGE', NULL, NULL, '/uploads/content/demo-article-1.jpg', 2),
+  (62503, 20003, 'TEXT', 'Once the second line stepped forward, midfield recoveries became cleaner.', NULL, NULL, 3);
+
 INSERT INTO content_relation (id, content_id, relation_type, relation_id, confidence, source_type)
 VALUES
   (61001, 20001, 'TEAM', 30001, 1.0000, 'MANUAL'),

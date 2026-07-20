@@ -13,6 +13,7 @@ public class ContentDetailVO {
     private String body;
     private String coverUrl;
     private AuthorVO author;
+    private List<ArticleBlockVO> blocks;
     private List<MediaVO> mediaList;
     private List<RelationVO> relationList;
     private Integer likeCount;
@@ -41,6 +42,8 @@ public class ContentDetailVO {
     public void setCoverUrl(String coverUrl) { this.coverUrl = coverUrl; }
     public AuthorVO getAuthor() { return author; }
     public void setAuthor(AuthorVO author) { this.author = author; }
+    public List<ArticleBlockVO> getBlocks() { return blocks; }
+    public void setBlocks(List<ArticleBlockVO> blocks) { this.blocks = blocks; }
     public List<MediaVO> getMediaList() { return mediaList; }
     public void setMediaList(List<MediaVO> mediaList) { this.mediaList = mediaList; }
     public List<RelationVO> getRelationList() { return relationList; }

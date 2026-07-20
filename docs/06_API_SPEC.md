@@ -1037,3 +1037,47 @@ Authors can delete their own comments. ADMIN can delete any comment.
 Delete sets status=DELETED and is_deleted=1.
 Deleted comments are excluded from normal lists, cannot be liked, and cannot be replied to.
 ```
+
+# T13 Current Implementation Notes
+
+Implemented in T13:
+
+```http
+GET    /api/app/users/me/likes?pageNum=1&pageSize=20&targetType=CONTENT&contentType=POST&status=ACTIVE
+POST   /api/app/contents/articles
+PUT    /api/app/contents/{contentId}/articles
+GET    /api/app/search/entities?keyword=Barcelona&entityType=TEAM&pageNum=1&pageSize=10
+GET    /api/app/search/entities?keyword=Lewandowski&entityType=PLAYER
+GET    /api/app/search/entities?keyword=Barcelona&entityType=MATCH
+```
+
+Article request:
+
+```json
+{
+  "title": "T13 article smoke",
+  "summary": "T13 summary",
+  "coverFileId": 90001,
+  "blocks": [
+    {"blockType": "TEXT", "text": "First paragraph.", "sortOrder": 1},
+    {"blockType": "IMAGE", "mediaFileId": 90002, "sortOrder": 2}
+  ],
+  "relationList": [
+    {"relationType": "TEAM", "relationId": 30001},
+    {"relationType": "MATCH", "relationId": 50001}
+  ]
+}
+```
+
+Current scope:
+
+```text
+My likes returns only active CONTENT likes owned by the current user, and filters hidden/deleted content.
+Comment likes remain supported through comment endpoints but are not returned by my likes.
+ARTICLE detail returns ordered blocks in addition to existing body, coverUrl, mediaList, relationList, counts, liked, and favorited fields.
+Article create/edit accepts TEXT and IMAGE blocks. IMAGE blocks and coverFileId must belong to the current user and use CONTENT_IMAGE or GENERAL_IMAGE.
+Old POST create, old content detail, and existing ARTICLE seed content remain readable.
+relationList accepts TEAM, PLAYER, and MATCH, validates existence/status, normalizes type case, and deduplicates repeated type/id pairs.
+Entity search is public and returns a unified PageResult for TEAM, PLAYER, and MATCH.
+There is no active follow cap for USER, TEAM, or PLAYER follows.
+```

@@ -1683,6 +1683,32 @@ Watermarking
 Private file authorization
 ```
 
+## T13 Current Completion Notes
+
+T13 likes, article blocks, and entity search is implemented with the following scope:
+
+```text
+My likes endpoint under GET /api/app/users/me/likes
+ARTICLE create and edit endpoints under /api/app/contents/articles
+content_block table for ordered TEXT and IMAGE article blocks
+Article detail blocks field while preserving body, coverUrl, mediaList, and relationList compatibility
+Public entity search for TEAM, PLAYER, and MATCH
+relationList validation and deduplication for POST and ARTICLE
+No active follow cap for USER, TEAM, or PLAYER follows
+Windows smoke-content-article.ps1 and check-t13.ps1
+```
+
+Still out of scope for T13:
+
+```text
+Full-text search engine
+Article rich-text editor model beyond TEXT and IMAGE blocks
+Video/embed block rendering
+Search highlighting
+Search analytics
+Notification fanout for likes
+```
+
 ## T11 Current Completion Notes
 
 T11 user social is implemented with the following scope:

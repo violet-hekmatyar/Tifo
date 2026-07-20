@@ -162,6 +162,25 @@ CREATE TABLE content_media (
   KEY idx_content_id (content_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE content_block (
+  id BIGINT NOT NULL PRIMARY KEY,
+  content_id BIGINT NOT NULL,
+  block_type VARCHAR(32) NOT NULL,
+  text_content TEXT NULL,
+  media_file_id BIGINT NULL,
+  media_url VARCHAR(512) NULL,
+  embed_url VARCHAR(1024) NULL,
+  sort_order INT NOT NULL,
+  status VARCHAR(32) NOT NULL DEFAULT 'ACTIVE',
+  is_deleted TINYINT NOT NULL DEFAULT 0,
+  create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  update_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  KEY idx_content_block_content_id (content_id),
+  KEY idx_content_block_sort (content_id, sort_order),
+  KEY idx_content_block_type (block_type),
+  KEY idx_content_block_media_file_id (media_file_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE content_relation (
   id BIGINT NOT NULL PRIMARY KEY,
   content_id BIGINT NOT NULL,
@@ -175,7 +194,7 @@ CREATE TABLE content_relation (
   remark VARCHAR(512) NULL,
   create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   update_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  UNIQUE KEY uk_content_relation (content_id, relation_type, relation_id),
+  KEY idx_content_relation_content (content_id),
   KEY idx_relation (relation_type, relation_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 

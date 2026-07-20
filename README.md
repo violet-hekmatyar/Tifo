@@ -305,3 +305,22 @@ T12 validation:
 ```powershell
 .\scripts\windows\check-t12.ps1
 ```
+
+## T13 Likes, Article Blocks, And Entity Search Check
+
+T13 provides:
+
+```text
+GET    /api/app/users/me/likes
+POST   /api/app/contents/articles
+PUT    /api/app/contents/{contentId}/articles
+GET    /api/app/search/entities
+```
+
+`GET /api/app/users/me/likes` returns current-user active CONTENT likes only; comment likes stay in `like_record` but are not mixed into this page. ARTICLE uses ordered `content_block` rows for TEXT and IMAGE blocks while keeping `content.body`, `cover_url`, `mediaList`, and old POST/detail APIs compatible. Entity search is public and covers TEAM, PLAYER, and MATCH. Follow limits are not enforced for USER, TEAM, or PLAYER follows; the historical "5 teams" idea is not active.
+
+T13 validation:
+
+```powershell
+.\scripts\windows\check-t13.ps1
+```

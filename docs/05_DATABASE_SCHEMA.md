@@ -305,8 +305,17 @@ idx_hot_time(status, hot_score, publish_time)
 索引：
 
 ```text
-uk_content_relation(content_id, relation_type, relation_id)
+idx_content_relation_content(content_id)
 idx_relation(relation_type, relation_id)
+```
+
+T13 note:
+
+```text
+content_block uses idx_content_block_sort(content_id, sort_order), not a unique key.
+content_relation uses normal indexes, not a unique key.
+The service validates and deduplicates active relationList entries before insert.
+This keeps soft-deleted historical article blocks and relations from conflicting with later edits.
 ```
 
 ## 7.5 `hot_event`

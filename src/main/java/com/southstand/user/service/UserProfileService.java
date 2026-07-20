@@ -19,8 +19,10 @@ import com.southstand.football.team.entity.FootballTeam;
 import com.southstand.football.team.mapper.FootballTeamMapper;
 import com.southstand.interaction.entity.Comment;
 import com.southstand.interaction.entity.FavoriteRecord;
+import com.southstand.interaction.entity.LikeRecord;
 import com.southstand.interaction.mapper.CommentMapper;
 import com.southstand.interaction.mapper.FavoriteRecordMapper;
+import com.southstand.interaction.mapper.LikeRecordMapper;
 import com.southstand.user.dto.UpdateMyProfileRequest;
 import com.southstand.user.entity.SysUser;
 import com.southstand.user.entity.UserProfile;
@@ -30,6 +32,7 @@ import com.southstand.user.vo.FollowStatsVO;
 import com.southstand.user.vo.MyCommentVO;
 import com.southstand.user.vo.MyContentVO;
 import com.southstand.user.vo.MyFavoriteVO;
+import com.southstand.user.vo.MyLikeVO;
 import com.southstand.user.vo.MyProfileUpdateVO;
 import com.southstand.user.vo.MyStatsVO;
 import com.southstand.user.vo.PlayerBriefVO;
@@ -55,6 +58,7 @@ public class UserProfileService {
     private final FollowService followService;
     private final ContentMapper contentMapper;
     private final FavoriteRecordMapper favoriteRecordMapper;
+    private final LikeRecordMapper likeRecordMapper;
     private final CommentMapper commentMapper;
 
     public UserProfileService(
@@ -66,6 +70,7 @@ public class UserProfileService {
             FollowService followService,
             ContentMapper contentMapper,
             FavoriteRecordMapper favoriteRecordMapper,
+            LikeRecordMapper likeRecordMapper,
             CommentMapper commentMapper
     ) {
         this.sysUserMapper = sysUserMapper;
@@ -76,6 +81,7 @@ public class UserProfileService {
         this.followService = followService;
         this.contentMapper = contentMapper;
         this.favoriteRecordMapper = favoriteRecordMapper;
+        this.likeRecordMapper = likeRecordMapper;
         this.commentMapper = commentMapper;
     }
 
@@ -240,6 +246,34 @@ public class UserProfileService {
         return PageResult.of(records, page.getTotal(), page.getCurrent(), page.getSize());
     }
 
+    public PageResult<MyLikeVO> myLikes(Long pageNum, Long pageSize, String targetType, String contentType, String status) {
+        SysUser user = requireActiveCurrentUser();
+        String resolvedTargetType = isBlank(targetType) ? "CONTENT" : targetType.trim();
+        if (!"CONTENT".equals(resolvedTargetType)) {
+            throw new BusinessException(ErrorCode.PARAM_ERROR, "unsupported targetType");
+        }
+        String resolvedStatus = isBlank(status) ? "ACTIVE" : status.trim();
+        Page<LikeRecord> page = likeRecordMapper.selectPage(new Page<>(safePageNum(pageNum), safePageSize(pageSize)),
+                new LambdaQueryWrapper<LikeRecord>()
+                        .eq(LikeRecord::getUserId, user.getId())
+                        .eq(LikeRecord::getTargetType, "CONTENT")
+                        .eq(LikeRecord::getStatus, resolvedStatus)
+                        .orderByDesc(LikeRecord::getUpdateTime)
+                        .orderByDesc(LikeRecord::getCreateTime));
+        List<MyLikeVO> records = new ArrayList<>();
+        for (LikeRecord record : page.getRecords()) {
+            Content content = contentMapper.selectById(record.getTargetId());
+            if (!isVisibleContent(content)) {
+                continue;
+            }
+            if (!isBlank(contentType) && !contentType.trim().equals(content.getContentType())) {
+                continue;
+            }
+            records.add(toMyLike(record, content));
+        }
+        return PageResult.of(records, page.getTotal(), page.getCurrent(), page.getSize());
+    }
+
     public PageResult<MyCommentVO> myComments(Long pageNum, Long pageSize, String targetType) {
         SysUser user = requireActiveCurrentUser();
         Page<Comment> page = commentMapper.selectPage(new Page<>(safePageNum(pageNum), safePageSize(pageSize)),
@@ -395,6 +429,27 @@ public class UserProfileService {
         vo.setContentStatus(content.getStatus());
         vo.setFavoriteTime(record.getUpdateTime() == null ? record.getCreateTime() : record.getUpdateTime());
         vo.setPublishTime(content.getPublishTime());
+        return vo;
+    }
+
+    private MyLikeVO toMyLike(LikeRecord record, Content content) {
+        MyLikeVO vo = new MyLikeVO();
+        vo.setContentId(content.getId());
+        vo.setContentType(content.getContentType());
+        vo.setTitle(content.getTitle());
+        vo.setSummary(defaultString(content.getSummary(), ""));
+        vo.setCoverUrl(defaultString(content.getCoverUrl(), ""));
+        vo.setAuthorId(content.getAuthorId());
+        UserProfile authorProfile = profileOf(content.getAuthorId());
+        SysUser author = sysUserMapper.selectById(content.getAuthorId());
+        vo.setAuthorNickname(authorProfile == null ? (author == null ? null : author.getUsername()) : defaultString(authorProfile.getNickname(), author == null ? null : author.getUsername()));
+        vo.setAuthorAvatarUrl(authorProfile == null ? "" : defaultString(authorProfile.getAvatarUrl(), ""));
+        vo.setLikedAt(record.getUpdateTime() == null ? record.getCreateTime() : record.getUpdateTime());
+        vo.setContentStatus(content.getStatus());
+        vo.setVisible(true);
+        vo.setLikeCount(nvl(content.getLikeCount()));
+        vo.setCommentCount(nvl(content.getCommentCount()));
+        vo.setFavoriteCount(nvl(content.getFavoriteCount()));
         return vo;
     }
 

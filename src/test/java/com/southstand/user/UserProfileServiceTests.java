@@ -66,6 +66,7 @@ class UserProfileServiceTests {
                 followService,
                 mock(ContentMapper.class),
                 mock(FavoriteRecordMapper.class),
+                mock(com.southstand.interaction.mapper.LikeRecordMapper.class),
                 mock(CommentMapper.class)
         ).me();
 

@@ -73,6 +73,7 @@ class ContentServiceTests {
         when(fileBindingService.validateContentImages(any(), any())).thenReturn(List.of());
         return new ContentService(
                 contentMapper,
+                mock(com.southstand.content.mapper.ContentBlockMapper.class),
                 mock(ContentMediaMapper.class),
                 mock(ContentRelationMapper.class),
                 mock(LikeRecordMapper.class),
@@ -81,6 +82,7 @@ class ContentServiceTests {
                 profileMapper,
                 mock(FootballTeamMapper.class),
                 mock(FootballPlayerMapper.class),
+                mock(com.southstand.football.match.mapper.MatchInfoMapper.class),
                 fileBindingService
         );
     }

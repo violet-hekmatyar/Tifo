@@ -19,6 +19,20 @@
 -> 管理后台发布内容和维护基础数据
 ```
 
+## T13 Scope Notes
+
+T13 closes the following P0/P1 backend scope:
+
+```text
+My likes tab reads current-user active CONTENT likes.
+Comment likes are separate interaction records and are not mixed into my likes.
+ARTICLE content supports ordered TEXT and IMAGE blocks through content_block.
+Article create/edit is available for logged-in users while old POST creation and old content detail remain compatible.
+relationList for POST and ARTICLE validates TEAM, PLAYER, and MATCH targets and deduplicates repeated type/id pairs.
+Unified entity search covers TEAM, PLAYER, and MATCH with a public GET endpoint.
+No follow cap is active for USER, TEAM, or PLAYER follows; historical "5 teams" wording is not a current requirement.
+```
+
 ## 2. 优先级定义
 
 | 优先级 | 含义 |

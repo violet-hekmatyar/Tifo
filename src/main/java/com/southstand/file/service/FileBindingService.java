@@ -75,6 +75,17 @@ public class FileBindingService {
         return result;
     }
 
+    public FileResourceEntity validateContentImage(Long userId, Long fileId) {
+        if (fileId == null) {
+            throw new BusinessException(ErrorCode.PARAM_ERROR, "fileId required");
+        }
+        FileResourceEntity file = requireOwnedFile(userId, fileId);
+        if (!"CONTENT_IMAGE".equals(file.getBizType()) && !"GENERAL_IMAGE".equals(file.getBizType())) {
+            throw new BusinessException(ErrorCode.PARAM_ERROR, "file bizType is not allowed for content image");
+        }
+        return file;
+    }
+
     private FileResourceEntity requireOwnedFile(Long userId, Long fileId) {
         FileResourceEntity file = fileStorageService.requireActiveFile(fileId);
         if (!userId.equals(file.getUserId())) {

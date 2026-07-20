@@ -11,6 +11,7 @@ import com.southstand.user.service.UserSocialService;
 import com.southstand.user.vo.MyCommentVO;
 import com.southstand.user.vo.MyContentVO;
 import com.southstand.user.vo.MyFavoriteVO;
+import com.southstand.user.vo.MyLikeVO;
 import com.southstand.user.vo.MyProfileUpdateVO;
 import com.southstand.user.vo.UserProfileVO;
 import com.southstand.user.vo.UserSummaryVO;
@@ -75,6 +76,16 @@ public class UserProfileController {
             @RequestParam(required = false, defaultValue = "10") Long pageSize,
             @RequestParam(required = false, defaultValue = "CONTENT") String targetType) {
         return Result.success(userProfileService.myFavorites(pageNum, pageSize, targetType));
+    }
+
+    @GetMapping("/likes")
+    public Result<PageResult<MyLikeVO>> likes(
+            @RequestParam(required = false, defaultValue = "1") Long pageNum,
+            @RequestParam(required = false, defaultValue = "20") Long pageSize,
+            @RequestParam(required = false, defaultValue = "CONTENT") String targetType,
+            @RequestParam(required = false) String contentType,
+            @RequestParam(required = false, defaultValue = "ACTIVE") String status) {
+        return Result.success(userProfileService.myLikes(pageNum, pageSize, targetType, contentType, status));
     }
 
     @GetMapping("/comments")

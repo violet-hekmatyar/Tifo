@@ -494,3 +494,29 @@ ADMIN can delete any comment.
 Other users receive 40301.
 Deleted comments return 40401 for like/reply flows and are not shown in normal lists.
 ```
+
+## T13 Permission Notes
+
+Public reads:
+
+```text
+GET /api/app/search/entities
+GET /api/app/contents/{contentId}
+```
+
+Protected reads and writes:
+
+```text
+GET  /api/app/users/me/likes requires login.
+POST /api/app/contents/articles requires login.
+PUT  /api/app/contents/{contentId}/articles requires login and allows the author or ADMIN.
+```
+
+Validation and privacy:
+
+```text
+My likes is self-only and returns CONTENT likes, not COMMENT likes.
+Article coverFileId and IMAGE block mediaFileId must be ACTIVE files owned by the current user and bizType CONTENT_IMAGE or GENERAL_IMAGE.
+relationList rejects missing TEAM, PLAYER, or MATCH targets with 40401.
+No USER, TEAM, or PLAYER follow count cap is enforced.
+```

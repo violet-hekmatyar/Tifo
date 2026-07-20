@@ -915,3 +915,31 @@ smoke-comment-hot.ps1
 ```
 
 `smoke-comment-hot.ps1` verifies post creation, root comment creation, reply creation, comment like toggle, hot/latest comment lists, replies endpoint, hot comments endpoint, feed `hotComment`, comment soft delete, deleted comments disappearing from normal lists, and deleted comment like returning `40401`.
+
+## T13 Likes, Article Blocks, And Search Validation
+
+Run:
+
+```powershell
+cd D:\Football-APP
+.\scripts\windows\check-t13.ps1
+```
+
+The T13 check covers:
+
+```text
+reset-dev-db.ps1
+mvn test
+mvn clean package
+jar startup with APP_FILE_STORAGE_TYPE=LOCAL and temp APP_FILE_LOCAL_STORAGE_ROOT
+smoke-auth.ps1
+smoke-football.ps1
+smoke-feed.ps1
+smoke-file-upload.ps1
+smoke-storage-media.ps1
+smoke-user-social.ps1
+smoke-comment-hot.ps1
+smoke-content-article.ps1
+```
+
+`smoke-content-article.ps1` verifies article image upload, ARTICLE create/detail/update with ordered blocks, relationList deduplication and validation, my CONTENT likes with comment-like filtering, public TEAM/PLAYER/MATCH entity search, invalid relation returning `40401`, and following more than five teams without a follow cap.

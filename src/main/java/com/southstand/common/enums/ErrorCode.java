@@ -10,6 +10,7 @@ public enum ErrorCode {
     FORBIDDEN(40301, "无权限"),
     NOT_FOUND(40401, "资源不存在"),
     CONFLICT(40901, "数据冲突"),
+    @Deprecated
     TEAM_FOLLOW_LIMIT(40902, "关注球队数量已达上限"),
     SYSTEM_ERROR(50001, "系统异常");
 
