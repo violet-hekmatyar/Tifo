@@ -1,0 +1,28 @@
+{
+  "seed": 20260722,
+  "baseline_time": "2026-07-20 12:00:00",
+  "password_hash": "$2a$10$lerPW2KN6MHgIUmqhLMi/OQXNNz3x8jFfu.FgIHGutLBZfEaY4bam",
+  "counts": {
+    "users": 36,
+    "leagues": 8,
+    "teams": 24,
+    "players_per_team": 6,
+    "matches": 80,
+    "contents": 120,
+    "root_comments": 360,
+    "replies": 160
+  },
+  "id_bases": {
+    "user": 11000000000000001,
+    "league": 12000000000000001,
+    "team": 13000000000000001,
+    "player": 14000000000000001,
+    "match": 15000000000000001,
+    "match_event": 15100000000000001,
+    "content": 16000000000000001,
+    "content_block": 16100000000000001,
+    "comment": 17000000000000001,
+    "interaction": 18000000000000001,
+    "file": 19000000000000001
+  }
+}

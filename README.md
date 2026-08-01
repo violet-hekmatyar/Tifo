@@ -324,3 +324,15 @@ T13 validation:
 ```powershell
 .\scripts\windows\check-t13.ps1
 ```
+
+## T14 Deterministic Demo Dataset
+
+T14 adds a Chinese-first, fully offline demo dataset with stable IDs, times, relationships, counters, and locally generated SVG assets. It is synthetic development data and must never be imported automatically in production.
+
+```powershell
+py -3 scripts/data/generate-demo-data.py
+.\scripts\windows\init-demo-data.ps1
+.\scripts\windows\check-t14.ps1
+```
+
+Configuration and account details are documented in `scripts/data/README.md`. The generator uses fixed seed `20260722`, has no third-party sports API dependency, and does not impose USER, TEAM, or PLAYER follow limits.

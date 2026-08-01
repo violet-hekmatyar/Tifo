@@ -16,6 +16,7 @@ DROP TABLE IF EXISTS follow_record;
 DROP TABLE IF EXISTS favorite_record;
 DROP TABLE IF EXISTS like_record;
 DROP TABLE IF EXISTS comment;
+DROP TABLE IF EXISTS content_block;
 DROP TABLE IF EXISTS content_relation;
 DROP TABLE IF EXISTS content_media;
 DROP TABLE IF EXISTS content;

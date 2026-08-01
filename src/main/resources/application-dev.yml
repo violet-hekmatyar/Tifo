@@ -21,6 +21,8 @@ logging:
     com.southstand: DEBUG
 
 app:
+  diagnostics:
+    request-timing-enabled: true
   security:
     jwt:
       secret: ${JWT_SECRET:dev_only_change_me_jwt_secret_please_override_in_prod_2026}

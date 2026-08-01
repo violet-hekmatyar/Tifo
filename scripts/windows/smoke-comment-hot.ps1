@@ -142,7 +142,7 @@ if ($hotComments.data[0].commentId -ne $commentId) {
     throw "hot comments expected root comment first"
 }
 
-$feed = Invoke-Json GET "/api/app/feed?tab=mixed&pageNum=1&pageSize=100" $null $userB.Token
+$feed = Invoke-Json GET "/api/app/feed?tab=mixed&teamId=30001&pageNum=1&pageSize=100" $null $userB.Token
 Assert-Code $feed 0 "feed with hotComment"
 $feedCard = $feed.data.records | Where-Object { $_.contentId -eq $contentId } | Select-Object -First 1
 if ($null -eq $feedCard -or $null -eq $feedCard.hotComment -or $feedCard.hotComment.commentId -ne $commentId) {

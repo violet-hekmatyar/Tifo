@@ -1790,3 +1790,18 @@ Real MinIO SDK integration
 Physical file cleanup scheduler
 Private file authorization
 ```
+
+## T14 Completed Scope
+
+```text
+Deterministic Python standard-library demo generator
+Chinese-first names, content, and comments
+Committed UTF-8 seed-demo.sql
+Locally generated reusable SVG assets
+36 dev demo accounts with BCrypt passwords
+8 leagues, 24 teams, 144 players, 80 matches, and 120 contents
+Consistent match goals/events, ARTICLE blocks, relations, comments, and counters
+SQL and offline validation
+Windows init, smoke, and full T03-T13 regression check
+No third-party sports API and no follow-count cap
+```

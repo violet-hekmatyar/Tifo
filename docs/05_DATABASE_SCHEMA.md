@@ -798,6 +798,12 @@ user_profile.follower_count is synced from ACTIVE USER follows targeting that us
 No hard cap is applied to USER, TEAM, or PLAYER follows.
 ```
 
+## T14 Demo Data Consistency
+
+`scripts/sql/seed-demo.sql` populates only existing tables. Demo IDs use separate BIGINT ranges beginning at 11 quadrillion for users and ending at 19 quadrillion for file resources. The script deletes only its own ranges before insert, so reset/import is repeatable.
+
+`scripts/sql/validate-demo-data.sql` checks references, active uniqueness, user/main-team follows, player/team membership, score versus GOAL events, REPORT versus FINISHED matches, ARTICLE blocks, relation entities, comment trees, and all cached interaction counters. All checks must return `anomaly_count=0`.
+
 ## T12 Comment Hot Schema Notes
 
 T12 reuses `comment` and `like_record`.

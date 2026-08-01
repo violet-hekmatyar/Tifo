@@ -40,6 +40,7 @@ import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -196,8 +197,10 @@ public class FeedService {
                 wrapper.in("id", filterIds);
             }
         }
-        return contentMapper.selectList(wrapper).stream()
-                .map(content -> toContentCard(content, user, personalizedOnly || user.userId != null))
+        List<Content> contents = contentMapper.selectList(wrapper);
+        ContentBatch batch = loadContentBatch(contents, user.userId);
+        return contents.stream()
+                .map(content -> toContentCard(content, user, personalizedOnly || user.userId != null, batch))
                 .collect(Collectors.toList());
     }
 
@@ -223,12 +226,14 @@ public class FeedService {
             }
             wrapper.and(w -> w.in("home_team_id", teamIds).or().in("away_team_id", teamIds));
         }
-        return matchInfoMapper.selectList(wrapper).stream()
-                .map(match -> toMatchCard(match, user))
+        List<MatchInfo> matches = matchInfoMapper.selectList(wrapper);
+        MatchBatch batch = loadMatchBatch(matches);
+        return matches.stream()
+                .map(match -> toMatchCard(match, user, batch))
                 .collect(Collectors.toList());
     }
 
-    private FeedCardVO toContentCard(Content content, UserContext user, boolean personalized) {
+    private FeedCardVO toContentCard(Content content, UserContext user, boolean personalized, ContentBatch batch) {
         FeedCardVO card = new FeedCardVO();
         card.setCardId("CONTENT_" + content.getId());
         card.setCardType(CARD_CONTENT);
@@ -237,35 +242,36 @@ public class FeedService {
         card.setTitle(content.getTitle());
         card.setSummary(content.getSummary());
         card.setCoverUrl(content.getCoverUrl());
-        card.setAuthor(author(content.getAuthorId()));
-        List<ContentRelation> relations = contentRelations(content.getId());
-        card.setRelationTags(relations.stream().map(relation -> relationTag(relation, user)).collect(Collectors.toList()));
+        card.setAuthor(author(content.getAuthorId(), batch.profiles));
+        List<ContentRelation> relations = batch.relations.getOrDefault(content.getId(), List.of());
+        card.setRelationTags(relations.stream().map(relation -> relationTag(relation, user, batch)).collect(Collectors.toList()));
         card.setLikeCount(nvl(content.getLikeCount()));
         card.setCommentCount(nvl(content.getCommentCount()));
         card.setFavoriteCount(nvl(content.getFavoriteCount()));
-        card.setHotComment(hotComment(content.getId()));
-        card.setLiked(isLiked(user.userId, content.getId()));
-        card.setFavorited(isFavorited(user.userId, content.getId()));
+        card.setHotComment(hotComment(content.getId(), batch));
+        card.setLiked(batch.likedContentIds.contains(content.getId()));
+        card.setFavorited(batch.favoritedContentIds.contains(content.getId()));
         card.setPublishTime(content.getPublishTime());
         card.setScore(contentScore(content, relations, user, personalized));
         return card;
     }
 
-    private FeedCardVO toMatchCard(MatchInfo match, UserContext user) {
-        MatchReport report = firstReport(match.getId());
+    private FeedCardVO toMatchCard(MatchInfo match, UserContext user, MatchBatch batch) {
+        MatchReport report = batch.reports.get(match.getId());
         FeedCardVO card = new FeedCardVO();
         card.setCardId("MATCH_" + match.getId());
         card.setCardType(CARD_MATCH);
         card.setMatchId(match.getId());
         card.setLeagueId(match.getLeagueId());
-        card.setLeagueName(leagueName(match.getLeagueId()));
-        card.setHomeTeam(matchTeam(match.getHomeTeamId(), match.getHomeScore()));
-        card.setAwayTeam(matchTeam(match.getAwayTeamId(), match.getAwayScore()));
+        FootballLeague league = batch.leagues.get(match.getLeagueId());
+        card.setLeagueName(league == null ? null : league.getLeagueName());
+        card.setHomeTeam(matchTeam(batch.teams.get(match.getHomeTeamId()), match.getHomeScore()));
+        card.setAwayTeam(matchTeam(batch.teams.get(match.getAwayTeamId()), match.getAwayScore()));
         card.setHomeScore(match.getHomeScore());
         card.setAwayScore(match.getAwayScore());
         card.setMatchStatus(match.getMatchStatus());
         card.setMatchTime(match.getMatchTime());
-        card.setEventSummary(eventSummary(match.getId()));
+        card.setEventSummary(eventSummary(batch.events.get(match.getId()), batch.players));
         card.setHasReport(report != null || Objects.equals(match.getHasReport(), 1));
         card.setReportContentId(report == null ? null : report.getContentId());
         card.setScore(matchScore(match, user));
@@ -400,19 +406,120 @@ public class FeedService {
                 .collect(Collectors.toCollection(LinkedHashSet::new));
     }
 
-    private List<ContentRelation> contentRelations(Long contentId) {
-        return contentRelationMapper.selectList(new QueryWrapper<ContentRelation>()
-                .eq("content_id", contentId)
+    private ContentBatch loadContentBatch(List<Content> contents, Long userId) {
+        ContentBatch batch = new ContentBatch();
+        if (contents == null || contents.isEmpty()) {
+            return batch;
+        }
+        Set<Long> contentIds = contents.stream().map(Content::getId)
+                .collect(Collectors.toCollection(LinkedHashSet::new));
+        Set<Long> authorIds = contents.stream().map(Content::getAuthorId).filter(Objects::nonNull)
+                .collect(Collectors.toCollection(LinkedHashSet::new));
+
+        List<ContentRelation> relations = safeList(contentRelationMapper.selectList(new QueryWrapper<ContentRelation>()
+                .in("content_id", contentIds)
                 .eq("status", ACTIVE)
                 .eq("is_deleted", NOT_DELETED)
-                .orderByAsc("id"));
+                .orderByAsc("content_id")
+                .orderByAsc("id")));
+        batch.relations = relations.stream().collect(Collectors.groupingBy(
+                ContentRelation::getContentId, LinkedHashMap::new, Collectors.toList()));
+
+        Set<Long> teamIds = relationIds(relations, TEAM);
+        Set<Long> playerIds = relationIds(relations, PLAYER);
+        Set<Long> matchIds = relationIds(relations, MATCH);
+        Set<Long> leagueIds = relationIds(relations, "LEAGUE");
+        batch.players.putAll(indexById(safeBatchPlayers(playerIds), FootballPlayer::getId));
+        batch.matches.putAll(indexById(safeBatchMatches(matchIds), MatchInfo::getId));
+        batch.leagues.putAll(indexById(safeBatchLeagues(leagueIds), FootballLeague::getId));
+        batch.matches.values().forEach(match -> {
+            teamIds.add(match.getHomeTeamId());
+            teamIds.add(match.getAwayTeamId());
+        });
+        batch.teams.putAll(indexById(safeBatchTeams(teamIds), FootballTeam::getId));
+
+        List<Comment> comments = safeList(commentMapper.selectList(new QueryWrapper<Comment>()
+                .eq("target_type", "CONTENT")
+                .in("target_id", contentIds)
+                .eq("parent_id", 0)
+                .eq("status", ACTIVE)
+                .eq("is_deleted", NOT_DELETED)));
+        LocalDateTime now = LocalDateTime.now();
+        Comparator<Comment> hottest = Comparator
+                .comparing((Comment c) -> CommentService.calculateHotScore(
+                        nvl(c.getLikeCount()), nvl(c.getReplyCount()), c.getCreateTime(), now))
+                .thenComparing(Comment::getCreateTime, Comparator.nullsFirst(Comparator.naturalOrder()));
+        comments.forEach(comment -> batch.hotComments.merge(comment.getTargetId(), comment,
+                (left, right) -> hottest.compare(left, right) >= 0 ? left : right));
+        comments.stream().map(Comment::getUserId).filter(Objects::nonNull).forEach(authorIds::add);
+
+        if (!authorIds.isEmpty()) {
+            List<UserProfile> profiles = safeList(userProfileMapper.selectList(new QueryWrapper<UserProfile>()
+                    .in("user_id", authorIds)
+                    .eq("status", ACTIVE)
+                    .eq("is_deleted", NOT_DELETED)));
+            batch.profiles = profiles.stream().collect(Collectors.toMap(
+                    UserProfile::getUserId, Function.identity(), (left, right) -> left, LinkedHashMap::new));
+        }
+        if (userId != null) {
+            batch.likedContentIds = safeList(likeRecordMapper.selectList(new QueryWrapper<LikeRecord>()
+                            .eq("user_id", userId)
+                            .eq("target_type", "CONTENT")
+                            .in("target_id", contentIds)
+                            .eq("status", ACTIVE)))
+                    .stream().map(LikeRecord::getTargetId).collect(Collectors.toSet());
+            batch.favoritedContentIds = safeList(favoriteRecordMapper.selectList(new QueryWrapper<FavoriteRecord>()
+                            .eq("user_id", userId)
+                            .eq("target_type", "CONTENT")
+                            .in("target_id", contentIds)
+                            .eq("status", ACTIVE)))
+                    .stream().map(FavoriteRecord::getTargetId).collect(Collectors.toSet());
+        }
+        return batch;
     }
 
-    private RelationTagVO relationTag(ContentRelation relation, UserContext user) {
+    private MatchBatch loadMatchBatch(List<MatchInfo> matches) {
+        MatchBatch batch = new MatchBatch();
+        if (matches == null || matches.isEmpty()) {
+            return batch;
+        }
+        Set<Long> matchIds = matches.stream().map(MatchInfo::getId)
+                .collect(Collectors.toCollection(LinkedHashSet::new));
+        Set<Long> leagueIds = matches.stream().map(MatchInfo::getLeagueId).filter(Objects::nonNull)
+                .collect(Collectors.toCollection(LinkedHashSet::new));
+        Set<Long> teamIds = new LinkedHashSet<>();
+        matches.forEach(match -> {
+            teamIds.add(match.getHomeTeamId());
+            teamIds.add(match.getAwayTeamId());
+        });
+        batch.leagues = indexById(safeBatchLeagues(leagueIds), FootballLeague::getId);
+        batch.teams = indexById(safeBatchTeams(teamIds), FootballTeam::getId);
+
+        List<MatchReport> reports = safeList(matchReportMapper.selectList(new QueryWrapper<MatchReport>()
+                .in("match_id", matchIds)
+                .eq("status", ACTIVE)
+                .eq("is_deleted", NOT_DELETED)
+                .orderByAsc("id")));
+        reports.forEach(report -> batch.reports.putIfAbsent(report.getMatchId(), report));
+
+        List<MatchEvent> events = safeList(matchEventMapper.selectList(new QueryWrapper<MatchEvent>()
+                .in("match_id", matchIds)
+                .eq("status", ACTIVE)
+                .eq("is_deleted", NOT_DELETED)
+                .orderByDesc("minute")
+                .orderByDesc("id")));
+        events.forEach(event -> batch.events.putIfAbsent(event.getMatchId(), event));
+        Set<Long> playerIds = batch.events.values().stream().map(MatchEvent::getPlayerId).filter(Objects::nonNull)
+                .collect(Collectors.toCollection(LinkedHashSet::new));
+        batch.players = indexById(safeBatchPlayers(playerIds), FootballPlayer::getId);
+        return batch;
+    }
+
+    private RelationTagVO relationTag(ContentRelation relation, UserContext user, ContentBatch batch) {
         RelationTagVO vo = new RelationTagVO();
         vo.setRelationType(relation.getRelationType());
         vo.setRelationId(relation.getRelationId());
-        vo.setRelationName(relationName(relation.getRelationType(), relation.getRelationId()));
+        vo.setRelationName(relationName(relation.getRelationType(), relation.getRelationId(), batch));
         vo.setFollowed(isRelationFollowed(relation, user));
         return vo;
     }
@@ -430,61 +537,47 @@ public class FeedService {
         return false;
     }
 
-    private String relationName(String type, Long id) {
+    private String relationName(String type, Long id, ContentBatch batch) {
         if (TEAM.equals(type)) {
-            FootballTeam team = teamMapper.selectById(id);
+            FootballTeam team = batch.teams.get(id);
             return team == null ? null : team.getTeamName();
         }
         if (PLAYER.equals(type)) {
-            FootballPlayer player = playerMapper.selectById(id);
+            FootballPlayer player = batch.players.get(id);
             return player == null ? null : player.getPlayerName();
         }
         if (MATCH.equals(type)) {
-            MatchInfo match = matchInfoMapper.selectById(id);
+            MatchInfo match = batch.matches.get(id);
             if (match == null) {
                 return null;
             }
-            return teamName(match.getHomeTeamId()) + " vs " + teamName(match.getAwayTeamId());
+            return teamName(batch.teams.get(match.getHomeTeamId())) + " vs "
+                    + teamName(batch.teams.get(match.getAwayTeamId()));
         }
         if ("LEAGUE".equals(type)) {
-            return leagueName(id);
+            FootballLeague league = batch.leagues.get(id);
+            return league == null ? null : league.getLeagueName();
         }
         return null;
     }
 
-    private AuthorVO author(Long userId) {
+    private AuthorVO author(Long userId, Map<Long, UserProfile> profiles) {
         AuthorVO vo = new AuthorVO();
         vo.setUserId(userId);
-        UserProfile profile = userId == null ? null : userProfileMapper.selectOne(new QueryWrapper<UserProfile>()
-                .eq("user_id", userId)
-                .eq("status", ACTIVE)
-                .eq("is_deleted", NOT_DELETED)
-                .last("LIMIT 1"));
+        UserProfile profile = userId == null ? null : profiles.get(userId);
         vo.setNickname(profile == null ? null : profile.getNickname());
         vo.setAvatarUrl(profile == null ? null : profile.getAvatarUrl());
         vo.setVerified(false);
         return vo;
     }
 
-    private HotCommentVO hotComment(Long contentId) {
-        List<Comment> comments = commentMapper.selectList(new QueryWrapper<Comment>()
-                .eq("target_type", "CONTENT")
-                .eq("target_id", contentId)
-                .eq("parent_id", 0)
-                .eq("status", ACTIVE)
-                .eq("is_deleted", NOT_DELETED)
-                .orderByDesc("create_time")
-                .last("LIMIT 200"));
-        if (comments.isEmpty()) {
+    private HotCommentVO hotComment(Long contentId, ContentBatch batch) {
+        Comment comment = batch.hotComments.get(contentId);
+        if (comment == null) {
             return null;
         }
         LocalDateTime now = LocalDateTime.now();
-        comments.sort(Comparator
-                .comparing((Comment c) -> CommentService.calculateHotScore(nvl(c.getLikeCount()), nvl(c.getReplyCount()), c.getCreateTime(), now))
-                .reversed()
-                .thenComparing(Comment::getCreateTime, Comparator.nullsLast(Comparator.reverseOrder())));
-        Comment comment = comments.get(0);
-        AuthorVO author = author(comment.getUserId());
+        AuthorVO author = author(comment.getUserId(), batch.profiles);
         HotCommentVO vo = new HotCommentVO();
         vo.setCommentId(comment.getId());
         vo.setContentId(contentId);
@@ -498,32 +591,7 @@ public class FeedService {
         return vo;
     }
 
-    private boolean isLiked(Long userId, Long contentId) {
-        if (userId == null) {
-            return false;
-        }
-        Long count = likeRecordMapper.selectCount(new QueryWrapper<LikeRecord>()
-                .eq("user_id", userId)
-                .eq("target_type", "CONTENT")
-                .eq("target_id", contentId)
-                .eq("status", ACTIVE));
-        return count != null && count > 0;
-    }
-
-    private boolean isFavorited(Long userId, Long contentId) {
-        if (userId == null) {
-            return false;
-        }
-        Long count = favoriteRecordMapper.selectCount(new QueryWrapper<FavoriteRecord>()
-                .eq("user_id", userId)
-                .eq("target_type", "CONTENT")
-                .eq("target_id", contentId)
-                .eq("status", ACTIVE));
-        return count != null && count > 0;
-    }
-
-    private MatchTeamVO matchTeam(Long teamId, Integer score) {
-        FootballTeam team = teamMapper.selectById(teamId);
+    private MatchTeamVO matchTeam(FootballTeam team, Integer score) {
         MatchTeamVO vo = new MatchTeamVO();
         if (team != null) {
             vo.setTeamId(team.getId());
@@ -534,8 +602,7 @@ public class FeedService {
         return vo;
     }
 
-    private String teamName(Long teamId) {
-        FootballTeam team = teamMapper.selectById(teamId);
+    private String teamName(FootballTeam team) {
         return team == null ? null : team.getTeamName();
     }
 
@@ -544,30 +611,45 @@ public class FeedService {
         return league == null ? null : league.getLeagueName();
     }
 
-    private String eventSummary(Long matchId) {
-        MatchEvent event = matchEventMapper.selectOne(new QueryWrapper<MatchEvent>()
-                .eq("match_id", matchId)
-                .eq("status", ACTIVE)
-                .eq("is_deleted", NOT_DELETED)
-                .orderByDesc("minute")
-                .orderByDesc("id")
-                .last("LIMIT 1"));
+    private String eventSummary(MatchEvent event, Map<Long, FootballPlayer> players) {
         if (event == null) {
             return null;
         }
-        FootballPlayer player = event.getPlayerId() == null ? null : playerMapper.selectById(event.getPlayerId());
+        FootballPlayer player = event.getPlayerId() == null ? null : players.get(event.getPlayerId());
         String minute = event.getMinute() == null ? "" : event.getMinute() + "'";
         String name = player == null ? "" : " " + player.getPlayerName();
         return (minute + " " + event.getEventType() + name).trim();
     }
 
-    private MatchReport firstReport(Long matchId) {
-        return matchReportMapper.selectOne(new QueryWrapper<MatchReport>()
-                .eq("match_id", matchId)
-                .eq("status", ACTIVE)
-                .eq("is_deleted", NOT_DELETED)
-                .orderByAsc("id")
-                .last("LIMIT 1"));
+    private Set<Long> relationIds(List<ContentRelation> relations, String type) {
+        return relations.stream().filter(relation -> type.equals(relation.getRelationType()))
+                .map(ContentRelation::getRelationId).filter(Objects::nonNull)
+                .collect(Collectors.toCollection(LinkedHashSet::new));
+    }
+
+    private List<FootballTeam> safeBatchTeams(Set<Long> ids) {
+        return ids.isEmpty() ? List.of() : safeList(teamMapper.selectBatchIds(ids));
+    }
+
+    private List<FootballPlayer> safeBatchPlayers(Set<Long> ids) {
+        return ids.isEmpty() ? List.of() : safeList(playerMapper.selectBatchIds(ids));
+    }
+
+    private List<MatchInfo> safeBatchMatches(Set<Long> ids) {
+        return ids.isEmpty() ? List.of() : safeList(matchInfoMapper.selectBatchIds(ids));
+    }
+
+    private List<FootballLeague> safeBatchLeagues(Set<Long> ids) {
+        return ids.isEmpty() ? List.of() : safeList(leagueMapper.selectBatchIds(ids));
+    }
+
+    private <T> List<T> safeList(List<T> values) {
+        return values == null ? List.of() : values;
+    }
+
+    private <T> Map<Long, T> indexById(List<T> values, Function<T, Long> idExtractor) {
+        return values.stream().collect(Collectors.toMap(idExtractor, Function.identity(),
+                (left, right) -> left, LinkedHashMap::new));
     }
 
     private int countMatches(Long leagueId, String status) {
@@ -647,6 +729,26 @@ public class FeedService {
 
     private double decimal(BigDecimal value) {
         return value == null ? 0D : value.doubleValue();
+    }
+
+    private static class ContentBatch {
+        private Map<Long, List<ContentRelation>> relations = Collections.emptyMap();
+        private Map<Long, UserProfile> profiles = Collections.emptyMap();
+        private final Map<Long, FootballTeam> teams = new LinkedHashMap<>();
+        private final Map<Long, FootballPlayer> players = new LinkedHashMap<>();
+        private final Map<Long, MatchInfo> matches = new LinkedHashMap<>();
+        private final Map<Long, FootballLeague> leagues = new LinkedHashMap<>();
+        private final Map<Long, Comment> hotComments = new LinkedHashMap<>();
+        private Set<Long> likedContentIds = Collections.emptySet();
+        private Set<Long> favoritedContentIds = Collections.emptySet();
+    }
+
+    private static class MatchBatch {
+        private Map<Long, FootballLeague> leagues = Collections.emptyMap();
+        private Map<Long, FootballTeam> teams = Collections.emptyMap();
+        private Map<Long, FootballPlayer> players = Collections.emptyMap();
+        private final Map<Long, MatchReport> reports = new LinkedHashMap<>();
+        private final Map<Long, MatchEvent> events = new LinkedHashMap<>();
     }
 
     private static class UserContext {

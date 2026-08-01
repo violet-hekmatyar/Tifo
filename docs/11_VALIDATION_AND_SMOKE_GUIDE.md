@@ -943,3 +943,14 @@ smoke-content-article.ps1
 ```
 
 `smoke-content-article.ps1` verifies article image upload, ARTICLE create/detail/update with ordered blocks, relationList deduplication and validation, my CONTENT likes with comment-like filtering, public TEAM/PLAYER/MATCH entity search, invalid relation returning `40401`, and following more than five teams without a follow cap.
+
+## T14 Demo Data Validation
+
+```powershell
+py -3 scripts/data/validate-demo-data.py
+.\scripts\windows\init-demo-data.ps1
+.\scripts\windows\smoke-demo-data.ps1 -Port 8080
+.\scripts\windows\check-t14.ps1
+```
+
+The offline validator proves repeatable generation. Database validation fails immediately on any non-zero anomaly count. The smoke check covers two-page feed, player and match pagination, football details, score/event agreement, ordered ARTICLE blocks, likes/favorites, hot/latest comments, public user social pages, and ten public demo asset URLs. `check-t14.ps1` also runs all T03-T13 regression smoke scripts and leaves ports 8080/8090 without its Java process.
