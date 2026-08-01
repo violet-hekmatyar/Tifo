@@ -977,3 +977,13 @@ cd D:\Football-APP
 ```powershell
 .\scripts\windows\check-t15.ps1 -ResetDatabase -ConfirmReset
 ```
+
+# T16 验证
+
+```powershell
+.\scripts\windows\init-t16-data.ps1
+.\scripts\windows\smoke-team-player-detail.ps1 -Port 8080
+.\scripts\windows\check-t16.ps1
+```
+
+`check-t16.ps1` 默认保存旧数据指纹，增量执行 T15 前置数据和 V016/T16 seed，验证阵容、荣誉和历史约束，再运行测试、打包及 T03-T16 smoke，最后再次比对旧数据并释放 8080/8090。

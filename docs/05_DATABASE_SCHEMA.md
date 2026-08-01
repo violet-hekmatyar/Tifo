@@ -839,3 +839,11 @@ like_record stores comment likes with target_type=COMMENT and target_id=comment.
 - `football_team_competition_stat`：球队在赛事作用域内的进失球、射门、角球、犯规、牌和评分。
 
 Demo 积分规则为 `3 * won + drawn - deduction_points`；排名依次使用积分、净胜球、进球数降序和球队 ID 升序。未来接入真实 Provider 后，由供应商或具体赛事规则覆盖。
+
+# T16 表
+
+- `football_team_season_player`：赛季阵容、位置、号码、队长和租借元数据，唯一键为 `(season_id, team_id, player_id)`。
+- `football_team_honor`：球队荣誉和夺冠年份，唯一键为 `(team_id, honor_name, honor_type)`。
+- `football_player_team_history`：少量可验证效力关系；当前关系必须与 `team_player` 一致。
+
+T15 的球员和球队赛事统计继续是唯一统计事实源，T16 不建立重复统计表。

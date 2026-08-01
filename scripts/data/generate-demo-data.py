@@ -423,15 +423,15 @@ def main():
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--scope", choices=("full", "t15"), default="full")
+    parser.add_argument("--scope", choices=("full", "t15", "t16"), default="full")
     parser.add_argument("--mode", choices=("reset", "incremental"), default="reset")
     args = parser.parse_args()
-    if args.scope == "t15" or args.mode == "incremental":
-        if args.scope != "t15" or args.mode != "incremental":
-            parser.error("incremental mode is available only with --scope t15")
-        incremental_path = ROOT / "scripts" / "sql" / "seed-t15-incremental.sql"
+    if args.scope in ("t15", "t16") or args.mode == "incremental":
+        if args.scope not in ("t15", "t16") or args.mode != "incremental":
+            parser.error("incremental mode requires --scope t15 or --scope t16")
+        incremental_path = ROOT / "scripts" / "sql" / f"seed-{args.scope}-incremental.sql"
         if not incremental_path.is_file():
             parser.error(f"missing incremental seed: {incremental_path}")
-        print(json.dumps({"scope": "t15", "mode": "incremental", "sql": str(incremental_path)}, indent=2))
+        print(json.dumps({"scope": args.scope, "mode": "incremental", "sql": str(incremental_path)}, indent=2))
     else:
         main()

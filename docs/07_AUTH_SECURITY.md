@@ -520,3 +520,7 @@ Article coverFileId and IMAGE block mediaFileId must be ACTIVE files owned by th
 relationList rejects missing TEAM, PLAYER, or MATCH targets with 40401.
 No USER, TEAM, or PLAYER follow count cap is enforced.
 ```
+
+## T16 Read-only Access
+
+T16 team/player detail GET APIs allow anonymous access. A valid JWT only adds follow state; no App-side roster, honor, history, or statistics write endpoint is exposed.

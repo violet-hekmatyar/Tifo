@@ -1815,3 +1815,12 @@ No third-party sports API and no follow-count cap
 - [x] T15 确定性数据、一致性校验、测试和 Windows 回归脚本
 
 后续真实体育数据接入应新增 Provider/同步适配层写入同一模型，不改变 App 端查询契约，也不将 Demo 数据描述为官方数据。
+
+# T16 球队与球员详情
+
+- [x] 审计 `team_player` 与球队/球员详情能力
+- [x] 新增赛季阵容、球队荣誉和球员效力历史
+- [x] 新增 8 个公开只读详情接口
+- [x] 复用 T15 统计完成球队 stats 和球员 career
+- [x] 增量数据、冲突检查、幂等校验和数据保护
+- [x] 服务、控制器、性能结构、迁移测试与 Windows smoke

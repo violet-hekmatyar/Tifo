@@ -19,7 +19,10 @@ def digest(path):
 def main():
     config = json.loads((DATA / "demo-config.json").read_text(encoding="utf-8"))
     names = json.loads((DATA / "demo-names.json").read_text(encoding="utf-8"))
-    required = [SEED, ROOT / "scripts" / "sql" / "validate-demo-data.sql"]
+    t16_migration = ROOT / "scripts" / "sql" / "migrations" / "V016__team_roster_player_career.sql"
+    t16_seed = ROOT / "scripts" / "sql" / "seed-t16-incremental.sql"
+    t16_validation = ROOT / "scripts" / "sql" / "validate-t16-incremental.sql"
+    required = [SEED, ROOT / "scripts" / "sql" / "validate-demo-data.sql", t16_migration, t16_seed, t16_validation]
     missing = [str(path) for path in required if not path.exists()]
     if missing:
         raise SystemExit("Missing generated files: " + ", ".join(missing))
@@ -40,7 +43,12 @@ def main():
             "football_season", "football_competition_stage", "football_standing",
             "football_player_competition_stat", "football_team_competition_stat"]),
         "demo_source_declared": "'DEMO'" in SEED.read_text(encoding="utf-8"),
-        "seed_has_no_placeholder": "REPLACE_WITH" not in SEED.read_text(encoding="utf-8")
+        "seed_has_no_placeholder": "REPLACE_WITH" not in SEED.read_text(encoding="utf-8"),
+        "t16_incremental_is_non_destructive": all(token not in t16_seed.read_text(encoding="utf-8").upper()
+            for token in ["DROP DATABASE", "TRUNCATE TABLE", "DELETE FROM"]),
+        "t16_models_declared": all(name in t16_migration.read_text(encoding="utf-8") for name in [
+            "football_team_season_player", "football_team_honor", "football_player_team_history"]),
+        "t16_consistency_validation_present": "roster_stat_mismatch" in t16_validation.read_text(encoding="utf-8")
     }
     for name, passed in checks.items():
         print(f"{name}: {'PASS' if passed else 'FAIL'}")

@@ -22,6 +22,7 @@ public class FootballTeam {
     private Integer followerCount;
     private String status;
     private Integer isDeleted;
+    private String remark;
 
     public Long getId() {
         return id;
@@ -134,4 +135,7 @@ public class FootballTeam {
     public void setIsDeleted(Integer isDeleted) {
         this.isDeleted = isDeleted;
     }
+
+    public String getRemark() { return remark; }
+    public void setRemark(String remark) { this.remark = remark; }
 }

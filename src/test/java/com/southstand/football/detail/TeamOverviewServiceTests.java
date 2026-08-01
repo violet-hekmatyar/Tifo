@@ -1,0 +1,3 @@
+package com.southstand.football.detail;
+import static org.assertj.core.api.Assertions.*; import static org.mockito.Mockito.*; import org.junit.jupiter.api.Test;
+class TeamOverviewServiceTests{@Test void overviewAggregatesStandingStatsAndRoster(){var f=new FootballDetailTestFixture();var v=f.service.teamOverview(f.TEAM,f.SEASON);assertThat(v.standing().rank()).isEqualTo(1);assertThat(v.seasonStats().goalsFor()).isEqualTo(40);assertThat(v.topScorers()).hasSize(1);}@Test void missingTeamReturns404(){var f=new FootballDetailTestFixture();assertThatThrownBy(()->f.service.teamOverview(999L,null)).hasMessageContaining("team");}}

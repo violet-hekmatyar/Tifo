@@ -1,0 +1,19 @@
+$ErrorActionPreference="Stop";$root=(Resolve-Path -LiteralPath (Join-Path $PSScriptRoot "..\..")).Path;$javaProcess=$null
+$tempStorage=Join-Path ([IO.Path]::GetTempPath()) "south-stand-t16-uploads";$snapshot=Join-Path ([IO.Path]::GetTempPath()) "south-stand-t16-preservation-$PID.json";$old=@{}
+$backendLog=Join-Path ([IO.Path]::GetTempPath()) "south-stand-t16-backend-$PID.log";$backendErr=Join-Path ([IO.Path]::GetTempPath()) "south-stand-t16-backend-$PID.err"
+foreach($n in @("SPRING_PROFILES_ACTIVE","SERVER_PORT","MYSQL_PASSWORD","JWT_SECRET","APP_FILE_STORAGE_TYPE","APP_FILE_LOCAL_STORAGE_ROOT")){$old[$n]=[Environment]::GetEnvironmentVariable($n)}
+function Step([scriptblock]$a,[string]$label){Write-Host "";Write-Host "Running: $label";&$a;if($LASTEXITCODE-ne0){throw "$label failed"};Write-Host "[OK] $label"}
+function Stop-Port([int]$p){foreach($x in @(Get-NetTCPConnection -State Listen -LocalPort $p -ErrorAction SilentlyContinue)){Stop-Process -Id $x.OwningProcess -Force}}
+Push-Location $root
+try{
+ if(-not$env:MYSQL_PASSWORD){$env:MYSQL_PASSWORD=(docker exec apihub-mysql printenv MYSQL_ROOT_PASSWORD).Trim()};$env:JWT_SECRET=if($env:JWT_SECRET){$env:JWT_SECRET}else{"dev_only_change_me_jwt_secret_please_override_in_prod_2026"};$env:APP_FILE_STORAGE_TYPE="LOCAL";$env:APP_FILE_LOCAL_STORAGE_ROOT=$tempStorage
+ Step {.\scripts\windows\check-existing-data-preserved.ps1 -Phase Before -SnapshotPath $snapshot} "capture old-data fingerprints"
+ Step {.\scripts\windows\init-demo-data.ps1 -Mode Incremental} "T15 prerequisite incremental data"
+ Step {.\scripts\windows\init-t16-data.ps1} "T16 incremental migration, seed and validation"
+ Step {.\scripts\windows\check-existing-data-preserved.ps1 -Phase After -SnapshotPath $snapshot} "verify old data preserved"
+ Stop-Port 8080;Stop-Port 8090;Step {mvn test} "mvn test";Step {mvn clean package} "mvn clean package"
+ $env:SPRING_PROFILES_ACTIVE="dev";$env:SERVER_PORT="8080";$javaProcess=Start-Process java -ArgumentList @("-jar","target/south-stand-server.jar","--server.port=8080") -WorkingDirectory $root -WindowStyle Hidden -RedirectStandardOutput $backendLog -RedirectStandardError $backendErr -PassThru
+ $ready=$false;for($i=0;$i-lt60;$i++){Start-Sleep -Milliseconds 500;if($javaProcess.HasExited){throw "backend exited"};try{if((Invoke-RestMethod "http://localhost:8080/api/public/health" -TimeoutSec 2).code-eq0){$ready=$true;break}}catch{}};if(-not$ready){throw "backend startup timeout"}
+ foreach($s in @("smoke-auth","smoke-football","smoke-feed","smoke-file-upload","smoke-storage-media","smoke-user-social","smoke-comment-hot","smoke-content-article","smoke-demo-data","smoke-football-ranks","smoke-team-player-detail")){Step {& ".\scripts\windows\$s.ps1" -Port 8080} "$s.ps1"}
+ Step {.\scripts\windows\check-existing-data-preserved.ps1 -Phase After -SnapshotPath $snapshot} "verify preservation after smoke";Write-Host "T16 check passed"
+}catch{Write-Host "[FAIL] $($_.Exception.Message)";if(Test-Path $backendLog){Get-Content -Encoding UTF8 $backendLog|Select-Object -Last 80};if(Test-Path $backendErr){Get-Content -Encoding UTF8 $backendErr|Select-Object -Last 30};exit 1}finally{if($javaProcess-and-not$javaProcess.HasExited){Stop-Process -Id $javaProcess.Id -Force;Wait-Process -Id $javaProcess.Id -Timeout 10 -ErrorAction SilentlyContinue};Remove-Item $tempStorage -Recurse -Force -ErrorAction SilentlyContinue;Remove-Item $snapshot -Force -ErrorAction SilentlyContinue;foreach($e in $old.GetEnumerator()){if($null-eq$e.Value){Remove-Item "Env:$($e.Key)" -ErrorAction SilentlyContinue}else{Set-Item "Env:$($e.Key)" $e.Value}};Pop-Location;foreach($p in @(8080,8090)){if(Get-NetTCPConnection -State Listen -LocalPort $p -ErrorAction SilentlyContinue){Write-Host "[WARN] port $p still listening"}else{Write-Host "[OK] port $p has no listener"}}}

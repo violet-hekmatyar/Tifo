@@ -17,6 +17,8 @@ public class FootballPlayer {
     private Integer shirtNumber;
     private String position;
     private LocalDate birthDate;
+    private Integer heightCm;
+    private Integer weightKg;
     private Integer retired;
     private Integer followerCount;
     private String status;
@@ -81,6 +83,11 @@ public class FootballPlayer {
     public LocalDate getBirthDate() {
         return birthDate;
     }
+
+    public Integer getHeightCm() { return heightCm; }
+    public void setHeightCm(Integer heightCm) { this.heightCm = heightCm; }
+    public Integer getWeightKg() { return weightKg; }
+    public void setWeightKg(Integer weightKg) { this.weightKg = weightKg; }
 
     public void setBirthDate(LocalDate birthDate) {
         this.birthDate = birthDate;

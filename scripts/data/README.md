@@ -52,3 +52,12 @@ Database validation checks foreign references, active uniqueness, score/goal agr
 # T15 榜单数据
 
 生成器同时创建 16 个赛季、16 个阶段、5 份各 8 队的当前赛季积分榜、240 条球员赛事统计和 40 条球队赛事统计。所有来源均为 `DEMO`，更新时间固定为演示基准时间；积分、净胜球、排名和球队统计交叉一致。数据仅用于开发与展示，不代表官方体育数据。
+
+# T16 增量详情数据
+
+```powershell
+py -3 scripts/data/generate-demo-data.py --scope t16 --mode incremental
+.\scripts\windows\init-t16-data.ps1
+```
+
+该模式只补赛季阵容、Demo 荣誉和可证明的当前效力关系。阵容来自 `team_player` 与 T15 球员统计交集，不生成用户、内容或虚构转会链。

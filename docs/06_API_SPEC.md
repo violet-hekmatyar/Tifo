@@ -1096,3 +1096,18 @@ There is no active follow cap for USER, TEAM, or PLAYER follows.
 球员 `rankType`：`GOALS`、`ASSISTS`、`YELLOW_CARDS`、`RED_CARDS`、`SHOTS`、`SHOTS_ON_TARGET`、`RATING`、`SAVES`、`APPEARANCES`、`MINUTES`。
 
 球队 `rankType`：`GOALS_FOR`、`GOALS_AGAINST`、`ASSISTS`、`YELLOW_CARDS`、`RED_CARDS`、`SHOTS`、`SHOTS_ON_TARGET`、`CORNERS`、`FOULS`、`CLEAN_SHEETS`、`AVG_RATING`。`GOALS_AGAINST` 按升序，其余默认降序；服务端返回 `sortDirection` 和连续位置排名。
+
+# T16 球队和球员详情
+
+```http
+GET /api/app/football/teams/{teamId}/overview?seasonId=
+GET /api/app/football/teams/{teamId}/players?seasonId=&position=&squadRole=&pageNum=1&pageSize=50
+GET /api/app/football/teams/{teamId}/stats?seasonId=&stageId=
+GET /api/app/football/teams/{teamId}/honors?honorType=
+GET /api/app/football/players/{playerId}/overview?seasonId=
+GET /api/app/football/players/{playerId}/stats?seasonId=&leagueId=&stageId=
+GET /api/app/football/players/{playerId}/teams
+GET /api/app/football/players/{playerId}/career
+```
+
+接口均公开只读，可选 JWT 仅用于 `followed`。不存在返回 `40401`；球队与赛季不匹配返回 `40001`。

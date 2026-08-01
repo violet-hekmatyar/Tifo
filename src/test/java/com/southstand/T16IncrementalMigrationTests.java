@@ -1,0 +1,3 @@
+package com.southstand;
+import static org.assertj.core.api.Assertions.*;import java.nio.file.*;import org.junit.jupiter.api.Test;
+class T16IncrementalMigrationTests{@Test void migrationAndSeedAreNonDestructive()throws Exception{String m=Files.readString(Path.of("scripts/sql/migrations/V016__team_roster_player_career.sql")).toUpperCase();String s=Files.readString(Path.of("scripts/sql/seed-t16-incremental.sql")).toUpperCase();assertThat(m).contains("CREATE TABLE IF NOT EXISTS").doesNotContain("DROP TABLE","DROP DATABASE","TRUNCATE");assertThat(s).contains("WHERE NOT EXISTS","SOURCE<>'DEMO'").doesNotContain("DELETE FROM","TRUNCATE TABLE","DROP DATABASE");}}

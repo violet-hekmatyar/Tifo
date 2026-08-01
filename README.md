@@ -345,3 +345,13 @@ T15 提供联赛赛季、赛事阶段、积分榜、球员榜和球队榜。默�
 .\scripts\windows\check-t15.ps1                      # 默认非破坏性
 .\scripts\windows\check-t15.ps1 -ResetDatabase -ConfirmReset  # 显式破坏性重建
 ```
+
+## T16 球队与球员详情
+
+T16 增加赛季阵容、球队荣誉和可证明的球员当前效力历史，并通过 T15 统计聚合球队详情、球员详情和生涯汇总。默认初始化及检查保持非破坏性：
+
+```powershell
+py -3 scripts/data/generate-demo-data.py --scope t16 --mode incremental
+.\scripts\windows\init-t16-data.ps1
+.\scripts\windows\check-t16.ps1
+```
