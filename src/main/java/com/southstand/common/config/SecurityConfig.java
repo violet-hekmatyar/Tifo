@@ -61,6 +61,10 @@ public class SecurityConfig {
                         .requestMatchers(
                                 HttpMethod.GET,
                                 "/api/app/football/leagues",
+                                "/api/app/football/leagues/**",
+                                "/api/app/football/standings",
+                                "/api/app/football/player-ranks",
+                                "/api/app/football/team-ranks",
                                 "/api/app/football/matches",
                                 "/api/app/football/matches/**",
                                 "/api/app/football/teams/**",

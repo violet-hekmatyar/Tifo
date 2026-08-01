@@ -82,7 +82,7 @@ GET /api/public/health/redis
 重置本地开发库：
 
 ```powershell
-.\scripts\windows\reset-dev-db.ps1
+.\scripts\windows\reset-dev-db.ps1 -ConfirmReset -ConfirmationText "RESET south_stand"
 ```
 
 T02 验收：
@@ -331,8 +331,17 @@ T14 adds a Chinese-first, fully offline demo dataset with stable IDs, times, rel
 
 ```powershell
 py -3 scripts/data/generate-demo-data.py
-.\scripts\windows\init-demo-data.ps1
+.\scripts\windows\init-demo-data.ps1 -Mode ResetDemo -ConfirmReset
 .\scripts\windows\check-t14.ps1
 ```
 
 Configuration and account details are documented in `scripts/data/README.md`. The generator uses fixed seed `20260722`, has no third-party sports API dependency, and does not impose USER, TEAM, or PLAYER follow limits.
+# T15 赛季与榜单
+
+T15 提供联赛赛季、赛事阶段、积分榜、球员榜和球队榜。默认初始化与完整回归都采用增量模式，只补缺失表、索引和 T15 数据，并用 ID + SHA-256 指纹验证既有用户、社区、文件及足球基础数据未改变。主要公开接口为 `/api/app/football/leagues/{leagueId}/seasons`、`/api/app/football/standings`、`/api/app/football/player-ranks` 和 `/api/app/football/team-ranks`。
+
+```powershell
+.\scripts\windows\init-demo-data.ps1                  # 默认 Incremental
+.\scripts\windows\check-t15.ps1                      # 默认非破坏性
+.\scripts\windows\check-t15.ps1 -ResetDatabase -ConfirmReset  # 显式破坏性重建
+```

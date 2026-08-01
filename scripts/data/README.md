@@ -7,6 +7,13 @@ This directory defines a deterministic, offline dataset for local development an
 ```powershell
 py -3 scripts/data/generate-demo-data.py
 .\scripts\windows\init-demo-data.ps1
+
+# T15 default: preserve existing data and add only missing rank data
+py -3 scripts/data/generate-demo-data.py --scope t15 --mode incremental
+.\scripts\windows\init-demo-data.ps1 -Mode Incremental
+
+# Destructive full demo rebuild: both flags are mandatory
+.\scripts\windows\init-demo-data.ps1 -Mode ResetDemo -ConfirmReset
 ```
 
 The generator uses only the Python standard library, reads `demo-config.json` and `demo-names.json`, writes UTF-8 `scripts/sql/seed-demo.sql`, and creates reusable SVG assets under `src/main/resources/static/demo/`. The fixed random seed is `20260722`; the baseline time is `2026-07-20 12:00:00 +08:00`. Repeated generation with the same files produces the same SQL bytes.
@@ -42,3 +49,6 @@ py -3 scripts/data/validate-demo-data.py
 ```
 
 Database validation checks foreign references, active uniqueness, score/goal agreement, report status, ARTICLE block rules, comment trees, counter/detail agreement, and minimum pagination volumes. User main teams always have a matching active TEAM follow. Active players have exactly one current team. There is no USER, TEAM, or PLAYER follow-count cap.
+# T15 榜单数据
+
+生成器同时创建 16 个赛季、16 个阶段、5 份各 8 队的当前赛季积分榜、240 条球员赛事统计和 40 条球队赛事统计。所有来源均为 `DEMO`，更新时间固定为演示基准时间；积分、净胜球、排名和球队统计交叉一致。数据仅用于开发与展示，不代表官方体育数据。

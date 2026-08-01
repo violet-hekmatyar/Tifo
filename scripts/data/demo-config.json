@@ -8,6 +8,8 @@
     "teams": 24,
     "players_per_team": 6,
     "matches": 80,
+    "rank_leagues": 5,
+    "standing_teams_per_league": 8,
     "contents": 120,
     "root_comments": 360,
     "replies": 160
@@ -23,6 +25,11 @@
     "content_block": 16100000000000001,
     "comment": 17000000000000001,
     "interaction": 18000000000000001,
-    "file": 19000000000000001
+    "file": 19000000000000001,
+    "season": 20000000000000001,
+    "stage": 21000000000000001,
+    "standing": 22000000000000001,
+    "player_stat": 23000000000000001,
+    "team_stat": 24000000000000001
   }
 }

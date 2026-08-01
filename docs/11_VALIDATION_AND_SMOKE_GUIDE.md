@@ -132,7 +132,7 @@ cd D:\Football-APP
 脚本覆盖：
 
 ```text
-.\scripts\windows\reset-dev-db.ps1
+.\scripts\windows\reset-dev-db.ps1 -ConfirmReset -ConfirmationText "RESET south_stand"
 mvn clean test
 mvn clean package
 java -jar target\south-stand-server.jar
@@ -167,7 +167,7 @@ cd D:\Football-APP
 脚本覆盖：
 
 ```text
-.\scripts\windows\reset-dev-db.ps1
+.\scripts\windows\reset-dev-db.ps1 -ConfirmReset -ConfirmationText "RESET south_stand"
 mvn clean test
 mvn clean package
 java -jar target\south-stand-server.jar
@@ -201,7 +201,7 @@ cd D:\Football-APP
 脚本覆盖：
 
 ```text
-.\scripts\windows\reset-dev-db.ps1
+.\scripts\windows\reset-dev-db.ps1 -ConfirmReset -ConfirmationText "RESET south_stand"
 mvn clean test
 mvn clean package
 java -jar target\south-stand-server.jar
@@ -954,3 +954,26 @@ py -3 scripts/data/validate-demo-data.py
 ```
 
 The offline validator proves repeatable generation. Database validation fails immediately on any non-zero anomaly count. The smoke check covers two-page feed, player and match pagination, football details, score/event agreement, ordered ARTICLE blocks, likes/favorites, hot/latest comments, public user social pages, and ten public demo asset URLs. `check-t14.ps1` also runs all T03-T13 regression smoke scripts and leaves ports 8080/8090 without its Java process.
+# T15 验证
+
+```powershell
+cd D:\Football-APP
+.\scripts\windows\smoke-football-ranks.ps1 -Port 8080
+.\scripts\windows\check-t15.ps1
+```
+
+`check-t15.ps1` 默认先保存既有业务记录的 ID 与关键字段 SHA-256，再执行 `V015__season_standings_ranks.sql` 和 `seed-t15-incremental.sql`，最后逐 ID 比对并运行全部测试及 T03-T15 smoke。默认流程不执行 `DROP DATABASE`、`TRUNCATE` 或业务表清理；脚本结束时确认 8080/8090 无残留。
+
+单独验证数据保护：
+
+```powershell
+.\scripts\windows\check-existing-data-preserved.ps1 -Phase Before -SnapshotPath $env:TEMP\t15-before.json
+.\scripts\windows\init-demo-data.ps1 -Mode Incremental
+.\scripts\windows\check-existing-data-preserved.ps1 -Phase After -SnapshotPath $env:TEMP\t15-before.json
+```
+
+只有需要完全重建 Demo 库时才使用：
+
+```powershell
+.\scripts\windows\check-t15.ps1 -ResetDatabase -ConfirmReset
+```

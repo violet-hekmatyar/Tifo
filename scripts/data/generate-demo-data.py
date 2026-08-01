@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import json
+import argparse
 import random
 from collections import Counter, defaultdict
 from datetime import datetime, timedelta
@@ -160,6 +161,78 @@ def main():
                 event_seq += 1
         match_goals[match_id] = goal_count
 
+    seasons, stages, standings, player_stats, team_stats = [], [], [], [], []
+    current_season_by_league = {}
+    current_stage_by_league = {}
+    season_seq = stage_seq = standing_seq = player_stat_seq = team_stat_seq = 0
+    for league_index, league_id in enumerate(league_ids):
+        for previous, code, name, start, end in [
+            (True, "2024-2025", "2024/25赛季", "2024-08-01", "2025-06-30"),
+            (False, "2025-2026", "2025/26赛季", "2025-08-01", "2026-06-30")
+        ]:
+            season_id = bases["season"] + season_seq
+            stage_id = bases["stage"] + stage_seq
+            current = 0 if previous else 1
+            seasons.append((season_id, league_id, code, name, start, end, current, "ACTIVE", "DEMO", f"demo-{league_index + 1}-{code}", config["baseline_time"], config["baseline_time"], 0))
+            stage_type = "GROUP" if names["leagues"][league_index][2] == "CUP" else "LEAGUE"
+            stage_name = "小组赛" if stage_type == "GROUP" else "联赛阶段"
+            stages.append((stage_id, league_id, season_id, stage_type, stage_name, None, 1, "ACTIVE", 0))
+            if current:
+                current_season_by_league[league_id] = season_id
+                current_stage_by_league[league_id] = stage_id
+            season_seq += 1
+            stage_seq += 1
+
+    for league_index in range(counts["rank_leagues"]):
+        league_id = league_ids[league_index]
+        season_id = current_season_by_league[league_id]
+        stage_id = current_stage_by_league[league_id]
+        scope_teams = [team_ids[(league_index * 4 + offset) % len(team_ids)] for offset in range(counts["standing_teams_per_league"])]
+        standing_rows = []
+        for offset, team_id in enumerate(scope_teams):
+            played = 20
+            won = 14 - offset
+            drawn = offset % 3
+            lost = played - won - drawn
+            goals_for = 44 - offset * 3
+            goals_against = 15 + offset * 2
+            deduction = 1 if offset == 6 else 0
+            points = won * 3 + drawn - deduction
+            standing_rows.append((team_id, played, won, drawn, lost, goals_for, goals_against,
+                                  goals_for - goals_against, points, deduction, "胜胜平负胜"))
+        standing_rows.sort(key=lambda row: (-row[8], -row[7], -row[5], row[0]))
+        for rank, row in enumerate(standing_rows, 1):
+            team_id, played, won, drawn, lost, goals_for, goals_against, goal_difference, points, deduction, form = row
+            standings.append((bases["standing"] + standing_seq, league_id, season_id, stage_id, "", team_id, rank,
+                              played, won, drawn, lost, goals_for, goals_against, goal_difference, points, deduction,
+                              form, "DEMO", config["baseline_time"], 0))
+            assists = max(0, goals_for - 3)
+            shots = goals_for * 5 + rank * 3
+            shots_on_target = goals_for * 2 + rank
+            team_stats.append((bases["team_stat"] + team_stat_seq, league_id, season_id, stage_id, team_id,
+                               played, goals_for, goals_against, assists, 22 + rank, rank % 3, shots,
+                               shots_on_target, 70 + rank * 3, 180 + rank * 4, max(0, 8 - rank),
+                               round(7.45 - rank * 0.06, 2), "DEMO", config["baseline_time"], 0))
+            standing_seq += 1
+            team_stat_seq += 1
+            team_index = team_ids.index(team_id)
+            for slot in range(counts["players_per_team"]):
+                player_id = player_ids[team_index * counts["players_per_team"] + slot]
+                appearances = 14 + (rank + slot) % 7
+                starts = max(0, appearances - slot % 4)
+                minutes = starts * 82 + (appearances - starts) * 24
+                goals = max(0, (7 - slot) * 2 + (8 - rank)) if slot >= 3 else slot % 2
+                assists_count = max(0, 8 - rank + (slot % 4)) if slot >= 2 else slot
+                shots_on_target = goals + 4 + slot
+                shots = shots_on_target + 8 + rank
+                saves = 36 + rank * 3 if slot == 0 else 0
+                rating = round(6.15 + goals * 0.05 + assists_count * 0.03 + appearances * 0.01, 2)
+                player_stats.append((bases["player_stat"] + player_stat_seq, league_id, season_id, stage_id,
+                                     player_id, team_id, appearances, starts, minutes, goals, assists_count,
+                                     (rank + slot) % 6, 1 if (rank + slot) % 17 == 0 else 0, shots,
+                                     shots_on_target, saves, min(rating, 9.50), "DEMO", config["baseline_time"], 0))
+                player_stat_seq += 1
+
     file_rows = []
     for i in range(60):
         file_id = bases["file"] + i
@@ -295,8 +368,10 @@ def main():
     post_count = Counter(row[8] for row in contents if row[17] == "PUBLISHED" and row[18] == 0)
     profiles = [row + (post_count[row[1]], follower_count[row[1]], following_count[row[1]], team_count[row[1]], player_count[row[1]]) for row in profiles]
 
-    lines = ["USE south_stand;", "", "SET NAMES utf8mb4;", "SET FOREIGN_KEY_CHECKS = 0;", "", "-- Deterministic T14 demo dataset. Development use only."]
+    lines = ["USE south_stand;", "", "SET NAMES utf8mb4;", "SET FOREIGN_KEY_CHECKS = 0;", "", "-- Deterministic T14/T15 demo dataset. Development use only."]
     cleanup = [
+        ("football_team_competition_stat", "id", bases["team_stat"]), ("football_player_competition_stat", "id", bases["player_stat"]),
+        ("football_standing", "id", bases["standing"]), ("football_competition_stage", "id", bases["stage"]), ("football_season", "id", bases["season"]),
         ("match_report", "id", bases["match_event"]), ("match_event", "id", bases["match_event"]), ("match_info", "id", bases["match"]),
         ("team_player", "player_id", bases["player"]), ("football_player", "id", bases["player"]), ("football_team", "id", bases["team"]), ("football_league", "id", bases["league"]),
         ("follow_record", "id", bases["interaction"]), ("favorite_record", "id", bases["interaction"]), ("like_record", "id", bases["interaction"]),
@@ -309,6 +384,8 @@ def main():
 
     insert(lines, "sys_user", ["id", "username", "password_hash", "role_type", "onboarding_completed", "status", "create_time"], users)
     insert(lines, "football_league", ["id", "league_name", "league_name_en", "country", "logo_url", "season", "league_type", "sort_order"], leagues)
+    insert(lines, "football_season", ["id", "league_id", "season_code", "season_name", "start_date", "end_date", "current_flag", "status", "source", "source_record_id", "source_updated_at", "synced_at", "is_deleted"], seasons)
+    insert(lines, "football_competition_stage", ["id", "league_id", "season_id", "stage_type", "stage_name", "group_code", "sort_order", "status", "is_deleted"], stages)
     insert(lines, "football_team", ["id", "team_name", "team_name_en", "short_name", "logo_url", "country", "city", "home_stadium", "founded_year", "coach_name", "market_value", "follower_count"], teams)
     insert(lines, "football_player", ["id", "player_name", "player_name_en", "avatar_url", "nationality", "shirt_number", "position", "birth_date", "height_cm", "weight_kg", "market_value", "follower_count"], players)
     insert(lines, "team_player", ["id", "team_id", "player_id", "team_type", "season", "shirt_number", "position", "status"], team_players)
@@ -317,6 +394,9 @@ def main():
     insert(lines, "file_resource", ["id", "user_id", "biz_type", "original_name", "storage_name", "object_key", "relative_path", "url", "content_type", "extension", "size_bytes", "storage_type", "status"], file_rows)
     insert(lines, "match_info", ["id", "league_id", "season", "round_name", "home_team_id", "away_team_id", "home_score", "away_score", "match_time", "venue", "match_status", "important_level", "has_report"], matches)
     insert(lines, "match_event", ["id", "match_id", "team_id", "player_id", "assist_player_id", "event_type", "minute", "extra_minute", "score_after", "description", "has_debate"], events)
+    insert(lines, "football_standing", ["id", "league_id", "season_id", "stage_id", "group_code", "team_id", "rank_no", "played", "won", "drawn", "lost", "goals_for", "goals_against", "goal_difference", "points", "deduction_points", "form_text", "source", "source_updated_at", "is_deleted"], standings)
+    insert(lines, "football_player_competition_stat", ["id", "league_id", "season_id", "stage_id", "player_id", "team_id", "appearances", "starts", "minutes", "goals", "assists", "yellow_cards", "red_cards", "shots", "shots_on_target", "saves", "rating", "source", "source_updated_at", "is_deleted"], player_stats)
+    insert(lines, "football_team_competition_stat", ["id", "league_id", "season_id", "stage_id", "team_id", "played", "goals_for", "goals_against", "assists", "yellow_cards", "red_cards", "shots", "shots_on_target", "corners", "fouls", "clean_sheets", "avg_rating", "source", "source_updated_at", "is_deleted"], team_stats)
     insert(lines, "content", ["id", "content_type", "content_format", "card_type", "title", "summary", "body", "cover_url", "author_id", "source_type", "is_official", "view_count", "like_count", "comment_count", "favorite_count", "hot_score", "publish_time", "status", "is_deleted"], contents)
     insert(lines, "content_media", ["id", "content_id", "media_type", "media_url", "thumbnail_url", "width", "height", "sort_order", "status", "is_deleted"], media)
     insert(lines, "content_block", ["id", "content_id", "block_type", "text_content", "media_file_id", "media_url", "sort_order", "status", "is_deleted"], blocks)
@@ -326,12 +406,14 @@ def main():
     insert(lines, "like_record", ["id", "user_id", "target_type", "target_id", "status"], likes)
     insert(lines, "favorite_record", ["id", "user_id", "target_type", "target_id", "status"], favorites)
     insert(lines, "follow_record", ["id", "user_id", "follow_type", "target_id", "is_main", "status", "is_deleted"], follows)
-    lines.append("-- End of deterministic T14 demo dataset.")
+    lines.append("-- End of deterministic T14/T15 demo dataset.")
     SQL_PATH.write_text("\n".join(lines) + "\n", encoding="utf-8", newline="\n")
 
     summary = {
         "users": len(users), "leagues": len(leagues), "teams": len(teams), "players": len(players),
-        "matches": len(matches), "events": len(events), "contents": len(contents), "blocks": len(blocks),
+        "matches": len(matches), "events": len(events), "seasons": len(seasons), "stages": len(stages),
+        "standings": len(standings), "player_stats": len(player_stats), "team_stats": len(team_stats),
+        "contents": len(contents), "blocks": len(blocks),
         "comments": len(comments), "content_likes_active": sum(1 for r in likes if r[2] == "CONTENT" and r[4] == "ACTIVE"),
         "comment_likes_active": sum(1 for r in likes if r[2] == "COMMENT" and r[4] == "ACTIVE"),
         "favorites_active": len(favorites), "follows": len(follows), "files": len(file_rows)
@@ -340,4 +422,16 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--scope", choices=("full", "t15"), default="full")
+    parser.add_argument("--mode", choices=("reset", "incremental"), default="reset")
+    args = parser.parse_args()
+    if args.scope == "t15" or args.mode == "incremental":
+        if args.scope != "t15" or args.mode != "incremental":
+            parser.error("incremental mode is available only with --scope t15")
+        incremental_path = ROOT / "scripts" / "sql" / "seed-t15-incremental.sql"
+        if not incremental_path.is_file():
+            parser.error(f"missing incremental seed: {incremental_path}")
+        print(json.dumps({"scope": "t15", "mode": "incremental", "sql": str(incremental_path)}, indent=2))
+    else:
+        main()

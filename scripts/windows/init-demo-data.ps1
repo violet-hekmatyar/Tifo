@@ -1,9 +1,16 @@
-param([switch]$SkipGenerate)
+param(
+    [ValidateSet("Incremental", "ResetDemo")][string]$Mode = "Incremental",
+    [switch]$ConfirmReset,
+    [switch]$SkipGenerate
+)
 
 $ErrorActionPreference = "Stop"
 $root = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot "..\..")).Path
 $seedDemo = Join-Path $root "scripts\sql\seed-demo.sql"
+$migrationT15 = Join-Path $root "scripts\sql\migrations\V015__season_standings_ranks.sql"
+$incrementalT15 = Join-Path $root "scripts\sql\seed-t15-incremental.sql"
 $validateSql = Join-Path $root "scripts\sql\validate-demo-data.sql"
+$validateT15Sql = Join-Path $root "scripts\sql\validate-t15-incremental.sql"
 $mysqlHostName = if ($env:MYSQL_HOST) { $env:MYSQL_HOST } else { "localhost" }
 $mysqlPortNumber = if ($env:MYSQL_PORT) { $env:MYSQL_PORT } else { "3306" }
 $mysqlUserName = if ($env:MYSQL_USERNAME) { $env:MYSQL_USERNAME } else { "root" }
@@ -30,20 +37,28 @@ function Invoke-MysqlFile($path, [switch]$Capture) {
 
 Push-Location $root
 try {
-    if (-not $SkipGenerate) { Invoke-Python @("scripts/data/generate-demo-data.py") }
-    foreach ($path in @($seedDemo, $validateSql)) {
+    foreach ($path in @($migrationT15, $incrementalT15, $validateSql, $validateT15Sql)) {
         if (-not (Test-Path -LiteralPath $path)) { throw "Required file missing: $path" }
     }
-    & (Join-Path $root "scripts\windows\reset-dev-db.ps1")
-    if ($LASTEXITCODE -ne 0) { throw "reset-dev-db.ps1 failed" }
-    Write-Host "Importing deterministic demo dataset..."
-    Invoke-MysqlFile $seedDemo
+    if ($Mode -eq "ResetDemo") {
+        if (-not $ConfirmReset) { throw "ResetDemo requires -ConfirmReset." }
+        if (-not $SkipGenerate) { Invoke-Python @("scripts/data/generate-demo-data.py") }
+        & (Join-Path $root "scripts\windows\reset-dev-db.ps1") -ConfirmReset -ConfirmationText "RESET south_stand"
+        if ($LASTEXITCODE -ne 0) { throw "reset-dev-db.ps1 failed" }
+        Write-Host "Importing deterministic full demo dataset..."
+        Invoke-MysqlFile $seedDemo
+    } else {
+        Write-Host "Applying non-destructive T15 migration and incremental seed..."
+        Invoke-MysqlFile $migrationT15
+        Invoke-MysqlFile $incrementalT15
+    }
     Write-Host "Validating demo dataset..."
-    $validation = Invoke-MysqlFile $validateSql -Capture
+    $validationPath = if ($Mode -eq "ResetDemo") { $validateSql } else { $validateT15Sql }
+    $validation = Invoke-MysqlFile $validationPath -Capture
     $validation | ForEach-Object { Write-Host $_ }
     $bad = $validation | Where-Object { $_ -match '^[^\t]+\t([1-9][0-9]*)$' -and $_ -notmatch '^demo_' }
     if ($bad) { throw "Demo validation found anomalies: $($bad -join '; ')" }
-    Write-Host "T14 demo data initialized and validated"
+    Write-Host "Demo data mode $Mode completed and validated"
 } finally {
     Pop-Location
 }

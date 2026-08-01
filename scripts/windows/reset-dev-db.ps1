@@ -1,3 +1,8 @@
+param(
+    [switch]$ConfirmReset,
+    [string]$ConfirmationText = ""
+)
+
 $ErrorActionPreference = "Stop"
 
 $mysqlHost = if ($env:MYSQL_HOST) { $env:MYSQL_HOST } else { "localhost" }
@@ -66,7 +71,11 @@ Require-File $resetPath
 Require-File $schemaPath
 Require-File $seedPath
 
-Write-Host "Resetting south_stand development database..."
+if (-not $ConfirmReset -or $ConfirmationText -ne "RESET south_stand") {
+    throw "Destructive reset refused. Re-run with -ConfirmReset -ConfirmationText 'RESET south_stand'."
+}
+
+Write-Warning "Destructive operation confirmed: all data in south_stand will be replaced."
 Invoke-MysqlFile $resetPath
 Invoke-MysqlFile $schemaPath
 Invoke-MysqlFile $seedPath

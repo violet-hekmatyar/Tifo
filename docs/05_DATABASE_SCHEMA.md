@@ -830,3 +830,12 @@ like_record stores comment likes with target_type=COMMENT and target_id=comment.
 ```text
 后端启动后，App 首页、数据页、球队详情、球员详情、比赛详情、我的页面、后台列表都有数据可展示。
 ```
+# T15 赛季与榜单表
+
+- `football_season`：一个联赛的稳定赛季代码、中文名称、日期范围和当前赛季标记；唯一键为 `(league_id, season_code)`。
+- `football_competition_stage`：赛季内 `LEAGUE`、`GROUP`、`KNOCKOUT` 或 `FRIENDLY` 阶段，T15 使用前两类。
+- `football_standing`：按联赛、赛季、阶段和分组唯一约束球队及排名。
+- `football_player_competition_stat`：球员在赛事作用域内的出场、进球、助攻、牌、射门、评分和扑救。
+- `football_team_competition_stat`：球队在赛事作用域内的进失球、射门、角球、犯规、牌和评分。
+
+Demo 积分规则为 `3 * won + drawn - deduction_points`；排名依次使用积分、净胜球、进球数降序和球队 ID 升序。未来接入真实 Provider 后，由供应商或具体赛事规则覆盖。

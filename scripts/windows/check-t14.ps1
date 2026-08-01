@@ -55,7 +55,7 @@ try {
     }
 
     Invoke-Step "py -3 scripts/data/validate-demo-data.py" "offline generator validation"
-    Invoke-Step ".\scripts\windows\init-demo-data.ps1 -SkipGenerate" "demo database initialization"
+    Invoke-Step ".\scripts\windows\init-demo-data.ps1 -Mode ResetDemo -ConfirmReset -SkipGenerate" "explicit demo database reset"
     Invoke-Step "mvn test" "mvn test"
     Invoke-Step "mvn clean package" "mvn clean package"
 

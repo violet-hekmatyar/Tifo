@@ -1805,3 +1805,13 @@ SQL and offline validation
 Windows init, smoke, and full T03-T13 regression check
 No third-party sports API and no follow-count cap
 ```
+# T15 完成项
+
+- [x] 联赛赛季与赛事阶段模型
+- [x] 积分榜与统一 Demo 排名规则
+- [x] 球员和球队赛事统计模型
+- [x] 赛季切换、阶段、积分榜、球员榜、球队榜公开接口
+- [x] 后端稳定枚举排序与批量实体装配
+- [x] T15 确定性数据、一致性校验、测试和 Windows 回归脚本
+
+后续真实体育数据接入应新增 Provider/同步适配层写入同一模型，不改变 App 端查询契约，也不将 Demo 数据描述为官方数据。

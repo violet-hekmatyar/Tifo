@@ -49,6 +49,32 @@ SELECT check_name, anomaly_count FROM (
   UNION ALL SELECT 'users_with_20_likes_below_3', IF(COUNT(*)>=3,0,1) FROM (SELECT user_id FROM like_record WHERE id>=18000000000000001 AND target_type='CONTENT' AND status='ACTIVE' GROUP BY user_id HAVING COUNT(*)>=20) x
   UNION ALL SELECT 'users_with_20_favorites_below_3', IF(COUNT(*)>=3,0,1) FROM (SELECT user_id FROM favorite_record WHERE id>=18000000000000001 AND status='ACTIVE' GROUP BY user_id HAVING COUNT(*)>=20) x
   UNION ALL SELECT 'contents_with_20_comments_below_5', IF(COUNT(*)>=5,0,1) FROM (SELECT target_id FROM comment WHERE id>=17000000000000001 AND status='ACTIVE' AND is_deleted=0 GROUP BY target_id HAVING COUNT(*)>=20) x
+  UNION ALL SELECT 'season_missing_league', COUNT(*) FROM football_season s LEFT JOIN football_league l ON l.id=s.league_id WHERE s.id>=20000000000000001 AND l.id IS NULL
+  UNION ALL SELECT 'season_invalid_dates', COUNT(*) FROM football_season WHERE id>=20000000000000001 AND start_date>=end_date
+  UNION ALL SELECT 'season_multiple_current', COUNT(*) FROM (SELECT league_id FROM football_season WHERE id>=20000000000000001 AND current_flag=1 AND status='ACTIVE' AND is_deleted=0 GROUP BY league_id HAVING COUNT(*)>1) x
+  UNION ALL SELECT 'season_duplicate_code', COUNT(*) FROM (SELECT league_id,season_code FROM football_season WHERE id>=20000000000000001 GROUP BY league_id,season_code HAVING COUNT(*)>1) x
+  UNION ALL SELECT 'stage_missing_scope', COUNT(*) FROM football_competition_stage st LEFT JOIN football_league l ON l.id=st.league_id LEFT JOIN football_season s ON s.id=st.season_id WHERE st.id>=21000000000000001 AND (l.id IS NULL OR s.id IS NULL OR s.league_id<>st.league_id)
+  UNION ALL SELECT 'standing_missing_team', COUNT(*) FROM football_standing fs LEFT JOIN football_team t ON t.id=fs.team_id WHERE fs.id>=22000000000000001 AND t.id IS NULL
+  UNION ALL SELECT 'standing_played_formula', COUNT(*) FROM football_standing WHERE id>=22000000000000001 AND played<>won+drawn+lost
+  UNION ALL SELECT 'standing_goal_difference_formula', COUNT(*) FROM football_standing WHERE id>=22000000000000001 AND goal_difference<>goals_for-goals_against
+  UNION ALL SELECT 'standing_points_formula', COUNT(*) FROM football_standing WHERE id>=22000000000000001 AND points<>won*3+drawn-deduction_points
+  UNION ALL SELECT 'standing_duplicate_team', COUNT(*) FROM (SELECT league_id,season_id,stage_id,group_code,team_id FROM football_standing WHERE id>=22000000000000001 GROUP BY league_id,season_id,stage_id,group_code,team_id HAVING COUNT(*)>1) x
+  UNION ALL SELECT 'standing_duplicate_rank', COUNT(*) FROM (SELECT league_id,season_id,stage_id,group_code,rank_no FROM football_standing WHERE id>=22000000000000001 GROUP BY league_id,season_id,stage_id,group_code,rank_no HAVING COUNT(*)>1) x
+  UNION ALL SELECT 'standing_rank_not_continuous', COUNT(*) FROM (SELECT league_id,season_id,stage_id,group_code,COUNT(*) n,MIN(rank_no) min_rank,MAX(rank_no) max_rank FROM football_standing WHERE id>=22000000000000001 GROUP BY league_id,season_id,stage_id,group_code HAVING min_rank<>1 OR max_rank<>n) x
+  UNION ALL SELECT 'standing_rank_order_mismatch', COUNT(*) FROM (SELECT id,rank_no,ROW_NUMBER() OVER(PARTITION BY league_id,season_id,stage_id,group_code ORDER BY points DESC,goal_difference DESC,goals_for DESC,team_id ASC) expected_rank FROM football_standing WHERE id>=22000000000000001) x WHERE rank_no<>expected_rank
+  UNION ALL SELECT 'standing_source_not_demo', COUNT(*) FROM football_standing WHERE id>=22000000000000001 AND source<>'DEMO'
+  UNION ALL SELECT 'player_stat_missing_scope', COUNT(*) FROM football_player_competition_stat ps LEFT JOIN football_season s ON s.id=ps.season_id LEFT JOIN football_player p ON p.id=ps.player_id LEFT JOIN football_team t ON t.id=ps.team_id LEFT JOIN team_player tp ON tp.player_id=ps.player_id AND tp.team_id=ps.team_id AND tp.status='ACTIVE' AND tp.is_deleted=0 WHERE ps.id>=23000000000000001 AND (s.id IS NULL OR s.league_id<>ps.league_id OR p.id IS NULL OR t.id IS NULL OR tp.id IS NULL)
+  UNION ALL SELECT 'player_stat_invalid_totals', COUNT(*) FROM football_player_competition_stat WHERE id>=23000000000000001 AND (appearances<starts OR shots<shots_on_target OR goals>shots_on_target OR LEAST(appearances,starts,minutes,goals,assists,yellow_cards,red_cards,shots,shots_on_target,saves)<0)
+  UNION ALL SELECT 'player_stat_rating_range', COUNT(*) FROM football_player_competition_stat WHERE id>=23000000000000001 AND (rating<5.00 OR rating>9.50)
+  UNION ALL SELECT 'player_stat_non_goalkeeper_saves', COUNT(*) FROM football_player_competition_stat ps JOIN football_player p ON p.id=ps.player_id WHERE ps.id>=23000000000000001 AND p.position<>'GK' AND ps.saves<>0
+  UNION ALL SELECT 'player_stat_source_not_demo', COUNT(*) FROM football_player_competition_stat WHERE id>=23000000000000001 AND source<>'DEMO'
+  UNION ALL SELECT 'team_stat_missing_scope', COUNT(*) FROM football_team_competition_stat ts LEFT JOIN football_season s ON s.id=ts.season_id LEFT JOIN football_team t ON t.id=ts.team_id WHERE ts.id>=24000000000000001 AND (s.id IS NULL OR s.league_id<>ts.league_id OR t.id IS NULL)
+  UNION ALL SELECT 'team_stat_standing_mismatch', COUNT(*) FROM football_team_competition_stat ts LEFT JOIN football_standing fs ON fs.league_id=ts.league_id AND fs.season_id=ts.season_id AND fs.stage_id=ts.stage_id AND fs.team_id=ts.team_id WHERE ts.id>=24000000000000001 AND (fs.id IS NULL OR ts.played<>fs.played OR ts.goals_for<>fs.goals_for OR ts.goals_against<>fs.goals_against)
+  UNION ALL SELECT 'team_stat_invalid_totals', COUNT(*) FROM football_team_competition_stat WHERE id>=24000000000000001 AND (shots<shots_on_target OR assists>goals_for OR LEAST(played,goals_for,goals_against,assists,yellow_cards,red_cards,shots,shots_on_target,corners,fouls,clean_sheets)<0)
+  UNION ALL SELECT 'team_stat_source_not_demo', COUNT(*) FROM football_team_competition_stat WHERE id>=24000000000000001 AND source<>'DEMO'
+  UNION ALL SELECT 'standing_leagues_below_5', IF(COUNT(*)>=5,0,1) FROM (SELECT league_id FROM football_standing WHERE id>=22000000000000001 GROUP BY league_id HAVING COUNT(*)>=8) x
+  UNION ALL SELECT 'player_stats_below_120', IF(COUNT(*)>=120,0,1) FROM football_player_competition_stat WHERE id>=23000000000000001
+  UNION ALL SELECT 'team_stats_below_24', IF(COUNT(*)>=24,0,1) FROM football_team_competition_stat WHERE id>=24000000000000001
 ) checks ORDER BY check_name;
 
 SELECT 'demo_users' metric, COUNT(*) value FROM sys_user WHERE id>=11000000000000001
@@ -56,4 +82,9 @@ UNION ALL SELECT 'demo_teams',COUNT(*) FROM football_team WHERE id>=130000000000
 UNION ALL SELECT 'demo_players',COUNT(*) FROM football_player WHERE id>=14000000000000001
 UNION ALL SELECT 'demo_matches',COUNT(*) FROM match_info WHERE id>=15000000000000001
 UNION ALL SELECT 'demo_contents',COUNT(*) FROM content WHERE id>=16000000000000001
-UNION ALL SELECT 'demo_comments',COUNT(*) FROM comment WHERE id>=17000000000000001;
+UNION ALL SELECT 'demo_comments',COUNT(*) FROM comment WHERE id>=17000000000000001
+UNION ALL SELECT 'demo_seasons',COUNT(*) FROM football_season WHERE id>=20000000000000001
+UNION ALL SELECT 'demo_stages',COUNT(*) FROM football_competition_stage WHERE id>=21000000000000001
+UNION ALL SELECT 'demo_standings',COUNT(*) FROM football_standing WHERE id>=22000000000000001
+UNION ALL SELECT 'demo_player_stats',COUNT(*) FROM football_player_competition_stat WHERE id>=23000000000000001
+UNION ALL SELECT 'demo_team_stats',COUNT(*) FROM football_team_competition_stat WHERE id>=24000000000000001;

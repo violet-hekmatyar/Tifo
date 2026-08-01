@@ -34,6 +34,12 @@ def main():
         "content_capacity": config["counts"]["contents"] >= 60,
         "match_capacity": config["counts"]["matches"] >= 60,
         "player_capacity": config["counts"]["teams"] * config["counts"]["players_per_team"] >= 100,
+        "rank_league_capacity": config["counts"]["rank_leagues"] >= 5,
+        "standing_team_capacity": config["counts"]["standing_teams_per_league"] >= 8,
+        "t15_tables_generated": all(name in SEED.read_text(encoding="utf-8") for name in [
+            "football_season", "football_competition_stage", "football_standing",
+            "football_player_competition_stat", "football_team_competition_stat"]),
+        "demo_source_declared": "'DEMO'" in SEED.read_text(encoding="utf-8"),
         "seed_has_no_placeholder": "REPLACE_WITH" not in SEED.read_text(encoding="utf-8")
     }
     for name, passed in checks.items():

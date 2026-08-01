@@ -112,7 +112,7 @@ try {
         }
     }
 
-    Invoke-Step ".\scripts\windows\reset-dev-db.ps1" "reset-dev-db.ps1"
+    Invoke-Step ".\scripts\windows\reset-dev-db.ps1 -ConfirmReset -ConfirmationText 'RESET south_stand'" "reset-dev-db.ps1"
     Invoke-Step "mvn test" "mvn test"
     Invoke-Step "mvn clean package" "mvn clean package"
 

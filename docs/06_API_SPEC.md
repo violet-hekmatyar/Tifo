@@ -1081,3 +1081,18 @@ relationList accepts TEAM, PLAYER, and MATCH, validates existence/status, normal
 Entity search is public and returns a unified PageResult for TEAM, PLAYER, and MATCH.
 There is no active follow cap for USER, TEAM, or PLAYER follows.
 ```
+# T15 足球赛季与榜单 API
+
+公开 GET 接口：
+
+```text
+/api/app/football/leagues/{leagueId}/seasons
+/api/app/football/leagues/{leagueId}/seasons/{seasonId}/stages
+/api/app/football/standings?leagueId=&seasonId=&stageId=&groupCode=
+/api/app/football/player-ranks?leagueId=&seasonId=&stageId=&rankType=&pageNum=1&pageSize=20
+/api/app/football/team-ranks?leagueId=&seasonId=&stageId=&rankType=&pageNum=1&pageSize=20
+```
+
+球员 `rankType`：`GOALS`、`ASSISTS`、`YELLOW_CARDS`、`RED_CARDS`、`SHOTS`、`SHOTS_ON_TARGET`、`RATING`、`SAVES`、`APPEARANCES`、`MINUTES`。
+
+球队 `rankType`：`GOALS_FOR`、`GOALS_AGAINST`、`ASSISTS`、`YELLOW_CARDS`、`RED_CARDS`、`SHOTS`、`SHOTS_ON_TARGET`、`CORNERS`、`FOULS`、`CLEAN_SHEETS`、`AVG_RATING`。`GOALS_AGAINST` 按升序，其余默认降序；服务端返回 `sortDirection` 和连续位置排名。
