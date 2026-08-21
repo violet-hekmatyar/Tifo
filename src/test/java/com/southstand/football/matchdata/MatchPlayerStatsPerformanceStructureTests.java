@@ -1,0 +1,3 @@
+package com.southstand.football.matchdata;
+import static org.assertj.core.api.Assertions.assertThat;import java.nio.file.Files;import java.nio.file.Path;import org.junit.jupiter.api.Test;
+class MatchPlayerStatsPerformanceStructureTests{@Test void playerStatsAggregateRatingsOnce()throws Exception{String s=Files.readString(Path.of("src/main/java/com/southstand/football/matchdata/service/MatchDataService.java"));assertThat(s).contains("List<FootballUserPlayerRating> ratingRows=ratingRows(matchId)","Map<Long,RatingAggregate> aggregates=aggregate(ratingRows)");assertThat(s).doesNotContain("statRows.forEach(x->ratings.select");}}

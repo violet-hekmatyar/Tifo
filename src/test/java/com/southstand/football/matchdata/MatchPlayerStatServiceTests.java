@@ -1,0 +1,4 @@
+package com.southstand.football.matchdata;
+import static org.assertj.core.api.Assertions.assertThat;import static org.mockito.ArgumentMatchers.any;import static org.mockito.Mockito.when;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;import java.util.List;import org.junit.jupiter.api.Test;
+class MatchPlayerStatServiceTests{@Test void batchesNamesAndComputesAccuracy(){var f=new MatchDataTestFixture();when(f.playerStats.selectList(any(QueryWrapper.class))).thenReturn(List.of(f.playerStat()));when(f.appearances.selectList(any(QueryWrapper.class))).thenReturn(List.of(f.appearance("STARTER",1,1)));var v=f.service.playerStats(f.MATCH,null,null,1,50);assertThat(v.getRecords()).singleElement().satisfies(x->{assertThat(x.passAccuracy()).isEqualByComparingTo("75.00");assertThat(x.goals()).isEqualTo(2);});}}

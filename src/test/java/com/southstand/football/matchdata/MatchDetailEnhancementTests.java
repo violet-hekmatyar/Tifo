@@ -1,0 +1,4 @@
+package com.southstand.football.matchdata;
+import static org.assertj.core.api.Assertions.assertThat;import static org.mockito.ArgumentMatchers.any;import static org.mockito.Mockito.when;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;import com.southstand.football.match.vo.MatchDetailVO;import java.util.List;import org.junit.jupiter.api.Test;
+class MatchDetailEnhancementTests{@Test void availabilityAndMotmAreAddedWithoutOldFieldChanges(){var f=new MatchDataTestFixture();when(f.playerStats.selectList(any(QueryWrapper.class))).thenReturn(List.of(f.playerStat()));var d=new MatchDetailVO();d.setMatchId(f.MATCH);d.setLeagueName("League");f.service.enhance(d);assertThat(d.getLeagueName()).isEqualTo("League");assertThat(d.getPlayerStatsAvailable()).isTrue();assertThat(d.getManOfTheMatch().playerId()).isEqualTo(f.PLAYER);}}

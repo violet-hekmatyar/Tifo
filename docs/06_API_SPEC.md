@@ -1111,3 +1111,13 @@ GET /api/app/football/players/{playerId}/career
 ```
 
 接口均公开只读，可选 JWT 仅用于 `followed`。不存在返回 `40401`；球队与赛季不匹配返回 `40001`。
+## T17 比赛数据 API
+
+- `GET /api/app/football/matches/{matchId}/lineups`
+- `GET /api/app/football/matches/{matchId}/stats`
+- `GET /api/app/football/matches/{matchId}/player-stats?teamId=&position=&pageNum=1&pageSize=50`
+- `GET /api/app/football/matches/{matchId}/ratings?teamId=`
+- `POST /api/app/football/matches/{matchId}/players/{playerId}/ratings`，请求 `{ "rating": 8.5 }`
+- `DELETE /api/app/football/matches/{matchId}/players/{playerId}/ratings`
+
+评分分布固定为 `1.0-2.0`、`2.5-4.0`、`4.5-6.0`、`6.5-8.0`、`8.5-10.0`。比赛详情新增 `lineupsAvailable`、`teamStatsAvailable`、`playerStatsAvailable`、`ratingsAvailable`、`ratingUserCount`、`manOfTheMatch`。

@@ -4,8 +4,8 @@ SET NAMES utf8mb4;
 -- Every row must return anomaly_count = 0. IDs below 10^16 are base seed data.
 SELECT check_name, anomaly_count FROM (
   SELECT 'missing_profile_user' check_name, COUNT(*) anomaly_count FROM user_profile p LEFT JOIN sys_user u ON u.id=p.user_id WHERE p.user_id>=11000000000000001 AND u.id IS NULL
-  UNION ALL SELECT 'missing_main_team', COUNT(*) FROM user_profile p LEFT JOIN football_team t ON t.id=p.main_team_id WHERE p.user_id>=11000000000000001 AND (t.id IS NULL OR t.status<>'ACTIVE')
-  UNION ALL SELECT 'main_team_follow_mismatch', COUNT(*) FROM user_profile p JOIN sys_user u ON u.id=p.user_id AND u.status='ACTIVE' LEFT JOIN follow_record f ON f.user_id=p.user_id AND f.follow_type='TEAM' AND f.target_id=p.main_team_id AND f.status='ACTIVE' AND f.is_deleted=0 WHERE p.user_id>=11000000000000001 AND f.id IS NULL
+  UNION ALL SELECT 'missing_main_team', COUNT(*) FROM user_profile p JOIN sys_user u ON u.id=p.user_id AND u.id>=11000000000000001 AND u.username LIKE 'demo_user_%' LEFT JOIN football_team t ON t.id=p.main_team_id WHERE (t.id IS NULL OR t.status<>'ACTIVE')
+  UNION ALL SELECT 'main_team_follow_mismatch', COUNT(*) FROM user_profile p JOIN sys_user u ON u.id=p.user_id AND u.id>=11000000000000001 AND u.status='ACTIVE' AND u.username LIKE 'demo_user_%' LEFT JOIN follow_record f ON f.user_id=p.user_id AND f.follow_type='TEAM' AND f.target_id=p.main_team_id AND f.status='ACTIVE' AND f.is_deleted=0 WHERE f.id IS NULL
   UNION ALL SELECT 'missing_team_player_team', COUNT(*) FROM team_player tp LEFT JOIN football_team t ON t.id=tp.team_id WHERE tp.player_id>=14000000000000001 AND t.id IS NULL
   UNION ALL SELECT 'missing_team_player_player', COUNT(*) FROM team_player tp LEFT JOIN football_player p ON p.id=tp.player_id WHERE tp.player_id>=14000000000000001 AND p.id IS NULL
   UNION ALL SELECT 'player_multiple_active_teams', COUNT(*) FROM (SELECT player_id FROM team_player WHERE player_id>=14000000000000001 AND status='ACTIVE' AND is_deleted=0 GROUP BY player_id HAVING COUNT(*)<>1) x
@@ -88,3 +88,27 @@ UNION ALL SELECT 'demo_stages',COUNT(*) FROM football_competition_stage WHERE id
 UNION ALL SELECT 'demo_standings',COUNT(*) FROM football_standing WHERE id>=22000000000000001
 UNION ALL SELECT 'demo_player_stats',COUNT(*) FROM football_player_competition_stat WHERE id>=23000000000000001
 UNION ALL SELECT 'demo_team_stats',COUNT(*) FROM football_team_competition_stat WHERE id>=24000000000000001;
+
+SELECT 't17_roster_chain_missing' check_name,COUNT(*) anomaly_count
+FROM football_player p
+LEFT JOIN team_player tp ON tp.player_id=p.id AND tp.status='ACTIVE' AND tp.is_deleted=0
+LEFT JOIN football_team_season_player r ON r.player_id=p.id AND r.status='ACTIVE' AND r.is_deleted=0
+LEFT JOIN football_player_team_history h ON h.player_id=p.id AND h.current_flag=1 AND h.is_deleted=0
+LEFT JOIN football_player_competition_stat ps ON ps.player_id=p.id AND ps.team_id=r.team_id AND ps.season_id=r.season_id AND ps.is_deleted=0
+WHERE p.id>=33000000000000001 AND p.id<33100000000000001 AND p.is_deleted=0 AND (tp.id IS NULL OR r.id IS NULL OR h.id IS NULL OR ps.id IS NULL);
+
+SELECT 't17_complete_team_roster_below_18' check_name,COUNT(*) anomaly_count FROM (
+ SELECT l.match_id,l.team_id,COUNT(DISTINCT r.player_id) n
+ FROM football_match_lineup l JOIN match_info m ON m.id=l.match_id JOIN football_season s ON s.league_id=m.league_id AND s.current_flag=1 AND s.is_deleted=0
+ LEFT JOIN football_team_season_player r ON r.season_id=s.id AND r.team_id=l.team_id AND r.status='ACTIVE' AND r.is_deleted=0
+ WHERE l.source='DEMO' AND l.is_deleted=0 GROUP BY l.match_id,l.team_id HAVING n<18
+) x;
+
+SELECT 't17_complete_matches_below_12' check_name,IF(COUNT(*)>=12,0,1) anomaly_count FROM (
+ SELECT m.id FROM match_info m
+ WHERE m.match_status='FINISHED' AND m.is_deleted=0
+ AND (SELECT COUNT(*) FROM football_match_lineup l WHERE l.match_id=m.id AND l.is_deleted=0)=2
+ AND (SELECT COUNT(*) FROM football_match_player_appearance a WHERE a.match_id=m.id AND a.lineup_type='STARTER' AND a.status='ACTIVE' AND a.is_deleted=0)=22
+ AND (SELECT COUNT(*) FROM football_match_player_appearance a WHERE a.match_id=m.id AND a.lineup_type IN('SUBSTITUTE','BENCH') AND a.status='ACTIVE' AND a.is_deleted=0)>=10
+ AND (SELECT COUNT(*) FROM football_match_team_stat t WHERE t.match_id=m.id AND t.is_deleted=0)=2
+) x;

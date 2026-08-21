@@ -1,0 +1,3 @@
+package com.southstand.football.matchdata;
+import static org.assertj.core.api.Assertions.assertThat;import java.nio.file.Files;import java.nio.file.Path;import org.junit.jupiter.api.Test;
+class MatchRatingPerformanceStructureTests{@Test void ratingSummaryDoesNotExposeUsersOrQueryPerPlayer()throws Exception{String vo=Files.readString(Path.of("src/main/java/com/southstand/football/matchdata/vo/MatchDataVO.java"));String service=Files.readString(Path.of("src/main/java/com/southstand/football/matchdata/service/MatchDataService.java"));assertThat(vo.substring(vo.indexOf("record RatingSummary"))).doesNotContain("userId","username");assertThat(service).doesNotContain("appeared.forEach(x->ratings.select");}}

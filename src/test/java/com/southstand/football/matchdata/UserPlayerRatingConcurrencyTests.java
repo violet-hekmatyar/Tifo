@@ -1,0 +1,8 @@
+package com.southstand.football.matchdata;
+import static org.assertj.core.api.Assertions.assertThat;import static org.mockito.ArgumentMatchers.any;import static org.mockito.Mockito.times;import static org.mockito.Mockito.verify;import static org.mockito.Mockito.when;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;import com.southstand.auth.security.CurrentUserHolder;import com.southstand.auth.security.LoginUserContext;import java.math.BigDecimal;import java.nio.file.Files;import java.nio.file.Path;import java.util.List;import java.util.concurrent.Executors;import java.util.concurrent.TimeUnit;import org.junit.jupiter.api.Test;
+class UserPlayerRatingConcurrencyTests{
+ @Test void uniqueKeyAndAtomicUpsertProtectConcurrentSubmits()throws Exception{String sql=Files.readString(Path.of("scripts/sql/migrations/V017__match_lineups_stats_ratings.sql"));String mapper=Files.readString(Path.of("src/main/java/com/southstand/football/matchdata/mapper/FootballUserPlayerRatingMapper.java"));assertThat(sql).contains("UNIQUE KEY uk_user_match_player");assertThat(mapper).contains("ON DUPLICATE KEY UPDATE","status='CANCELLED'");
+  var f=new MatchDataTestFixture();when(f.ratings.selectList(any(QueryWrapper.class))).thenReturn(List.of(f.rating(f.USER,"8.5")));var pool=Executors.newFixedThreadPool(4);for(int i=0;i<8;i++)pool.submit(()->{CurrentUserHolder.set(new LoginUserContext(f.USER,"u","USER"));try{f.service.submitRating(f.MATCH,f.PLAYER,new BigDecimal("8.5"));}finally{CurrentUserHolder.clear();}});pool.shutdown();assertThat(pool.awaitTermination(5,TimeUnit.SECONDS)).isTrue();verify(f.ratings,times(8)).upsertActive(any());
+ }
+}

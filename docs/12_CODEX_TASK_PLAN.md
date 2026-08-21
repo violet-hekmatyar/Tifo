@@ -1824,3 +1824,6 @@ No third-party sports API and no follow-count cap
 - [x] 复用 T15 统计完成球队 stats 和球员 career
 - [x] 增量数据、冲突检查、幂等校验和数据保护
 - [x] 服务、控制器、性能结构、迁移测试与 Windows smoke
+## T17 状态
+
+V017 模型、API、评分事务、校验、测试和 Windows 脚本已实现。增量阵容脚本以专用 Demo ID 为 9 支目标队补齐 18 人五层关系，比赛脚本已生成 20 场完整阵容与统计、300 条有效评分；旧比分、事件和非 DEMO 数据保持不变。全量校验、105 项测试、打包及 T03-T17 Smoke 均通过。

@@ -847,3 +847,14 @@ Demo 积分规则为 `3 * won + drawn - deduction_points`；排名依次使用�
 - `football_player_team_history`：少量可验证效力关系；当前关系必须与 `team_player` 一致。
 
 T15 的球员和球队赛事统计继续是唯一统计事实源，T16 不建立重复统计表。
+## T17 表
+
+- `football_match_lineup`：每场每队一条阵容，唯一键 `(match_id, team_id)`。
+- `football_match_player_appearance`：每场球员出场与首发/替补、队长、分钟信息，唯一键 `(match_id, player_id)`。
+- `football_match_team_stat`：每场球队技术统计，唯一键 `(match_id, team_id)`。
+- `football_match_player_stat`：实际出场球员逐场统计，唯一键 `(match_id, player_id)`。
+- `football_user_player_rating`：用户逐场球员评分，唯一键 `(user_id, match_id, player_id)`；撤销采用 `CANCELLED` 和软删除。
+
+完整 DDL 见 `scripts/sql/migrations/V017__match_lineups_stats_ratings.sql`。
+
+T17 Demo 阵容扩充使用独立 ID 段，并同时补齐球员、球队关系、赛季阵容、当前效力历史和赛事统计；任一专用 ID 被非 DEMO 数据占用时立即中止。

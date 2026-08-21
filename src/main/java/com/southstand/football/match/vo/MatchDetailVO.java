@@ -2,6 +2,7 @@ package com.southstand.football.match.vo;
 
 import com.southstand.football.event.vo.MatchEventVO;
 import com.southstand.football.report.vo.MatchReportVO;
+import com.southstand.football.matchdata.vo.MatchDataVO.ManOfTheMatch;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -19,6 +20,12 @@ public class MatchDetailVO {
     private LocalDateTime matchTime;
     private List<MatchEventVO> eventList;
     private MatchReportVO report;
+    private Boolean lineupsAvailable;
+    private Boolean teamStatsAvailable;
+    private Boolean playerStatsAvailable;
+    private Boolean ratingsAvailable;
+    private Integer ratingUserCount;
+    private ManOfTheMatch manOfTheMatch;
 
     public Long getMatchId() { return matchId; }
     public void setMatchId(Long matchId) { this.matchId = matchId; }
@@ -44,4 +51,10 @@ public class MatchDetailVO {
     public void setEventList(List<MatchEventVO> eventList) { this.eventList = eventList; }
     public MatchReportVO getReport() { return report; }
     public void setReport(MatchReportVO report) { this.report = report; }
+    public Boolean getLineupsAvailable(){return lineupsAvailable;} public void setLineupsAvailable(Boolean v){lineupsAvailable=v;}
+    public Boolean getTeamStatsAvailable(){return teamStatsAvailable;} public void setTeamStatsAvailable(Boolean v){teamStatsAvailable=v;}
+    public Boolean getPlayerStatsAvailable(){return playerStatsAvailable;} public void setPlayerStatsAvailable(Boolean v){playerStatsAvailable=v;}
+    public Boolean getRatingsAvailable(){return ratingsAvailable;} public void setRatingsAvailable(Boolean v){ratingsAvailable=v;}
+    public Integer getRatingUserCount(){return ratingUserCount;} public void setRatingUserCount(Integer v){ratingUserCount=v;}
+    public ManOfTheMatch getManOfTheMatch(){return manOfTheMatch;} public void setManOfTheMatch(ManOfTheMatch v){manOfTheMatch=v;}
 }

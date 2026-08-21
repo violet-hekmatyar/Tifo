@@ -524,3 +524,6 @@ No USER, TEAM, or PLAYER follow count cap is enforced.
 ## T16 Read-only Access
 
 T16 team/player detail GET APIs allow anonymous access. A valid JWT only adds follow state; no App-side roster, honor, history, or statistics write endpoint is exposed.
+## T17 评分权限
+
+阵容、球队统计、球员统计和评分汇总允许匿名读取，匿名响应中的 `currentUserRating` 为 `null`。评分创建、修改和撤销必须登录，服务端只使用 JWT 当前用户 ID；汇总响应不暴露评分用户身份。原子 upsert 与三列唯一键共同保证重复/并发提交不重复计数。

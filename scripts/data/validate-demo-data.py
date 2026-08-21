@@ -22,7 +22,11 @@ def main():
     t16_migration = ROOT / "scripts" / "sql" / "migrations" / "V016__team_roster_player_career.sql"
     t16_seed = ROOT / "scripts" / "sql" / "seed-t16-incremental.sql"
     t16_validation = ROOT / "scripts" / "sql" / "validate-t16-incremental.sql"
-    required = [SEED, ROOT / "scripts" / "sql" / "validate-demo-data.sql", t16_migration, t16_seed, t16_validation]
+    t17_roster = ROOT / "scripts" / "sql" / "seed-t17-roster-expansion.sql"
+    t17_seed = ROOT / "scripts" / "sql" / "seed-t17-incremental.sql"
+    t17_validation = ROOT / "scripts" / "sql" / "validate-t17-incremental.sql"
+    required = [SEED, ROOT / "scripts" / "sql" / "validate-demo-data.sql", t16_migration, t16_seed, t16_validation,
+                t17_roster, t17_seed, t17_validation]
     missing = [str(path) for path in required if not path.exists()]
     if missing:
         raise SystemExit("Missing generated files: " + ", ".join(missing))
@@ -48,7 +52,13 @@ def main():
             for token in ["DROP DATABASE", "TRUNCATE TABLE", "DELETE FROM"]),
         "t16_models_declared": all(name in t16_migration.read_text(encoding="utf-8") for name in [
             "football_team_season_player", "football_team_honor", "football_player_team_history"]),
-        "t16_consistency_validation_present": "roster_stat_mismatch" in t16_validation.read_text(encoding="utf-8")
+        "t16_consistency_validation_present": "roster_stat_mismatch" in t16_validation.read_text(encoding="utf-8"),
+        "t17_roster_is_incremental": all(token not in t17_roster.read_text(encoding="utf-8").upper()
+            for token in ["DROP DATABASE", "TRUNCATE TABLE", "DELETE FROM"]),
+        "t17_roster_has_five_layer_chain": all(name in t17_roster.read_text(encoding="utf-8") for name in [
+            "football_player", "team_player", "football_team_season_player", "football_player_team_history", "football_player_competition_stat"]),
+        "t17_complete_match_capacity_guard": "complete_matches_below_12" in t17_validation.read_text(encoding="utf-8"),
+        "t17_rating_capacity_guard": "active_ratings_below_300" in t17_validation.read_text(encoding="utf-8")
     }
     for name, passed in checks.items():
         print(f"{name}: {'PASS' if passed else 'FAIL'}")

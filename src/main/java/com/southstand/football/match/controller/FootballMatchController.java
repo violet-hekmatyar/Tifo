@@ -5,6 +5,11 @@ import com.southstand.common.result.Result;
 import com.southstand.football.match.vo.MatchDetailVO;
 import com.southstand.football.match.vo.MatchListVO;
 import com.southstand.football.schedule.service.FootballQueryService;
+import com.southstand.football.matchdata.dto.PlayerRatingRequest;
+import com.southstand.football.matchdata.service.MatchDataService;
+import com.southstand.football.matchdata.vo.MatchDataVO;
+import jakarta.validation.Valid;
+import java.util.List;
 import java.time.LocalDate;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -18,9 +23,11 @@ import org.springframework.web.bind.annotation.RestController;
 public class FootballMatchController {
 
     private final FootballQueryService footballQueryService;
+    private final MatchDataService matchDataService;
 
-    public FootballMatchController(FootballQueryService footballQueryService) {
+    public FootballMatchController(FootballQueryService footballQueryService,MatchDataService matchDataService) {
         this.footballQueryService = footballQueryService;
+        this.matchDataService = matchDataService;
     }
 
     @GetMapping("/important")
@@ -55,6 +62,29 @@ public class FootballMatchController {
 
     @GetMapping("/{matchId}")
     public Result<MatchDetailVO> matchDetail(@PathVariable Long matchId) {
-        return Result.success(footballQueryService.matchDetail(matchId));
+        MatchDetailVO detail=footballQueryService.matchDetail(matchId);
+        matchDataService.enhance(detail);
+        return Result.success(detail);
     }
+
+    @GetMapping("/{matchId}/lineups")
+    public Result<MatchDataVO.Lineups> lineups(@PathVariable Long matchId){return Result.success(matchDataService.lineups(matchId));}
+
+    @GetMapping("/{matchId}/stats")
+    public Result<List<MatchDataVO.TeamStatItem>> stats(@PathVariable Long matchId){return Result.success(matchDataService.teamStats(matchId));}
+
+    @GetMapping("/{matchId}/player-stats")
+    public Result<PageResult<MatchDataVO.PlayerStat>> playerStats(@PathVariable Long matchId,@RequestParam(required=false)Long teamId,
+            @RequestParam(required=false)String position,@RequestParam(defaultValue="1")long pageNum,@RequestParam(defaultValue="50")long pageSize){
+        return Result.success(matchDataService.playerStats(matchId,teamId,position,pageNum,pageSize));
+    }
+
+    @GetMapping("/{matchId}/ratings")
+    public Result<List<MatchDataVO.RatingSummary>> ratings(@PathVariable Long matchId,@RequestParam(required=false)Long teamId){return Result.success(matchDataService.ratings(matchId,teamId));}
+
+    @org.springframework.web.bind.annotation.PostMapping("/{matchId}/players/{playerId}/ratings")
+    public Result<MatchDataVO.RatingResult> rate(@PathVariable Long matchId,@PathVariable Long playerId,@Valid @org.springframework.web.bind.annotation.RequestBody PlayerRatingRequest request){return Result.success(matchDataService.submitRating(matchId,playerId,request.rating()));}
+
+    @org.springframework.web.bind.annotation.DeleteMapping("/{matchId}/players/{playerId}/ratings")
+    public Result<MatchDataVO.RatingResult> cancelRating(@PathVariable Long matchId,@PathVariable Long playerId){return Result.success(matchDataService.cancelRating(matchId,playerId));}
 }
