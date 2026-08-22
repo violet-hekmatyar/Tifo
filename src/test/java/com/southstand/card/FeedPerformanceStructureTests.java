@@ -10,6 +10,8 @@ import static org.mockito.Mockito.when;
 
 import com.baomidou.mybatisplus.core.conditions.Wrapper;
 import com.southstand.card.service.FeedService;
+import com.southstand.card.service.HotCommentCardService;
+import com.southstand.card.model.HomeFeedUserContext;
 import com.southstand.card.vo.FeedPageResult;
 import com.southstand.content.entity.Content;
 import com.southstand.content.mapper.ContentMapper;
@@ -24,6 +26,8 @@ import com.southstand.football.team.mapper.FootballTeamMapper;
 import com.southstand.interaction.mapper.CommentMapper;
 import com.southstand.interaction.mapper.FavoriteRecordMapper;
 import com.southstand.interaction.mapper.LikeRecordMapper;
+import com.southstand.interaction.entity.Comment;
+import com.southstand.user.entity.UserProfile;
 import com.southstand.user.mapper.UserProfileMapper;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -66,6 +70,28 @@ class FeedPerformanceStructureTests {
         verify(favoriteMapper, never()).selectCount(any(Wrapper.class));
     }
 
+    @Test
+    void hotCommentCandidatesUseOneBatchQueryPerEntityType() {
+        CommentMapper commentMapper = mock(CommentMapper.class);
+        ContentMapper contentMapper = mock(ContentMapper.class);
+        UserProfileMapper profileMapper = mock(UserProfileMapper.class);
+        List<Comment> comments = LongStream.rangeClosed(1, 40).mapToObj(this::comment).toList();
+        when(commentMapper.selectList(any(Wrapper.class))).thenReturn(comments);
+        when(contentMapper.selectList(any(Wrapper.class))).thenReturn(
+                LongStream.rangeClosed(1, 40).mapToObj(this::content).toList());
+        UserProfile author = new UserProfile(); author.setUserId(1001L); author.setNickname("批量作者");
+        when(profileMapper.selectList(any(Wrapper.class))).thenReturn(List.of(author));
+
+        var cards = new HotCommentCardService(commentMapper, contentMapper, profileMapper)
+                .candidates(HomeFeedUserContext.anonymous());
+
+        assertThat(cards).hasSize(10);
+        verify(commentMapper, times(1)).selectList(any(Wrapper.class));
+        verify(contentMapper, times(1)).selectList(any(Wrapper.class));
+        verify(profileMapper, times(1)).selectList(any(Wrapper.class));
+        verify(profileMapper, never()).selectOne(any(Wrapper.class));
+    }
+
     private Content content(long id) {
         Content content = new Content();
         content.setId(id);
@@ -80,5 +106,13 @@ class FeedPerformanceStructureTests {
         content.setStatus("PUBLISHED");
         content.setIsDeleted(0);
         return content;
+    }
+
+    private Comment comment(long id) {
+        Comment comment = new Comment();
+        comment.setId(id); comment.setTargetId(id); comment.setUserId(1001L);
+        comment.setContentText("comment " + id); comment.setLikeCount((int) id);
+        comment.setReplyCount(1); comment.setCreateTime(LocalDateTime.now());
+        return comment;
     }
 }

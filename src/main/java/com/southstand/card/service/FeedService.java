@@ -6,6 +6,7 @@ import com.southstand.card.vo.FeedCardVO;
 import com.southstand.card.vo.FeedPageResult;
 import com.southstand.card.vo.HotLeagueVO;
 import com.southstand.card.vo.RelationTagVO;
+import com.southstand.card.model.HomeFeedUserContext;
 import com.southstand.content.entity.Content;
 import com.southstand.content.entity.ContentRelation;
 import com.southstand.content.mapper.ContentMapper;
@@ -92,6 +93,8 @@ public class FeedService {
     private final CommentMapper commentMapper;
     private final RecommendationService recommendationService;
     private final RecommendationBehaviorService recommendationBehaviorService;
+    private final AuxiliaryCardService auxiliaryCardService;
+    private final HomeFeedCompositionService compositionService;
 
     @Autowired
     public FeedService(
@@ -109,7 +112,9 @@ public class FeedService {
             FavoriteRecordMapper favoriteRecordMapper,
             CommentMapper commentMapper,
             RecommendationService recommendationService,
-            RecommendationBehaviorService recommendationBehaviorService
+            RecommendationBehaviorService recommendationBehaviorService,
+            AuxiliaryCardService auxiliaryCardService,
+            HomeFeedCompositionService compositionService
     ) {
         this.contentMapper = contentMapper;
         this.contentRelationMapper = contentRelationMapper;
@@ -126,6 +131,8 @@ public class FeedService {
         this.commentMapper = commentMapper;
         this.recommendationService = recommendationService;
         this.recommendationBehaviorService = recommendationBehaviorService;
+        this.auxiliaryCardService = auxiliaryCardService;
+        this.compositionService = compositionService;
     }
 
     /** 保留现有测试夹具构造方式；生产环境使用完整构造器。 */
@@ -139,7 +146,7 @@ public class FeedService {
             CommentMapper commentMapper) {
         this(contentMapper, contentRelationMapper, matchInfoMapper, matchEventMapper, matchReportMapper,
                 leagueMapper, teamMapper, playerMapper, followRecordMapper, userProfileMapper,
-                likeRecordMapper, favoriteRecordMapper, commentMapper, null, null);
+                likeRecordMapper, favoriteRecordMapper, commentMapper, null, null, null, null);
     }
 
     public FeedPageResult feed(String tab, Long leagueId, Long teamId, long pageNum, long pageSize, String cursor) {
@@ -164,6 +171,10 @@ public class FeedService {
         RecommendationContext context = recommendationContext(user, safeTab, teamId, cards);
         RecommendationResult recommendation = recommendationService.recommend(context);
         List<FeedCardVO> ordered = applyRecommendation(cards, recommendation);
+        if ("recommend".equals(safeTab) && auxiliaryCardService != null && compositionService != null) {
+            List<FeedCardVO> auxiliary = auxiliaryCardService.candidates(homeContext(user));
+            ordered = compositionService.compose(ordered, auxiliary, recommendation.getRequestId());
+        }
         FeedPageResult result = page(ordered, pageNum, pageSize);
         result.setAlgorithmVersion(recommendation.getAlgorithmVersion());
         result.setModelVersion(recommendation.getModelVersion());
@@ -199,6 +210,11 @@ public class FeedService {
             case "match" -> "MATCH_ONLY";
             default -> "HOME_RECOMMEND";
         };
+    }
+
+    private HomeFeedUserContext homeContext(UserContext user) {
+        return new HomeFeedUserContext(user.userId, user.mainTeamId, user.followedTeamIds,
+                user.followedPlayerIds, user.followedUserIds);
     }
 
     private RecommendationCandidate recommendationCandidate(FeedCardVO card) {
@@ -251,6 +267,8 @@ public class FeedService {
             card.setScore(item.getScore());
             card.setReasonCode(item.getReasonCode().name());
             card.setReason(item.getReasonCode().getDisplayText());
+            card.setAlgorithmVersion(CARD_MATCH.equals(card.getCardType())
+                    ? "RULE_V2" : result.getAlgorithmVersion());
             card.setPosition(position++);
             card.setImpressionId(result.getRequestId() + ":" + item.key());
             ordered.add(card);
@@ -370,6 +388,7 @@ public class FeedService {
     private FeedCardVO toContentCard(Content content, UserContext user, boolean personalized, ContentBatch batch) {
         FeedCardVO card = new FeedCardVO();
         card.setCardId("CONTENT_" + content.getId());
+        card.setCardKey("CONTENT:" + content.getId());
         card.setCardType(CARD_CONTENT);
         card.setContentId(content.getId());
         card.setContentType(content.getContentType());
@@ -395,6 +414,7 @@ public class FeedService {
         MatchReport report = batch.reports.get(match.getId());
         FeedCardVO card = new FeedCardVO();
         card.setCardId("MATCH_" + match.getId());
+        card.setCardKey("MATCH:" + match.getId());
         card.setCardType(CARD_MATCH);
         card.setMatchId(match.getId());
         card.setLeagueId(match.getLeagueId());

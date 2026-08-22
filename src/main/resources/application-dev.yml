@@ -42,3 +42,9 @@ recommendation:
     weight: ${RECOMMENDATION_CF_WEIGHT:35}
     failure-threshold: ${RECOMMENDATION_CF_FAILURE_THRESHOLD:3}
     cooldown-seconds: ${RECOMMENDATION_CF_COOLDOWN_SECONDS:30}
+
+feed:
+  auxiliary-cards:
+    enabled: ${FEED_AUXILIARY_CARDS_ENABLED:true}
+    max-ratio: ${FEED_AUXILIARY_CARDS_MAX_RATIO:0.20}
+    min-gap: ${FEED_AUXILIARY_CARDS_MIN_GAP:3}

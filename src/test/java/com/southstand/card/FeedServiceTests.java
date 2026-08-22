@@ -52,6 +52,7 @@ class FeedServiceTests {
 
         assertThat(page.getRecords()).isNotEmpty();
         assertThat(page.getRecords()).extracting("cardType").contains("CONTENT", "MATCH");
+        assertThat(page.getRecords()).allMatch(card -> card.getCardKey() != null && !card.getCardKey().isBlank());
     }
 
     @Test

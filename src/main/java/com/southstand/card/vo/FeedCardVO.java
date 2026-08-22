@@ -10,7 +10,10 @@ import java.util.List;
 public class FeedCardVO {
 
     private String cardId;
+    private String cardKey;
     private String cardType;
+    private String algorithmVersion;
+    private HomeCardPayload payload;
     private Long contentId;
     private String contentType;
     private String title;
@@ -49,8 +52,14 @@ public class FeedCardVO {
 
     public String getCardId() { return cardId; }
     public void setCardId(String cardId) { this.cardId = cardId; }
+    public String getCardKey() { return cardKey; }
+    public void setCardKey(String cardKey) { this.cardKey = cardKey; }
     public String getCardType() { return cardType; }
     public void setCardType(String cardType) { this.cardType = cardType; }
+    public String getAlgorithmVersion() { return algorithmVersion; }
+    public void setAlgorithmVersion(String value) { algorithmVersion = value; }
+    public HomeCardPayload getPayload() { return payload; }
+    public void setPayload(HomeCardPayload value) { payload = value; }
     public Long getContentId() { return contentId; }
     public void setContentId(Long contentId) { this.contentId = contentId; }
     public String getContentType() { return contentType; }
