@@ -64,3 +64,6 @@ py -3 scripts/data/generate-demo-data.py --scope t16 --mode incremental
 ## T17 增量数据
 
 `scripts/sql/seed-t17-roster-expansion.sql` 先为 20 场安全目标比赛涉及的 9 支球队补齐赛季阵容，每队至少 18 人，并同步建立 `football_player`、`team_player`、赛季阵容、效力历史和 T15 球员赛事统计五层关系。随后 `scripts/sql/seed-t17-incremental.sql` 只处理比分与进球事件一致、事件球员属于对应赛季阵容的已结束比赛，生成 11 人首发、至少 5 人替补、逐场统计和评分。两份脚本均可重复执行；保留非 DEMO 数据，专用 ID 冲突时返回非 0。
+# T18 推荐数据
+
+`scripts/generate_t18_recommendation_seed.py` 基于正式 Demo ID 范围生成 `scripts/sql/seed-t18-recommendation-incremental.sql`：20 用户、120 CONTENT、6060 行、近 30 天、四组明显兴趣聚类。固定 `t18-demo-*` client_event_id 与 `INSERT IGNORE` 保证重复执行计数稳定；不会创建或更新用户、内容、比赛及其他业务数据。

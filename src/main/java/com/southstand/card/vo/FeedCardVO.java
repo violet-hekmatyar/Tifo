@@ -1,5 +1,6 @@
 package com.southstand.card.vo;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.southstand.content.vo.AuthorVO;
 import com.southstand.football.match.vo.MatchTeamVO;
 import com.southstand.interaction.vo.HotCommentVO;
@@ -37,6 +38,14 @@ public class FeedCardVO {
     private Boolean hasReport;
     private Long reportContentId;
     private Double score;
+    private String reasonCode;
+    private String reason;
+    private String impressionId;
+    private Integer position;
+    @JsonIgnore
+    private Double recommendationHotScore;
+    @JsonIgnore
+    private Integer recommendationImportantLevel;
 
     public String getCardId() { return cardId; }
     public void setCardId(String cardId) { this.cardId = cardId; }
@@ -96,4 +105,16 @@ public class FeedCardVO {
     public void setReportContentId(Long reportContentId) { this.reportContentId = reportContentId; }
     public Double getScore() { return score; }
     public void setScore(Double score) { this.score = score; }
+    public String getReasonCode() { return reasonCode; }
+    public void setReasonCode(String reasonCode) { this.reasonCode = reasonCode; }
+    public String getReason() { return reason; }
+    public void setReason(String reason) { this.reason = reason; }
+    public String getImpressionId() { return impressionId; }
+    public void setImpressionId(String impressionId) { this.impressionId = impressionId; }
+    public Integer getPosition() { return position; }
+    public void setPosition(Integer position) { this.position = position; }
+    public Double getRecommendationHotScore() { return recommendationHotScore; }
+    public void setRecommendationHotScore(Double value) { recommendationHotScore = value; }
+    public Integer getRecommendationImportantLevel() { return recommendationImportantLevel; }
+    public void setRecommendationImportantLevel(Integer value) { recommendationImportantLevel = value; }
 }

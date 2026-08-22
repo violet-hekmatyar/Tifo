@@ -19,6 +19,9 @@ import com.southstand.interaction.vo.CommentVO;
 import com.southstand.interaction.vo.CommentLikeToggleVO;
 import com.southstand.interaction.vo.CreateCommentResponse;
 import com.southstand.interaction.vo.HotCommentVO;
+import com.southstand.recommend.model.RecommendationBehaviorType;
+import com.southstand.recommend.model.RecommendationTargetType;
+import com.southstand.recommend.service.RecommendationBehaviorService;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Duration;
@@ -28,6 +31,7 @@ import java.util.Comparator;
 import java.util.List;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -44,15 +48,26 @@ public class CommentService {
     private final ContentMapper contentMapper;
     private final LikeRecordMapper likeRecordMapper;
     private final ContentService contentService;
+    private final RecommendationBehaviorService recommendationBehaviorService;
+
+    @Autowired
+    public CommentService(CommentMapper commentMapper,
+            ContentMapper contentMapper,
+            LikeRecordMapper likeRecordMapper,
+            ContentService contentService,
+            RecommendationBehaviorService recommendationBehaviorService) {
+        this.commentMapper = commentMapper;
+        this.contentMapper = contentMapper;
+        this.likeRecordMapper = likeRecordMapper;
+        this.contentService = contentService;
+        this.recommendationBehaviorService = recommendationBehaviorService;
+    }
 
     public CommentService(CommentMapper commentMapper,
             ContentMapper contentMapper,
             LikeRecordMapper likeRecordMapper,
             ContentService contentService) {
-        this.commentMapper = commentMapper;
-        this.contentMapper = contentMapper;
-        this.likeRecordMapper = likeRecordMapper;
-        this.contentService = contentService;
+        this(commentMapper, contentMapper, likeRecordMapper, contentService, null);
     }
 
     public PageResult<CommentVO> list(String targetType, Long targetId, String sort, Long parentId, long pageNum, long pageSize) {
@@ -153,6 +168,10 @@ public class CommentService {
         response.setCommentId(comment.getId());
         response.setParentId(parentId);
         response.setCreateTime(comment.getCreateTime());
+        if (recommendationBehaviorService != null) {
+            recommendationBehaviorService.recordInteractionSafely(userId, RecommendationBehaviorType.COMMENT,
+                    RecommendationTargetType.CONTENT, targetId);
+        }
         return response;
     }
 

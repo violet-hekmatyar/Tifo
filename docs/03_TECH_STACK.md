@@ -167,3 +167,6 @@ south-stand-backend
 ```
 
 后续如果需要再拆多模块。
+# T18 技术栈补充
+
+推荐远端调用继续使用 Spring `RestClient`，不增加 WebFlux/Feign/第三方 HTTP 客户端。Item-CF 为 Python 3 + FastAPI + Pydantic v2 + PyMySQL，默认绑定 `127.0.0.1:8100`；算法仅使用 Python 标准库完成稀疏矩阵、余弦相似度和 Top-K。

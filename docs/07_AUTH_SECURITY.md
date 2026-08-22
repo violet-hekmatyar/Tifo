@@ -527,3 +527,6 @@ T16 team/player detail GET APIs allow anonymous access. A valid JWT only adds fo
 ## T17 评分权限
 
 阵容、球队统计、球员统计和评分汇总允许匿名读取，匿名响应中的 `currentUserRating` 为 `null`。评分创建、修改和撤销必须登录，服务端只使用 JWT 当前用户 ID；汇总响应不暴露评分用户身份。原子 upsert 与三列唯一键共同保证重复/并发提交不重复计数。
+# T18 安全边界
+
+Spring `/api/internal/**` 仅 ADMIN 可访问；行为批量接口要求登录。Python 只绑定本机并且代码仅 SELECT `user_behavior_log`，部署前应创建只对该表有 SELECT 权限的 recommendation DB 用户。仓库只提交 `.env.example`，不提交密码、JWT 密钥或真实 `.env`。

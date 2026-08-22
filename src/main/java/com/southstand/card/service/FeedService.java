@@ -34,6 +34,13 @@ import com.southstand.interaction.mapper.FavoriteRecordMapper;
 import com.southstand.interaction.mapper.LikeRecordMapper;
 import com.southstand.interaction.service.CommentService;
 import com.southstand.interaction.vo.HotCommentVO;
+import com.southstand.recommend.model.RecommendationCandidate;
+import com.southstand.recommend.model.RecommendationContext;
+import com.southstand.recommend.model.RecommendationItem;
+import com.southstand.recommend.model.RecommendationTargetType;
+import com.southstand.recommend.service.RecommendationBehaviorService;
+import com.southstand.recommend.service.RecommendationService;
+import com.southstand.recommend.vo.RecommendationResult;
 import com.southstand.user.entity.UserProfile;
 import com.southstand.user.mapper.UserProfileMapper;
 import java.math.BigDecimal;
@@ -53,6 +60,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -82,7 +90,10 @@ public class FeedService {
     private final LikeRecordMapper likeRecordMapper;
     private final FavoriteRecordMapper favoriteRecordMapper;
     private final CommentMapper commentMapper;
+    private final RecommendationService recommendationService;
+    private final RecommendationBehaviorService recommendationBehaviorService;
 
+    @Autowired
     public FeedService(
             ContentMapper contentMapper,
             ContentRelationMapper contentRelationMapper,
@@ -96,7 +107,9 @@ public class FeedService {
             UserProfileMapper userProfileMapper,
             LikeRecordMapper likeRecordMapper,
             FavoriteRecordMapper favoriteRecordMapper,
-            CommentMapper commentMapper
+            CommentMapper commentMapper,
+            RecommendationService recommendationService,
+            RecommendationBehaviorService recommendationBehaviorService
     ) {
         this.contentMapper = contentMapper;
         this.contentRelationMapper = contentRelationMapper;
@@ -111,6 +124,22 @@ public class FeedService {
         this.likeRecordMapper = likeRecordMapper;
         this.favoriteRecordMapper = favoriteRecordMapper;
         this.commentMapper = commentMapper;
+        this.recommendationService = recommendationService;
+        this.recommendationBehaviorService = recommendationBehaviorService;
+    }
+
+    /** 保留现有测试夹具构造方式；生产环境使用完整构造器。 */
+    public FeedService(
+            ContentMapper contentMapper, ContentRelationMapper contentRelationMapper,
+            MatchInfoMapper matchInfoMapper, MatchEventMapper matchEventMapper,
+            MatchReportMapper matchReportMapper, FootballLeagueMapper leagueMapper,
+            FootballTeamMapper teamMapper, FootballPlayerMapper playerMapper,
+            FollowRecordMapper followRecordMapper, UserProfileMapper userProfileMapper,
+            LikeRecordMapper likeRecordMapper, FavoriteRecordMapper favoriteRecordMapper,
+            CommentMapper commentMapper) {
+        this(contentMapper, contentRelationMapper, matchInfoMapper, matchEventMapper, matchReportMapper,
+                leagueMapper, teamMapper, playerMapper, followRecordMapper, userProfileMapper,
+                likeRecordMapper, favoriteRecordMapper, commentMapper, null, null);
     }
 
     public FeedPageResult feed(String tab, Long leagueId, Long teamId, long pageNum, long pageSize, String cursor) {
@@ -123,10 +152,115 @@ public class FeedService {
             case "mixed" -> mixedCards(user, leagueId, teamId, false);
             default -> mixedCards(user, leagueId, teamId, true);
         };
-        cards = deduplicate(cards);
-        cards.sort(Comparator.comparing(FeedCardVO::getScore, Comparator.nullsLast(Comparator.reverseOrder()))
-                .thenComparing(card -> Objects.toString(card.getCardId(), "")));
-        return page(cards, pageNum, pageSize);
+        if (recommendationService == null) {
+            cards = deduplicate(cards);
+            cards.sort(Comparator.comparing(FeedCardVO::getScore, Comparator.nullsLast(Comparator.reverseOrder()))
+                    .thenComparing(card -> Objects.toString(card.getCardId(), "")));
+            return page(cards, pageNum, pageSize);
+        }
+        if (cards.isEmpty() && "recommend".equals(safeTab)) {
+            cards = mixedCards(user, leagueId, teamId, false);
+        }
+        RecommendationContext context = recommendationContext(user, safeTab, teamId, cards);
+        RecommendationResult recommendation = recommendationService.recommend(context);
+        List<FeedCardVO> ordered = applyRecommendation(cards, recommendation);
+        FeedPageResult result = page(ordered, pageNum, pageSize);
+        result.setAlgorithmVersion(recommendation.getAlgorithmVersion());
+        result.setModelVersion(recommendation.getModelVersion());
+        result.setExperimentId(recommendation.getExperimentId());
+        result.setExperimentBucket(recommendation.getExperimentBucket());
+        result.setRequestId(recommendation.getRequestId());
+        return result;
+    }
+
+    private RecommendationContext recommendationContext(UserContext user, String tab, Long teamId,
+                                                         List<FeedCardVO> cards) {
+        RecommendationContext context = new RecommendationContext();
+        context.setUserId(user.userId);
+        context.setMainTeamId(user.mainTeamId);
+        context.setFollowedTeamIds(new HashSet<>(user.followedTeamIds));
+        context.setFollowedPlayerIds(new HashSet<>(user.followedPlayerIds));
+        context.setFollowedUserIds(new HashSet<>(user.followedUserIds));
+        context.setScene(sceneOf(tab, teamId));
+        context.setCandidates(cards.stream().map(this::recommendationCandidate).toList());
+        if (recommendationBehaviorService != null && user.userId != null) {
+            LocalDateTime now = LocalDateTime.now();
+            context.setExposedKeys(recommendationBehaviorService.recentExposureKeys(
+                    user.userId, now.minusDays(3), now.minusMinutes(5)));
+        }
+        return context;
+    }
+
+    private String sceneOf(String tab, Long teamId) {
+        if (teamId != null) return "TEAM_FOLLOW_FEED";
+        return switch (tab) {
+            case "news" -> "NEWS_ONLY";
+            case "following" -> "FOLLOWING_FEED";
+            case "match" -> "MATCH_ONLY";
+            default -> "HOME_RECOMMEND";
+        };
+    }
+
+    private RecommendationCandidate recommendationCandidate(FeedCardVO card) {
+        RecommendationCandidate candidate = new RecommendationCandidate();
+        candidate.setCardType(card.getCardType());
+        if (CARD_MATCH.equals(card.getCardType())) {
+            candidate.setTargetType(RecommendationTargetType.MATCH);
+            candidate.setTargetId(card.getMatchId());
+            candidate.setMatchStatus(card.getMatchStatus());
+            candidate.setMatchTime(card.getMatchTime());
+            candidate.setHasReport(Boolean.TRUE.equals(card.getHasReport()));
+            candidate.setImportantLevel(card.getRecommendationImportantLevel());
+            candidate.setHomeTeamId(card.getHomeTeam() == null ? null : card.getHomeTeam().getTeamId());
+            candidate.setAwayTeamId(card.getAwayTeam() == null ? null : card.getAwayTeam().getTeamId());
+            return candidate;
+        }
+        candidate.setTargetType(RecommendationTargetType.CONTENT);
+        candidate.setTargetId(card.getContentId());
+        candidate.setContentType(card.getContentType());
+        candidate.setAuthorId(card.getAuthor() == null ? null : card.getAuthor().getUserId());
+        candidate.setLikeCount(nvl(card.getLikeCount()));
+        candidate.setCommentCount(nvl(card.getCommentCount()));
+        candidate.setFavoriteCount(nvl(card.getFavoriteCount()));
+        candidate.setHotScore(card.getRecommendationHotScore() == null ? 0D : card.getRecommendationHotScore());
+        candidate.setPublishTime(card.getPublishTime());
+        Set<Long> teamIds = new LinkedHashSet<>();
+        Set<Long> playerIds = new LinkedHashSet<>();
+        if (card.getRelationTags() != null) {
+            for (RelationTagVO tag : card.getRelationTags()) {
+                if (TEAM.equals(tag.getRelationType())) teamIds.add(tag.getRelationId());
+                if (PLAYER.equals(tag.getRelationType())) playerIds.add(tag.getRelationId());
+                if (MATCH.equals(tag.getRelationType()) && candidate.getRelatedMatchId() == null) {
+                    candidate.setRelatedMatchId(tag.getRelationId());
+                }
+            }
+        }
+        candidate.setTeamIds(teamIds);
+        candidate.setPlayerIds(playerIds);
+        return candidate;
+    }
+
+    private List<FeedCardVO> applyRecommendation(List<FeedCardVO> cards, RecommendationResult result) {
+        Map<String, FeedCardVO> byKey = new LinkedHashMap<>();
+        for (FeedCardVO card : cards) byKey.putIfAbsent(cardKey(card), card);
+        List<FeedCardVO> ordered = new ArrayList<>(cards.size());
+        int position = 0;
+        for (RecommendationItem item : result.getItems()) {
+            FeedCardVO card = byKey.get(item.key());
+            if (card == null) continue;
+            card.setScore(item.getScore());
+            card.setReasonCode(item.getReasonCode().name());
+            card.setReason(item.getReasonCode().getDisplayText());
+            card.setPosition(position++);
+            card.setImpressionId(result.getRequestId() + ":" + item.key());
+            ordered.add(card);
+        }
+        return ordered;
+    }
+
+    private String cardKey(FeedCardVO card) {
+        return CARD_MATCH.equals(card.getCardType()) ? "MATCH_" + card.getMatchId()
+                : "CONTENT_" + card.getContentId();
     }
 
     public List<HotLeagueVO> hotLeagues(int limit) {
@@ -252,6 +386,7 @@ public class FeedService {
         card.setLiked(batch.likedContentIds.contains(content.getId()));
         card.setFavorited(batch.favoritedContentIds.contains(content.getId()));
         card.setPublishTime(content.getPublishTime());
+        card.setRecommendationHotScore(decimal(content.getHotScore()));
         card.setScore(contentScore(content, relations, user, personalized));
         return card;
     }
@@ -274,6 +409,7 @@ public class FeedService {
         card.setEventSummary(eventSummary(batch.events.get(match.getId()), batch.players));
         card.setHasReport(report != null || Objects.equals(match.getHasReport(), 1));
         card.setReportContentId(report == null ? null : report.getContentId());
+        card.setRecommendationImportantLevel(match.getImportantLevel());
         card.setScore(matchScore(match, user));
         return card;
     }

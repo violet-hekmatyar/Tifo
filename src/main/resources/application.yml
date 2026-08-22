@@ -70,3 +70,18 @@ mybatis-plus:
       logic-delete-field: isDeleted
       logic-delete-value: 1
       logic-not-delete-value: 0
+
+recommendation:
+  enabled: ${RECOMMENDATION_ENABLED:false}
+  experiment:
+    enabled: ${RECOMMENDATION_EXPERIMENT_ENABLED:true}
+    id: ${RECOMMENDATION_EXPERIMENT_ID:REC_HOME_V1}
+    cf-percent: ${RECOMMENDATION_CF_PERCENT:50}
+  cf:
+    enabled: ${RECOMMENDATION_CF_ENABLED:true}
+    base-url: ${RECOMMENDATION_CF_BASE_URL:http://127.0.0.1:8100}
+    connect-timeout-ms: ${RECOMMENDATION_CF_CONNECT_TIMEOUT_MS:300}
+    read-timeout-ms: ${RECOMMENDATION_CF_READ_TIMEOUT_MS:800}
+    weight: ${RECOMMENDATION_CF_WEIGHT:35}
+    failure-threshold: ${RECOMMENDATION_CF_FAILURE_THRESHOLD:3}
+    cooldown-seconds: ${RECOMMENDATION_CF_COOLDOWN_SECONDS:30}

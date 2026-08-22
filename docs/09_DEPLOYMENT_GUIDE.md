@@ -453,3 +453,6 @@ curl http://server_ip:8080/api/app/football/leagues
 ```
 
 该章节在真实部署后补充最终结果。
+# T18 部署补充
+
+先执行 `V018__recommendation_behavior_log.sql`，再按需执行增量 Seed。用只读数据库账号设置 `DB_HOST/DB_PORT/DB_NAME/DB_USER/DB_PASSWORD`，通过 `scripts/windows/start-recommend-service.ps1` 启动 8100；用对应 stop 脚本按 PID 停止。Python 未就绪不阻止 Java 启动或 Feed 服务。

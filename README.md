@@ -360,3 +360,6 @@ py -3 scripts/data/generate-demo-data.py --scope t16 --mode incremental
 T17 新增比赛阵容、出场、球队技术统计、球员技术统计和用户球员评分模型，并扩展比赛详情可用性字段。公开读取接口位于 `/api/app/football/matches/{matchId}` 下；评分 POST/DELETE 需要 JWT。评分范围为 1.0-10.0、步长 0.5，只允许已结束比赛的实际出场球员。
 
 执行 `scripts/windows/init-t17-data.ps1` 可进行非破坏迁移、Demo 阵容扩充、增量比赛数据生成和一致性校验。脚本使用 T17 专用 ID 为 9 支目标队各补齐 18 人（2 门将、6 后卫、6 中场、4 前锋）的五层关系，并生成 20 场完整比赛、300 条有效评分；不会修改旧比分、事件或非 DEMO 数据。
+# T18 推荐系统融合
+
+当前后端在保留 T14 批量 Feed 装载的基础上增加 RULE_V2、CONTENT Item-CF、稳定 A/B、7:3 内容/比赛混排、推荐归因、行为闭环与三级降级。Python 服务位于 `recommend-service`，关闭时 Java Feed 自动使用 RULE_V2。执行 `scripts/windows/check-t18.ps1` 完成核心验收，HTTP 专项使用 `scripts/windows/smoke-recommendation.ps1`。

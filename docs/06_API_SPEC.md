@@ -1121,3 +1121,9 @@ GET /api/app/football/players/{playerId}/career
 - `DELETE /api/app/football/matches/{matchId}/players/{playerId}/ratings`
 
 评分分布固定为 `1.0-2.0`、`2.5-4.0`、`4.5-6.0`、`6.5-8.0`、`8.5-10.0`。比赛详情新增 `lineupsAvailable`、`teamStatsAvailable`、`playerStatsAvailable`、`ratingsAvailable`、`ratingUserCount`、`manOfTheMatch`。
+# T18 API
+
+- `POST /api/app/recommendation/behaviors/batch`：登录用户批量上报，最多 100 条，返回 received/saved/duplicated/rejected。
+- `GET /api/internal/recommendation/metrics`：管理员内部指标，支持 scene、algorithmVersion、experimentId、bucket 与时间范围。
+- Python：`GET /health`、`GET /api/internal/recommend/stats`、`POST /api/internal/recommend/content-scores`、`POST /api/internal/recommend/reload?days=30`。
+- Feed 页新增 algorithmVersion/modelVersion/experimentId/experimentBucket/requestId；Card 新增 reasonCode/reason/impressionId/position，均为向后兼容可选字段。

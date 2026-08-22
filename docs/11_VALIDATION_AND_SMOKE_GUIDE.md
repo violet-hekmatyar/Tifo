@@ -992,3 +992,6 @@ cd D:\Football-APP
 运行 `scripts/windows/init-t17-data.ps1` 执行 V017、Demo 阵容扩充、增量比赛种子和一致性校验。运行 `scripts/windows/check-t17.ps1` 执行旧数据指纹保护、全量 Demo 校验、测试、打包、T03-T16 回归和 T17 Smoke，并在结束后检查 8080/8090 无残留监听。
 
 当前包含 20 场完整 T17 Demo 比赛。Smoke 会动态寻找双方均有 11 人首发和至少 5 人替补的已结束比赛，验证门将/队长、比分与逐场统计聚合、四个读接口、详情增强字段、评分创建/覆盖/撤销，以及替补和未结束比赛评分拒绝。
+# T18 验证
+
+运行 `py -m pytest -q recommend-service/tests`、`mvn test`、`mvn clean package`。`check-t18.ps1` 验证指纹、V018、Seed、Python 模型、Java 测试与构建；启动后端后用 `smoke-recommendation.ps1` 验证 attribution 和六类行为幂等。B 用户在 Python 关闭时必须仍返回 HTTP 200、`RULE_V2` 且 bucket 保持 B；结束确认 8080/8100 无监听。

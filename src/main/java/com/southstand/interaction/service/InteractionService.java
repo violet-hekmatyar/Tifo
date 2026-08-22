@@ -18,6 +18,10 @@ import com.southstand.interaction.mapper.FavoriteRecordMapper;
 import com.southstand.interaction.mapper.LikeRecordMapper;
 import com.southstand.interaction.vo.ToggleFavoriteResponse;
 import com.southstand.interaction.vo.ToggleLikeResponse;
+import com.southstand.recommend.model.RecommendationBehaviorType;
+import com.southstand.recommend.model.RecommendationTargetType;
+import com.southstand.recommend.service.RecommendationBehaviorService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -34,17 +38,29 @@ public class InteractionService {
     private final ContentMapper contentMapper;
     private final CommentMapper commentMapper;
     private final ContentService contentService;
+    private final RecommendationBehaviorService recommendationBehaviorService;
+
+    @Autowired
+    public InteractionService(LikeRecordMapper likeRecordMapper,
+            FavoriteRecordMapper favoriteRecordMapper,
+            ContentMapper contentMapper,
+            CommentMapper commentMapper,
+            ContentService contentService,
+            RecommendationBehaviorService recommendationBehaviorService) {
+        this.likeRecordMapper = likeRecordMapper;
+        this.favoriteRecordMapper = favoriteRecordMapper;
+        this.contentMapper = contentMapper;
+        this.commentMapper = commentMapper;
+        this.contentService = contentService;
+        this.recommendationBehaviorService = recommendationBehaviorService;
+    }
 
     public InteractionService(LikeRecordMapper likeRecordMapper,
             FavoriteRecordMapper favoriteRecordMapper,
             ContentMapper contentMapper,
             CommentMapper commentMapper,
             ContentService contentService) {
-        this.likeRecordMapper = likeRecordMapper;
-        this.favoriteRecordMapper = favoriteRecordMapper;
-        this.contentMapper = contentMapper;
-        this.commentMapper = commentMapper;
-        this.contentService = contentService;
+        this(likeRecordMapper, favoriteRecordMapper, contentMapper, commentMapper, contentService, null);
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -79,6 +95,10 @@ public class InteractionService {
         response.setTargetType(request.getTargetType());
         response.setTargetId(request.getTargetId());
         response.setLiked(liked);
+        if (liked && TARGET_CONTENT.equals(request.getTargetType()) && recommendationBehaviorService != null) {
+            recommendationBehaviorService.recordInteractionSafely(userId, RecommendationBehaviorType.LIKE,
+                    RecommendationTargetType.CONTENT, request.getTargetId());
+        }
         return response;
     }
 
@@ -123,6 +143,10 @@ public class InteractionService {
         response.setTargetType(request.getTargetType());
         response.setTargetId(request.getTargetId());
         response.setFavorited(favorited);
+        if (favorited && recommendationBehaviorService != null) {
+            recommendationBehaviorService.recordInteractionSafely(userId, RecommendationBehaviorType.FAVORITE,
+                    RecommendationTargetType.CONTENT, request.getTargetId());
+        }
         return response;
     }
 

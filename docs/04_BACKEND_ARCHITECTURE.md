@@ -372,3 +372,6 @@ Mapper 返回给前端
 业务模块直接访问其他模块 Mapper
 AI Coding 自行新增复杂中间件
 ```
+# T18 推荐架构
+
+`FeedService` 继续负责原有过滤和 T14 批量加载，随后一次性构造轻量候选交给 `RecommendationService`。Java 完成稳定分桶、RULE_V2、一次 CF rerank、曝光降权、稳定排序、多样性和 7:3 混排；失败链为 `CF_V1 -> RULE_V2 -> HOT_V1`。每个 Feed 请求最多一次 Python HTTP 调用和一次批量曝光历史查询，不逐卡查库。

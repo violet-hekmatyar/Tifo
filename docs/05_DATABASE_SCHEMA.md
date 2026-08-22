@@ -858,3 +858,6 @@ T15 的球员和球队赛事统计继续是唯一统计事实源，T16 不建立
 完整 DDL 见 `scripts/sql/migrations/V017__match_lineups_stats_ratings.sql`。
 
 T17 Demo 阵容扩充使用独立 ID 段，并同时补齐球员、球队关系、赛季阵容、当前效力历史和赛事统计；任一专用 ID 被非 DEMO 数据占用时立即中止。
+# T18：user_behavior_log
+
+V018 增量创建推荐行为表，记录 `client_event_id`、用户/会话、行为/目标、scene、算法/模型/实验、request/impression/position、dwell 与事件时间。`client_event_id` 唯一；按用户时间、实验时间、请求位置、曝光行为和目标行为建立联合索引。迁移与 Seed 均不含 DROP/TRUNCATE/DELETE。
