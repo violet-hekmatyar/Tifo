@@ -16,6 +16,8 @@ public class SearchEntityVO {
     private Long awayTeamId;
     private String matchStatus;
     private LocalDateTime matchTime;
+    private String contentType;
+    private LocalDateTime publishTime;
 
     public String getEntityType() { return entityType; }
     public void setEntityType(String entityType) { this.entityType = entityType; }
@@ -41,4 +43,8 @@ public class SearchEntityVO {
     public void setMatchStatus(String matchStatus) { this.matchStatus = matchStatus; }
     public LocalDateTime getMatchTime() { return matchTime; }
     public void setMatchTime(LocalDateTime matchTime) { this.matchTime = matchTime; }
+    public String getContentType() { return contentType; }
+    public void setContentType(String contentType) { this.contentType = contentType; }
+    public LocalDateTime getPublishTime() { return publishTime; }
+    public void setPublishTime(LocalDateTime publishTime) { this.publishTime = publishTime; }
 }

@@ -1049,6 +1049,7 @@ PUT    /api/app/contents/{contentId}/articles
 GET    /api/app/search/entities?keyword=Barcelona&entityType=TEAM&pageNum=1&pageSize=10
 GET    /api/app/search/entities?keyword=Lewandowski&entityType=PLAYER
 GET    /api/app/search/entities?keyword=Barcelona&entityType=MATCH
+GET    /api/app/search/entities?keyword=Champions&entityType=CONTENT
 ```
 
 Article request:
@@ -1078,7 +1079,7 @@ ARTICLE detail returns ordered blocks in addition to existing body, coverUrl, me
 Article create/edit accepts TEXT and IMAGE blocks. IMAGE blocks and coverFileId must belong to the current user and use CONTENT_IMAGE or GENERAL_IMAGE.
 Old POST create, old content detail, and existing ARTICLE seed content remain readable.
 relationList accepts TEAM, PLAYER, and MATCH, validates existence/status, normalizes type case, and deduplicates repeated type/id pairs.
-Entity search is public and returns a unified PageResult for TEAM, PLAYER, and MATCH.
+Entity search is public and returns a unified PageResult for TEAM, PLAYER, MATCH, and CONTENT.
 There is no active follow cap for USER, TEAM, or PLAYER follows.
 ```
 # T15 足球赛季与榜单 API
@@ -1140,3 +1141,9 @@ POST /api/app/notifications/read-all
 ```
 
 列表按 `create_time DESC,id DESC` 数据库分页，类型为 `CONTENT_LIKED`、`CONTENT_COMMENTED`、`COMMENT_REPLIED`、`COMMENT_LIKED`、`USER_FOLLOWED`、`SYSTEM`。`readStatus` 接受 `READ/UNREAD`（兼容 `1/0`）。actor 与 CONTENT/COMMENT/USER target preview 均批量装配；目标删除时返回 `targetAvailable=false`。SYSTEM 只提供内部 Service，不提供 App 创建 API。
+
+# T22 Backend V1 Freeze Notes
+
+- `GET /api/app/search/entities` 的 `entityType` 固定为 `TEAM`、`PLAYER`、`MATCH`、`CONTENT`；不传时统一搜索四类。
+- CONTENT 使用已发布且未删除内容的标题、摘要、正文模糊匹配，返回 `contentType`、`publishTime` 等兼容新增字段。
+- 第一版 App 接口、分页、枚举和 Feed 卡片契约以 `docs/BACKEND_API_FREEZE_V1.md` 为冻结口径。

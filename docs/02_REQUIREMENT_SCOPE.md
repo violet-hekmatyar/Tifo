@@ -362,3 +362,7 @@ T15 范围包含联赛赛季、赛事阶段、积分榜、球员赛事统计和�
 # T18 范围补充
 
 T18 包含 Java RULE_V2、Python CONTENT Item-CF、MATCH 规则推荐、A/B、7:3 混排、理由/归因、行为日志和指标。Python 不读取核心业务表、不推荐 MATCH、不生成最终 Feed；Flutter 后续应在卡片真实进入可视区时上报 EXPOSE，后端下发不等于曝光。
+
+# T22 Backend V1 边界
+
+原始 43 页需求中会阻塞 Flutter 第一版的后端能力已收口。全局搜索固定覆盖 TEAM、PLAYER、MATCH、CONTENT；当前无球队/球员关注数量上限。私信/IM、真实足球数据 Provider、转会中心与转会卡、比赛视频、裁判评分、复杂杯赛树、高级热区图/传球图、实时 WebSocket 比分、Push、微信/手机号第三方登录明确延期，不属于 Backend V1。

@@ -1841,4 +1841,13 @@ T18 推荐融合已实现：V018、行为闭环、RULE_V2、CF_V1、稳定实验
 - [x] actor/target preview 批量装配与删除目标兼容
 - [x] 数据校验、单元/触发/性能测试和 Windows Smoke
 
-明确不包含私信、实时比赛通知、WebSocket、Push、短信、邮件、MQ 或复杂通知聚合；私信留待 T22。
+明确不包含私信、实时比赛通知、WebSocket、Push、短信、邮件、MQ 或复杂通知聚合；私信在 T22 统一确认为延期项。
+
+# T22 状态
+
+- [x] 完成 43 页原始需求的 Backend V1 最终审计
+- [x] 最小补齐 CONTENT 全局搜索，并批量装配搜索关联实体
+- [x] 复用既有 Demo 数据与一致性校验，不新增 migration/seed
+- [x] 新增 `docs/BACKEND_API_FREEZE_V1.md`
+- [x] 新增精简 T22 Final Check 与核心 Smoke
+- [x] 明确第一版延期项，Backend V1 进入冻结口径

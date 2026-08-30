@@ -4,6 +4,8 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.southstand.common.enums.ErrorCode;
 import com.southstand.common.exception.BusinessException;
 import com.southstand.common.result.PageResult;
+import com.southstand.content.entity.Content;
+import com.southstand.content.mapper.ContentMapper;
 import com.southstand.football.league.entity.FootballLeague;
 import com.southstand.football.league.mapper.FootballLeagueMapper;
 import com.southstand.football.match.entity.MatchInfo;
@@ -16,10 +18,14 @@ import com.southstand.football.team.entity.FootballTeam;
 import com.southstand.football.team.mapper.FootballTeamMapper;
 import com.southstand.search.vo.SearchEntityVO;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 
@@ -27,6 +33,7 @@ import org.springframework.stereotype.Service;
 public class SearchService {
 
     private static final String ACTIVE = "ACTIVE";
+    private static final String PUBLISHED = "PUBLISHED";
     private static final int NOT_DELETED = 0;
 
     private final FootballTeamMapper teamMapper;
@@ -34,19 +41,22 @@ public class SearchService {
     private final TeamPlayerMapper teamPlayerMapper;
     private final MatchInfoMapper matchMapper;
     private final FootballLeagueMapper leagueMapper;
+    private final ContentMapper contentMapper;
 
     public SearchService(
             FootballTeamMapper teamMapper,
             FootballPlayerMapper playerMapper,
             TeamPlayerMapper teamPlayerMapper,
             MatchInfoMapper matchMapper,
-            FootballLeagueMapper leagueMapper
+            FootballLeagueMapper leagueMapper,
+            ContentMapper contentMapper
     ) {
         this.teamMapper = teamMapper;
         this.playerMapper = playerMapper;
         this.teamPlayerMapper = teamPlayerMapper;
         this.matchMapper = matchMapper;
         this.leagueMapper = leagueMapper;
+        this.contentMapper = contentMapper;
     }
 
     public PageResult<SearchEntityVO> entities(String keyword, String entityType, Long pageNum, Long pageSize) {
@@ -67,7 +77,11 @@ public class SearchService {
         if (type == null || "MATCH".equals(type)) {
             all.addAll(searchMatches(kw));
         }
-        if (type != null && !"TEAM".equals(type) && !"PLAYER".equals(type) && !"MATCH".equals(type)) {
+        if (type == null || "CONTENT".equals(type)) {
+            all.addAll(searchContents(kw));
+        }
+        if (type != null && !"TEAM".equals(type) && !"PLAYER".equals(type)
+                && !"MATCH".equals(type) && !"CONTENT".equals(type)) {
             throw new BusinessException(ErrorCode.PARAM_ERROR, "unsupported entityType");
         }
         all.sort(Comparator.comparingInt((SearchEntityVO vo) -> typeOrder(vo.getEntityType()))
@@ -107,7 +121,11 @@ public class SearchService {
                         .orderByAsc("id"))
                 .stream()
                 .collect(Collectors.toMap(TeamPlayer::getPlayerId, TeamPlayer::getTeamId, (a, b) -> a));
-        return players.stream().map(player -> playerVO(player, teamIdByPlayer.get(player.getId()))).toList();
+        Set<Long> teamIds = new LinkedHashSet<>(teamIdByPlayer.values());
+        Map<Long, FootballTeam> teamsById = teamIds.isEmpty() ? Collections.emptyMap()
+                : teamMapper.selectBatchIds(teamIds).stream()
+                        .collect(Collectors.toMap(FootballTeam::getId, Function.identity()));
+        return players.stream().map(player -> playerVO(player, teamsById.get(teamIdByPlayer.get(player.getId())))).toList();
     }
 
     private List<SearchEntityVO> searchMatches(String keyword) {
@@ -146,9 +164,34 @@ public class SearchService {
         } else {
             return List.of();
         }
-        return matchMapper.selectList(wrapper.orderByAsc("match_time").orderByAsc("id").last("LIMIT 50"))
+        List<MatchInfo> matches = matchMapper.selectList(wrapper.orderByAsc("match_time").orderByAsc("id").last("LIMIT 50"));
+        Set<Long> resultTeamIds = new LinkedHashSet<>();
+        Set<Long> resultLeagueIds = new LinkedHashSet<>();
+        for (MatchInfo match : matches) {
+            resultTeamIds.add(match.getHomeTeamId());
+            resultTeamIds.add(match.getAwayTeamId());
+            resultLeagueIds.add(match.getLeagueId());
+        }
+        Map<Long, FootballTeam> teamsById = resultTeamIds.isEmpty() ? Collections.emptyMap()
+                : teamMapper.selectBatchIds(resultTeamIds).stream()
+                        .collect(Collectors.toMap(FootballTeam::getId, Function.identity()));
+        Map<Long, FootballLeague> leaguesById = resultLeagueIds.isEmpty() ? Collections.emptyMap()
+                : leagueMapper.selectBatchIds(resultLeagueIds).stream()
+                        .collect(Collectors.toMap(FootballLeague::getId, Function.identity()));
+        return matches.stream().map(match -> matchVO(match, teamsById, leaguesById)).toList();
+    }
+
+    private List<SearchEntityVO> searchContents(String keyword) {
+        String like = like(keyword);
+        return contentMapper.selectList(new QueryWrapper<Content>()
+                        .eq("status", PUBLISHED)
+                        .eq("is_deleted", NOT_DELETED)
+                        .and(w -> w.like("title", like).or().like("summary", like).or().like("body", like))
+                        .orderByDesc("publish_time")
+                        .orderByDesc("id")
+                        .last("LIMIT 50"))
                 .stream()
-                .map(this::matchVO)
+                .map(this::contentVO)
                 .toList();
     }
 
@@ -164,8 +207,7 @@ public class SearchService {
         return vo;
     }
 
-    private SearchEntityVO playerVO(FootballPlayer player, Long teamId) {
-        FootballTeam team = teamId == null ? null : teamMapper.selectById(teamId);
+    private SearchEntityVO playerVO(FootballPlayer player, FootballTeam team) {
         SearchEntityVO vo = new SearchEntityVO();
         vo.setEntityType("PLAYER");
         vo.setEntityId(player.getId());
@@ -177,10 +219,11 @@ public class SearchService {
         return vo;
     }
 
-    private SearchEntityVO matchVO(MatchInfo match) {
-        FootballTeam home = teamMapper.selectById(match.getHomeTeamId());
-        FootballTeam away = teamMapper.selectById(match.getAwayTeamId());
-        FootballLeague league = leagueMapper.selectById(match.getLeagueId());
+    private SearchEntityVO matchVO(MatchInfo match, Map<Long, FootballTeam> teamsById,
+                                   Map<Long, FootballLeague> leaguesById) {
+        FootballTeam home = teamsById.get(match.getHomeTeamId());
+        FootballTeam away = teamsById.get(match.getAwayTeamId());
+        FootballLeague league = leaguesById.get(match.getLeagueId());
         SearchEntityVO vo = new SearchEntityVO();
         vo.setEntityType("MATCH");
         vo.setEntityId(match.getId());
@@ -192,6 +235,28 @@ public class SearchService {
         vo.setMatchTime(match.getMatchTime());
         vo.setStatus(match.getStatus());
         return vo;
+    }
+
+    private SearchEntityVO contentVO(Content content) {
+        SearchEntityVO vo = new SearchEntityVO();
+        vo.setEntityType("CONTENT");
+        vo.setEntityId(content.getId());
+        vo.setName(content.getTitle());
+        vo.setSubtitle(preview(content.getSummary(), content.getBody()));
+        vo.setLogoUrl(content.getCoverUrl());
+        vo.setStatus(content.getStatus());
+        vo.setContentType(content.getContentType());
+        vo.setPublishTime(content.getPublishTime());
+        return vo;
+    }
+
+    private String preview(String summary, String body) {
+        String value = summary == null || summary.isBlank() ? body : summary;
+        if (value == null) {
+            return null;
+        }
+        String normalized = value.replaceAll("\\s+", " ").trim();
+        return normalized.length() <= 120 ? normalized : normalized.substring(0, 120);
     }
 
     private String teamName(FootballTeam team) {
@@ -216,6 +281,7 @@ public class SearchService {
             case "TEAM" -> 1;
             case "PLAYER" -> 2;
             case "MATCH" -> 3;
+            case "CONTENT" -> 4;
             default -> 9;
         };
     }
