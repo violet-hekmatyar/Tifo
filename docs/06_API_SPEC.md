@@ -1127,3 +1127,16 @@ GET /api/app/football/players/{playerId}/career
 - `GET /api/internal/recommendation/metrics`：管理员内部指标，支持 scene、algorithmVersion、experimentId、bucket 与时间范围。
 - Python：`GET /health`、`GET /api/internal/recommend/stats`、`POST /api/internal/recommend/content-scores`、`POST /api/internal/recommend/reload?days=30`。
 - Feed 页新增 algorithmVersion/modelVersion/experimentId/experimentBucket/requestId；Card 新增 reasonCode/reason/impressionId/position，均为向后兼容可选字段。
+
+# T21 通知 API
+
+以下接口均要求 JWT：
+
+```http
+GET  /api/app/notifications?pageNum=1&pageSize=10&type=&readStatus=
+GET  /api/app/notifications/unread-count
+POST /api/app/notifications/{notificationId}/read
+POST /api/app/notifications/read-all
+```
+
+列表按 `create_time DESC,id DESC` 数据库分页，类型为 `CONTENT_LIKED`、`CONTENT_COMMENTED`、`COMMENT_REPLIED`、`COMMENT_LIKED`、`USER_FOLLOWED`、`SYSTEM`。`readStatus` 接受 `READ/UNREAD`（兼容 `1/0`）。actor 与 CONTENT/COMMENT/USER target preview 均批量装配；目标删除时返回 `targetAvailable=false`。SYSTEM 只提供内部 Service，不提供 App 创建 API。

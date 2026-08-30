@@ -995,3 +995,12 @@ cd D:\Football-APP
 # T18 验证
 
 运行 `py -m pytest -q recommend-service/tests`、`mvn test`、`mvn clean package`。`check-t18.ps1` 验证指纹、V018、Seed、Python 模型、Java 测试与构建；启动后端后用 `smoke-recommendation.ps1` 验证 attribution 和六类行为幂等。B 用户在 Python 关闭时必须仍返回 HTTP 200、`RULE_V2` 且 bucket 保持 B；结束确认 8080/8100 无监听。
+
+# T21 验证
+
+```powershell
+.\scripts\windows\smoke-notification-center.ps1 -Port 8080
+.\scripts\windows\check-t21.ps1
+```
+
+`check-t21.ps1` 非破坏执行 V019 和 `validate-t21-notification.sql`，复用 `check-t20.ps1` 完成 T03-T20 全量回归，再验证五类互动通知、自通知过滤、取消/重新激活去重、预览、数据库分页、未读数、单条/全部已读、所有权隐藏、旧数据指纹和端口清理。验收时连续运行两次。

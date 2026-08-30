@@ -13,6 +13,7 @@ import com.southstand.content.mapper.ContentMapper;
 import com.southstand.follow.entity.FollowRecord;
 import com.southstand.follow.mapper.FollowRecordMapper;
 import com.southstand.follow.service.FollowService;
+import com.southstand.notification.service.NotificationService;
 import com.southstand.football.player.entity.FootballPlayer;
 import com.southstand.football.player.mapper.FootballPlayerMapper;
 import com.southstand.football.team.entity.FootballTeam;
@@ -42,6 +43,7 @@ import java.util.stream.Collectors;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
@@ -59,7 +61,9 @@ public class UserSocialService {
     private final FootballTeamMapper footballTeamMapper;
     private final FootballPlayerMapper footballPlayerMapper;
     private final UserProfileService userProfileService;
+    private final NotificationService notificationService;
 
+    @Autowired
     public UserSocialService(
             SysUserMapper sysUserMapper,
             UserProfileMapper userProfileMapper,
@@ -68,7 +72,8 @@ public class UserSocialService {
             ContentMapper contentMapper,
             FootballTeamMapper footballTeamMapper,
             FootballPlayerMapper footballPlayerMapper,
-            UserProfileService userProfileService
+            UserProfileService userProfileService,
+            NotificationService notificationService
     ) {
         this.sysUserMapper = sysUserMapper;
         this.userProfileMapper = userProfileMapper;
@@ -78,6 +83,15 @@ public class UserSocialService {
         this.footballTeamMapper = footballTeamMapper;
         this.footballPlayerMapper = footballPlayerMapper;
         this.userProfileService = userProfileService;
+        this.notificationService = notificationService;
+    }
+
+    public UserSocialService(SysUserMapper sysUserMapper, UserProfileMapper userProfileMapper,
+            FollowRecordMapper followRecordMapper, FollowService followService, ContentMapper contentMapper,
+            FootballTeamMapper footballTeamMapper, FootballPlayerMapper footballPlayerMapper,
+            UserProfileService userProfileService) {
+        this(sysUserMapper,userProfileMapper,followRecordMapper,followService,contentMapper,footballTeamMapper,
+                footballPlayerMapper,userProfileService,null);
     }
 
     public UserPublicProfileVO publicProfile(Long targetUserId) {
@@ -112,6 +126,7 @@ public class UserSocialService {
                     .set("is_main", 0));
         }
         syncUserCounts(current.getId(), targetUserId);
+        if (notificationService != null) notificationService.notifyUserFollowed(current.getId(), targetUserId);
         return actionResult(current.getId(), targetUserId, true);
     }
 

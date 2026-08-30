@@ -530,3 +530,7 @@ T16 team/player detail GET APIs allow anonymous access. A valid JWT only adds fo
 # T18 安全边界
 
 Spring `/api/internal/**` 仅 ADMIN 可访问；行为批量接口要求登录。Python 只绑定本机并且代码仅 SELECT `user_behavior_log`，部署前应创建只对该表有 SELECT 权限的 recommendation DB 用户。仓库只提交 `.env.example`，不提交密码、JWT 密钥或真实 `.env`。
+
+# T21 通知权限
+
+通知列表、未读数、单条已读和全部已读均要求登录并只使用 JWT 当前用户 ID。单条已读更新同时限定 `notification.id + recipient_user_id`，对他人的通知幂等返回成功而不泄露其是否存在。普通 App 用户没有 SYSTEM 通知创建接口。通知写入安排在主事务提交后并使用独立事务，异常只记录安全日志，不回滚点赞、评论、回复或关注。

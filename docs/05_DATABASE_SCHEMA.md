@@ -861,3 +861,7 @@ T17 Demo 阵容扩充使用独立 ID 段，并同时补齐球员、球队关系�
 # T18：user_behavior_log
 
 V018 增量创建推荐行为表，记录 `client_event_id`、用户/会话、行为/目标、scene、算法/模型/实验、request/impression/position、dwell 与事件时间。`client_event_id` 唯一；按用户时间、实验时间、请求位置、曝光行为和目标行为建立联合索引。迁移与 Seed 均不含 DROP/TRUNCATE/DELETE。
+
+# T21：notification
+
+V019 增量创建 `notification`，保存 recipient/actor、受控通知类型、主/次目标、默认文案、已读状态、软删除状态和唯一 `dedup_key`。索引覆盖接收人时间序、接收人未读时间序和目标定位。取消点赞/取消关注不会删除历史通知；相同业务重新激活由唯一键去重。本轮无通知 Seed。

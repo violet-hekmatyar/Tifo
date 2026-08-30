@@ -19,6 +19,7 @@ import com.southstand.interaction.vo.CommentVO;
 import com.southstand.interaction.vo.CommentLikeToggleVO;
 import com.southstand.interaction.vo.CreateCommentResponse;
 import com.southstand.interaction.vo.HotCommentVO;
+import com.southstand.notification.service.NotificationService;
 import com.southstand.recommend.model.RecommendationBehaviorType;
 import com.southstand.recommend.model.RecommendationTargetType;
 import com.southstand.recommend.service.RecommendationBehaviorService;
@@ -49,25 +50,33 @@ public class CommentService {
     private final LikeRecordMapper likeRecordMapper;
     private final ContentService contentService;
     private final RecommendationBehaviorService recommendationBehaviorService;
+    private final NotificationService notificationService;
 
     @Autowired
     public CommentService(CommentMapper commentMapper,
             ContentMapper contentMapper,
             LikeRecordMapper likeRecordMapper,
             ContentService contentService,
-            RecommendationBehaviorService recommendationBehaviorService) {
+            RecommendationBehaviorService recommendationBehaviorService,
+            NotificationService notificationService) {
         this.commentMapper = commentMapper;
         this.contentMapper = contentMapper;
         this.likeRecordMapper = likeRecordMapper;
         this.contentService = contentService;
         this.recommendationBehaviorService = recommendationBehaviorService;
+        this.notificationService = notificationService;
+    }
+
+    public CommentService(CommentMapper commentMapper, ContentMapper contentMapper, LikeRecordMapper likeRecordMapper,
+            ContentService contentService, RecommendationBehaviorService recommendationBehaviorService) {
+        this(commentMapper, contentMapper, likeRecordMapper, contentService, recommendationBehaviorService, null);
     }
 
     public CommentService(CommentMapper commentMapper,
             ContentMapper contentMapper,
             LikeRecordMapper likeRecordMapper,
             ContentService contentService) {
-        this(commentMapper, contentMapper, likeRecordMapper, contentService, null);
+        this(commentMapper, contentMapper, likeRecordMapper, contentService, null, null);
     }
 
     public PageResult<CommentVO> list(String targetType, Long targetId, String sort, Long parentId, long pageNum, long pageSize) {
@@ -172,6 +181,10 @@ public class CommentService {
             recommendationBehaviorService.recordInteractionSafely(userId, RecommendationBehaviorType.COMMENT,
                     RecommendationTargetType.CONTENT, targetId);
         }
+        if (notificationService != null) {
+            if (parent == null) notificationService.notifyContentCommented(userId, targetId, comment.getId());
+            else notificationService.notifyCommentReplied(userId, replyToUserId, comment.getId(), targetId);
+        }
         return response;
     }
 
@@ -218,6 +231,7 @@ public class CommentService {
         vo.setCommentId(commentId);
         vo.setLiked(liked);
         vo.setLikeCount(updated == null ? nvl(comment.getLikeCount()) + (liked ? 1 : -1) : nvl(updated.getLikeCount()));
+        if (liked && notificationService != null) notificationService.notifyCommentLiked(userId, commentId);
         return vo;
     }
 

@@ -10,6 +10,7 @@ import com.southstand.follow.dto.FollowToggleRequest;
 import com.southstand.follow.entity.FollowRecord;
 import com.southstand.follow.mapper.FollowRecordMapper;
 import com.southstand.follow.vo.FollowToggleResponse;
+import com.southstand.notification.service.NotificationService;
 import com.southstand.football.player.entity.FootballPlayer;
 import com.southstand.football.player.mapper.FootballPlayerMapper;
 import com.southstand.football.team.entity.FootballTeam;
@@ -23,6 +24,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import org.springframework.stereotype.Service;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
@@ -39,19 +41,28 @@ public class FollowService {
     private final FootballPlayerMapper footballPlayerMapper;
     private final SysUserMapper sysUserMapper;
     private final UserProfileMapper userProfileMapper;
+    private final NotificationService notificationService;
 
+    @Autowired
     public FollowService(
             FollowRecordMapper followRecordMapper,
             FootballTeamMapper footballTeamMapper,
             FootballPlayerMapper footballPlayerMapper,
             SysUserMapper sysUserMapper,
-            UserProfileMapper userProfileMapper
+            UserProfileMapper userProfileMapper,
+            NotificationService notificationService
     ) {
         this.followRecordMapper = followRecordMapper;
         this.footballTeamMapper = footballTeamMapper;
         this.footballPlayerMapper = footballPlayerMapper;
         this.sysUserMapper = sysUserMapper;
         this.userProfileMapper = userProfileMapper;
+        this.notificationService = notificationService;
+    }
+
+    public FollowService(FollowRecordMapper followRecordMapper, FootballTeamMapper footballTeamMapper,
+            FootballPlayerMapper footballPlayerMapper, SysUserMapper sysUserMapper, UserProfileMapper userProfileMapper) {
+        this(followRecordMapper, footballTeamMapper, footballPlayerMapper, sysUserMapper, userProfileMapper, null);
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -94,6 +105,9 @@ public class FollowService {
         response.setTeamFollowCount(counts.getTeamFollowCount());
         response.setPlayerFollowCount(counts.getPlayerFollowCount());
         response.setFollowingCount(counts.getFollowingCount());
+        if (followed && TYPE_USER.equals(followType) && notificationService != null) {
+            notificationService.notifyUserFollowed(userId, request.getTargetId());
+        }
         return response;
     }
 

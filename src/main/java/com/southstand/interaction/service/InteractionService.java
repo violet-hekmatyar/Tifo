@@ -18,6 +18,7 @@ import com.southstand.interaction.mapper.FavoriteRecordMapper;
 import com.southstand.interaction.mapper.LikeRecordMapper;
 import com.southstand.interaction.vo.ToggleFavoriteResponse;
 import com.southstand.interaction.vo.ToggleLikeResponse;
+import com.southstand.notification.service.NotificationService;
 import com.southstand.recommend.model.RecommendationBehaviorType;
 import com.southstand.recommend.model.RecommendationTargetType;
 import com.southstand.recommend.service.RecommendationBehaviorService;
@@ -39,6 +40,7 @@ public class InteractionService {
     private final CommentMapper commentMapper;
     private final ContentService contentService;
     private final RecommendationBehaviorService recommendationBehaviorService;
+    private final NotificationService notificationService;
 
     @Autowired
     public InteractionService(LikeRecordMapper likeRecordMapper,
@@ -46,13 +48,22 @@ public class InteractionService {
             ContentMapper contentMapper,
             CommentMapper commentMapper,
             ContentService contentService,
-            RecommendationBehaviorService recommendationBehaviorService) {
+            RecommendationBehaviorService recommendationBehaviorService,
+            NotificationService notificationService) {
         this.likeRecordMapper = likeRecordMapper;
         this.favoriteRecordMapper = favoriteRecordMapper;
         this.contentMapper = contentMapper;
         this.commentMapper = commentMapper;
         this.contentService = contentService;
         this.recommendationBehaviorService = recommendationBehaviorService;
+        this.notificationService = notificationService;
+    }
+
+    public InteractionService(LikeRecordMapper likeRecordMapper,
+            FavoriteRecordMapper favoriteRecordMapper, ContentMapper contentMapper, CommentMapper commentMapper,
+            ContentService contentService, RecommendationBehaviorService recommendationBehaviorService) {
+        this(likeRecordMapper, favoriteRecordMapper, contentMapper, commentMapper, contentService,
+                recommendationBehaviorService, null);
     }
 
     public InteractionService(LikeRecordMapper likeRecordMapper,
@@ -60,7 +71,7 @@ public class InteractionService {
             ContentMapper contentMapper,
             CommentMapper commentMapper,
             ContentService contentService) {
-        this(likeRecordMapper, favoriteRecordMapper, contentMapper, commentMapper, contentService, null);
+        this(likeRecordMapper, favoriteRecordMapper, contentMapper, commentMapper, contentService, null, null);
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -98,6 +109,10 @@ public class InteractionService {
         if (liked && TARGET_CONTENT.equals(request.getTargetType()) && recommendationBehaviorService != null) {
             recommendationBehaviorService.recordInteractionSafely(userId, RecommendationBehaviorType.LIKE,
                     RecommendationTargetType.CONTENT, request.getTargetId());
+        }
+        if (liked && notificationService != null) {
+            if (TARGET_CONTENT.equals(request.getTargetType())) notificationService.notifyContentLiked(userId, request.getTargetId());
+            else if (TARGET_COMMENT.equals(request.getTargetType())) notificationService.notifyCommentLiked(userId, request.getTargetId());
         }
         return response;
     }

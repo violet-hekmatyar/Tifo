@@ -363,3 +363,7 @@ T17 新增比赛阵容、出场、球队技术统计、球员技术统计和用�
 # T18 推荐系统融合
 
 当前后端在保留 T14 批量 Feed 装载的基础上增加 RULE_V2、CONTENT Item-CF、稳定 A/B、7:3 内容/比赛混排、推荐归因、行为闭环与三级降级。Python 服务位于 `recommend-service`，关闭时 Java Feed 自动使用 RULE_V2。执行 `scripts/windows/check-t18.ps1` 完成核心验收，HTTP 专项使用 `scripts/windows/smoke-recommendation.ps1`。
+
+# T21 通知中心
+
+T21 增加持久化互动通知，覆盖内容获赞、内容评论、评论回复、评论获赞、用户关注和 SYSTEM Service 能力。通知由既有业务动作自动生成，不需要客户端额外创建。执行 `scripts/windows/check-t21.ps1` 完成 V019、数据校验、T03-T20 回归和通知 Smoke；不包含私信、WebSocket、Push 或 MQ。
