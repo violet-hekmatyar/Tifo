@@ -22,8 +22,14 @@ import com.southstand.football.league.entity.FootballLeague;
 import com.southstand.football.league.mapper.FootballLeagueMapper;
 import com.southstand.football.match.entity.MatchInfo;
 import com.southstand.football.match.mapper.MatchInfoMapper;
+import com.southstand.football.matchdata.entity.FootballMatchPlayerAppearance;
+import com.southstand.football.matchdata.entity.FootballMatchPlayerStat;
+import com.southstand.football.matchdata.mapper.FootballMatchPlayerAppearanceMapper;
+import com.southstand.football.matchdata.mapper.FootballMatchPlayerStatMapper;
 import com.southstand.football.player.entity.FootballPlayer;
+import com.southstand.football.player.entity.TeamPlayer;
 import com.southstand.football.player.mapper.FootballPlayerMapper;
+import com.southstand.football.player.mapper.TeamPlayerMapper;
 import com.southstand.football.rank.entity.FootballPlayerCompetitionStat;
 import com.southstand.football.rank.entity.FootballSeason;
 import com.southstand.football.rank.entity.FootballStanding;
@@ -51,6 +57,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -64,15 +71,31 @@ public class FootballDetailService {
     private final FootballTeamCompetitionStatMapper teamStats; private final FootballStandingMapper standings;
     private final MatchInfoMapper matches; private final ContentRelationMapper contentRelations; private final ContentMapper contents;
     private final FollowRecordMapper follows;
+    private final TeamPlayerMapper teamPlayers;
+    private final FootballMatchPlayerAppearanceMapper matchAppearances;
+    private final FootballMatchPlayerStatMapper matchPlayerStats;
+
+    @Autowired
+    public FootballDetailService(FootballTeamMapper teams,FootballPlayerMapper players,FootballLeagueMapper leagues,
+            FootballSeasonMapper seasons,FootballTeamSeasonPlayerMapper rosters,FootballTeamHonorMapper honors,
+            FootballPlayerTeamHistoryMapper histories,FootballPlayerCompetitionStatMapper playerStats,
+            FootballTeamCompetitionStatMapper teamStats,FootballStandingMapper standings,MatchInfoMapper matches,
+            ContentRelationMapper contentRelations,ContentMapper contents,FollowRecordMapper follows,
+            TeamPlayerMapper teamPlayers,FootballMatchPlayerAppearanceMapper matchAppearances,
+            FootballMatchPlayerStatMapper matchPlayerStats){
+        this.teams=teams;this.players=players;this.leagues=leagues;this.seasons=seasons;this.rosters=rosters;this.honors=honors;
+        this.histories=histories;this.playerStats=playerStats;this.teamStats=teamStats;this.standings=standings;
+        this.matches=matches;this.contentRelations=contentRelations;this.contents=contents;this.follows=follows;
+        this.teamPlayers=teamPlayers;this.matchAppearances=matchAppearances;this.matchPlayerStats=matchPlayerStats;
+    }
 
     public FootballDetailService(FootballTeamMapper teams,FootballPlayerMapper players,FootballLeagueMapper leagues,
             FootballSeasonMapper seasons,FootballTeamSeasonPlayerMapper rosters,FootballTeamHonorMapper honors,
             FootballPlayerTeamHistoryMapper histories,FootballPlayerCompetitionStatMapper playerStats,
             FootballTeamCompetitionStatMapper teamStats,FootballStandingMapper standings,MatchInfoMapper matches,
             ContentRelationMapper contentRelations,ContentMapper contents,FollowRecordMapper follows){
-        this.teams=teams;this.players=players;this.leagues=leagues;this.seasons=seasons;this.rosters=rosters;this.honors=honors;
-        this.histories=histories;this.playerStats=playerStats;this.teamStats=teamStats;this.standings=standings;
-        this.matches=matches;this.contentRelations=contentRelations;this.contents=contents;this.follows=follows;
+        this(teams,players,leagues,seasons,rosters,honors,histories,playerStats,teamStats,standings,matches,
+                contentRelations,contents,follows,null,null,null);
     }
 
     public TeamOverview teamOverview(Long teamId,Long seasonId){
@@ -87,7 +110,9 @@ public class FootballDetailService {
         List<Match> next=teamMatches(teamId,List.of("SCHEDULED","LIVE"),true,1);
         return new TeamOverview(team.getId(),team.getTeamName(),team.getTeamNameEn(),team.getLogoUrl(),scope.season.getLeagueId(),
                 league==null?null:league.getLeagueName(),scope.season.getId(),scope.season.getSeasonName(),team.getCity(),team.getHomeStadium(),
-                team.getFoundedYear(),team.getRemark(),isFollowed("TEAM",teamId),standing,stats,scorers,assists,recent,next.isEmpty()?null:next.get(0),recentContents("TEAM",teamId));
+                team.getFoundedYear(),team.getRemark(),isFollowed("TEAM",teamId),standing,stats,scorers,assists,recent,
+                next.isEmpty()?null:next.get(0),recentContents("TEAM",teamId),competitionStandings(teamId),
+                leaderboards(squad),teamHonors(teamId,null));
     }
 
     public PageResult<RosterPlayer> teamPlayers(Long teamId,Long seasonId,String position,String squadRole,long pageNum,long pageSize){
@@ -129,7 +154,53 @@ public class FootballDetailService {
         FootballPlayer p=requirePlayer(playerId); List<TeamHistory> teamHistory=playerTeams(playerId);
         TeamHistory current=teamHistory.stream().filter(TeamHistory::current).findFirst().orElse(teamHistory.isEmpty()?null:teamHistory.get(0));
         List<PlayerStats> stats=playerStats(playerId,seasonId,null,null); FootballTeamSeasonPlayer roster=current==null?null:rosters.selectOne(new QueryWrapper<FootballTeamSeasonPlayer>().eq("player_id",playerId).eq("team_id",current.teamId()).eq("season_id",current.seasonId()).eq("is_deleted",0).last("LIMIT 1"));
-        return new PlayerOverview(p.getId(),p.getPlayerName(),p.getPlayerNameEn(),p.getAvatarUrl(),p.getPosition(),p.getNationality(),p.getBirthDate(),p.getBirthDate()==null?null:Period.between(p.getBirthDate(),LocalDate.now()).getYears(),p.getHeightCm(),p.getWeightKg(),null,current==null?null:current.teamId(),current==null?null:current.teamName(),current==null?null:current.teamLogoUrl(),current==null?p.getShirtNumber():current.shirtNumber(),roster!=null&&Objects.equals(roster.getCaptainFlag(),1),isFollowed("PLAYER",playerId),stats,playerCareer(playerId),recentContents("PLAYER",playerId));
+        List<TeamLink> links=playerTeamLinks(playerId); TeamLink club=links.stream().filter(x->"CLUB".equals(x.teamType())).findFirst().orElse(null);
+        TeamLink national=links.stream().filter(x->"NATIONAL".equals(x.teamType())).findFirst().orElse(null);
+        if(club==null&&current!=null)club=new TeamLink(current.teamId(),current.teamName(),current.teamLogoUrl(),"CLUB",current.shirtNumber());
+        boolean retired=Objects.equals(p.getRetired(),1);
+        return new PlayerOverview(p.getId(),p.getPlayerName(),p.getPlayerNameEn(),p.getAvatarUrl(),p.getPosition(),p.getNationality(),p.getBirthDate(),p.getBirthDate()==null?null:Period.between(p.getBirthDate(),LocalDate.now()).getYears(),p.getHeightCm(),p.getWeightKg(),null,current==null?null:current.teamId(),current==null?null:current.teamName(),current==null?null:current.teamLogoUrl(),current==null?p.getShirtNumber():current.shirtNumber(),roster!=null&&Objects.equals(roster.getCaptainFlag(),1),isFollowed("PLAYER",playerId),stats,playerCareer(playerId),recentContents("PLAYER",playerId),retired,retired?"RETIRED":"ACTIVE",club,national,retired?List.of():playerMatches(playerId,1,5).getRecords());
+    }
+
+    public PageResult<DetailMatch> teamMatches(Long teamId,String matchStatus,long pageNum,long pageSize){
+        requireTeam(teamId); QueryWrapper<MatchInfo> q=new QueryWrapper<MatchInfo>()
+                .and(w->w.eq("home_team_id",teamId).or().eq("away_team_id",teamId))
+                .eq("status",ACTIVE).eq("is_deleted",0);
+        boolean upcoming=false;
+        if(StringUtils.hasText(matchStatus)){
+            String value=matchStatus.toUpperCase();
+            if("RECENT".equals(value))q.eq("match_status","FINISHED");
+            else if("UPCOMING".equals(value)){q.in("match_status",List.of("SCHEDULED","LIVE"));upcoming=true;}
+            else q.eq("match_status",value);
+        }
+        if(upcoming)q.orderByAsc("match_time").orderByAsc("id");else q.orderByDesc("match_time").orderByDesc("id");
+        q.last("LIMIT 200");
+        return detailMatchPage(matches.selectList(q),Map.of(),teamId,pageNum,pageSize);
+    }
+
+    public PageResult<ContentSummary> teamContents(Long teamId,String contentType,long pageNum,long pageSize){
+        requireTeam(teamId);return relatedContents("TEAM",teamId,contentType,pageNum,pageSize);
+    }
+
+    public PageResult<ContentSummary> playerContents(Long playerId,String contentType,long pageNum,long pageSize){
+        requirePlayer(playerId);return relatedContents("PLAYER",playerId,contentType,pageNum,pageSize);
+    }
+
+    public PageResult<DetailMatch> playerMatches(Long playerId,long pageNum,long pageSize){
+        requirePlayer(playerId);
+        if(matchPlayerStats==null||matchAppearances==null)return PageResult.of(List.of(),0,Math.max(1,pageNum),Math.min(100,Math.max(1,pageSize)));
+        List<FootballMatchPlayerStat> statRows=matchPlayerStats.selectList(new QueryWrapper<FootballMatchPlayerStat>()
+                .eq("player_id",playerId).eq("is_deleted",0).orderByDesc("match_id").last("LIMIT 200"));
+        if(statRows.isEmpty())return PageResult.of(List.of(),0,Math.max(1,pageNum),Math.min(100,Math.max(1,pageSize)));
+        Set<Long> matchIds=statRows.stream().map(FootballMatchPlayerStat::getMatchId).collect(Collectors.toCollection(LinkedHashSet::new));
+        List<MatchInfo> matchRows=matches.selectBatchIds(matchIds).stream().filter(m->ACTIVE.equals(m.getStatus())&&Objects.equals(m.getIsDeleted(),0)).toList();
+        Map<Long,FootballMatchPlayerAppearance> appearanceMap=matchAppearances.selectList(new QueryWrapper<FootballMatchPlayerAppearance>()
+                .eq("player_id",playerId).in("match_id",matchIds).eq("status",ACTIVE).eq("is_deleted",0)).stream()
+                .collect(Collectors.toMap(FootballMatchPlayerAppearance::getMatchId,Function.identity(),(a,b)->a));
+        Map<Long,FootballMatchPlayerStat> statMap=statRows.stream().collect(Collectors.toMap(FootballMatchPlayerStat::getMatchId,Function.identity(),(a,b)->a));
+        matchRows=new ArrayList<>(matchRows);matchRows.sort(Comparator.comparing(MatchInfo::getMatchTime,Comparator.nullsLast(Comparator.reverseOrder())).thenComparing(MatchInfo::getId));
+        Map<Long,PlayerMatchContext> context=new HashMap<>();
+        for(Long matchId:matchIds)context.put(matchId,new PlayerMatchContext(playerId,statMap.get(matchId),appearanceMap.get(matchId)));
+        return detailMatchPage(matchRows,context,null,pageNum,pageSize);
     }
 
     public List<PlayerStats> playerStats(Long playerId,Long seasonId,Long leagueId,Long stageId){
@@ -172,7 +243,75 @@ public class FootballDetailService {
     private Standing standing(Long teamId,Long seasonId,Long stageId){FootballStanding s=standingEntity(teamId,seasonId,stageId);return s==null?null:new Standing(s.getRankNo(),s.getPlayed(),s.getWon(),s.getDrawn(),s.getLost(),s.getGoalsFor(),s.getGoalsAgainst(),s.getGoalDifference(),s.getPoints());}
     private FootballStanding standingEntity(Long teamId,Long seasonId,Long stageId){QueryWrapper<FootballStanding> q=new QueryWrapper<FootballStanding>().eq("team_id",teamId).eq("season_id",seasonId).eq("is_deleted",0);if(stageId!=null)q.eq("stage_id",stageId);else q.orderByAsc("stage_id").last("LIMIT 1");return standings.selectOne(q);}
     private List<Match> teamMatches(Long teamId,List<String> statuses,boolean asc,int limit){QueryWrapper<MatchInfo> q=new QueryWrapper<MatchInfo>().and(w->w.eq("home_team_id",teamId).or().eq("away_team_id",teamId)).in("match_status",statuses).eq("status",ACTIVE).eq("is_deleted",0);if(asc)q.orderByAsc("match_time");else q.orderByDesc("match_time");q.last("LIMIT "+limit);List<MatchInfo> ms=matches.selectList(q);Set<Long> ids=ms.stream().flatMap(m->java.util.stream.Stream.of(m.getHomeTeamId(),m.getAwayTeamId())).collect(Collectors.toSet());Map<Long,FootballTeam> tm=ids.isEmpty()?Map.of():batch(teams.selectBatchIds(ids),FootballTeam::getId);return ms.stream().map(m->new Match(m.getId(),m.getLeagueId(),m.getHomeTeamId(),teamName(tm.get(m.getHomeTeamId())),m.getAwayTeamId(),teamName(tm.get(m.getAwayTeamId())),m.getHomeScore(),m.getAwayScore(),m.getMatchStatus(),m.getMatchTime())).toList();}
-    private List<ContentSummary> recentContents(String type,Long id){List<ContentRelation> rs=contentRelations.selectList(new QueryWrapper<ContentRelation>().eq("relation_type",type).eq("relation_id",id).eq("status",ACTIVE).eq("is_deleted",0).orderByDesc("id").last("LIMIT 5"));if(rs.isEmpty())return List.of();Map<Long,Content> cm=batch(contents.selectList(new QueryWrapper<Content>().in("id",rs.stream().map(ContentRelation::getContentId).toList()).eq("status","PUBLISHED").eq("is_deleted",0)),Content::getId);return rs.stream().map(r->cm.get(r.getContentId())).filter(Objects::nonNull).map(c->new ContentSummary(c.getId(),c.getContentType(),c.getTitle(),c.getSummary(),c.getCoverUrl(),c.getPublishTime())).toList();}
+    private List<ContentSummary> recentContents(String type,Long id){return relatedContents(type,id,null,1,10).getRecords();}
+
+    private PageResult<ContentSummary> relatedContents(String relationType,Long relationId,String contentType,long pageNum,long pageSize){
+        List<ContentRelation> rs=contentRelations.selectList(new QueryWrapper<ContentRelation>()
+                .eq("relation_type",relationType).eq("relation_id",relationId).eq("status",ACTIVE).eq("is_deleted",0)
+                .orderByDesc("id").last("LIMIT 200"));
+        long pn=Math.max(1,pageNum),ps=Math.min(100,Math.max(1,pageSize));
+        if(rs.isEmpty())return PageResult.of(List.of(),0,pn,ps);
+        QueryWrapper<Content> q=new QueryWrapper<Content>().in("id",rs.stream().map(ContentRelation::getContentId).toList())
+                .eq("status","PUBLISHED").eq("is_deleted",0);
+        if(StringUtils.hasText(contentType))q.eq("content_type",contentType.toUpperCase());
+        List<Content> values=new ArrayList<>(contents.selectList(q));
+        values.sort(Comparator.comparing(Content::getHotScore,Comparator.nullsLast(Comparator.reverseOrder()))
+                .thenComparing(Content::getPublishTime,Comparator.nullsLast(Comparator.reverseOrder())).thenComparing(Content::getId));
+        int from=(int)Math.min((pn-1)*ps,values.size()),to=(int)Math.min(from+ps,values.size());
+        List<ContentSummary> records=values.subList(from,to).stream().map(c->new ContentSummary(c.getId(),c.getContentType(),
+                c.getTitle(),c.getSummary(),c.getCoverUrl(),c.getPublishTime(),nz(c.getLikeCount()),nz(c.getCommentCount()),nz(c.getFavoriteCount()))).toList();
+        return PageResult.of(records,values.size(),pn,ps);
+    }
+
+    private List<CompetitionStanding> competitionStandings(Long teamId){
+        List<FootballStanding> rows=standings.selectList(new QueryWrapper<FootballStanding>().eq("team_id",teamId)
+                .eq("is_deleted",0).orderByDesc("season_id").orderByAsc("league_id").orderByAsc("stage_id").last("LIMIT 20"));
+        Set<Long> leagueIds=rows.stream().map(FootballStanding::getLeagueId).collect(Collectors.toSet());
+        Set<Long> seasonIds=rows.stream().map(FootballStanding::getSeasonId).collect(Collectors.toSet());
+        Map<Long,FootballLeague> lm=leagueIds.isEmpty()?Map.of():batch(leagues.selectBatchIds(leagueIds),FootballLeague::getId);
+        Map<Long,FootballSeason> sm=seasonIds.isEmpty()?Map.of():batch(seasons.selectBatchIds(seasonIds),FootballSeason::getId);
+        return rows.stream().map(s->new CompetitionStanding(s.getLeagueId(),name(lm.get(s.getLeagueId())),s.getSeasonId(),
+                sm.get(s.getSeasonId())==null?null:sm.get(s.getSeasonId()).getSeasonName(),s.getStageId(),s.getRankNo(),
+                s.getPlayed(),s.getWon(),s.getDrawn(),s.getLost(),s.getGoalsFor(),s.getGoalsAgainst(),s.getGoalDifference(),s.getPoints())).toList();
+    }
+
+    private List<Leaderboard> leaderboards(List<RosterPlayer> squad){
+        Comparator<RosterPlayer> goals=Comparator.comparingInt((RosterPlayer x)->nz(x.goals())).reversed().thenComparing(RosterPlayer::playerId);
+        Comparator<RosterPlayer> assists=Comparator.comparingInt((RosterPlayer x)->nz(x.assists())).reversed().thenComparing(RosterPlayer::playerId);
+        Comparator<RosterPlayer> appearances=Comparator.comparingInt((RosterPlayer x)->nz(x.appearances())).reversed().thenComparing(RosterPlayer::playerId);
+        Comparator<RosterPlayer> ratings=Comparator.comparing(RosterPlayer::rating,Comparator.nullsLast(Comparator.reverseOrder())).thenComparing(RosterPlayer::playerId);
+        return List.of(new Leaderboard("GOALS","射手榜",squad.stream().sorted(goals).limit(5).toList()),
+                new Leaderboard("ASSISTS","助攻榜",squad.stream().sorted(assists).limit(5).toList()),
+                new Leaderboard("APPEARANCES","出场榜",squad.stream().sorted(appearances).limit(5).toList()),
+                new Leaderboard("RATING","评分榜",squad.stream().sorted(ratings).limit(5).toList()));
+    }
+
+    private List<TeamLink> playerTeamLinks(Long playerId){
+        if(teamPlayers==null)return List.of();
+        List<TeamPlayer> rows=teamPlayers.selectList(new QueryWrapper<TeamPlayer>().eq("player_id",playerId)
+                .eq("status",ACTIVE).eq("is_deleted",0).orderByDesc("season").orderByAsc("team_id"));
+        Set<Long> ids=rows.stream().map(TeamPlayer::getTeamId).collect(Collectors.toCollection(LinkedHashSet::new));
+        Map<Long,FootballTeam> tm=ids.isEmpty()?Map.of():batch(teams.selectBatchIds(ids),FootballTeam::getId);
+        Map<String,TeamLink> unique=new LinkedHashMap<>();
+        for(TeamPlayer row:rows){FootballTeam team=tm.get(row.getTeamId());String raw=Objects.toString(row.getTeamType(),"CLUB").toUpperCase();
+            String type=raw.contains("NATIONAL")?"NATIONAL":"CLUB";unique.putIfAbsent(type,new TeamLink(row.getTeamId(),teamName(team),team==null?null:team.getLogoUrl(),type,row.getShirtNumber()));}
+        return new ArrayList<>(unique.values());
+    }
+
+    private PageResult<DetailMatch> detailMatchPage(List<MatchInfo> rows,Map<Long,PlayerMatchContext> contexts,Long detailTeamId,long pageNum,long pageSize){
+        long pn=Math.max(1,pageNum),ps=Math.min(100,Math.max(1,pageSize));int from=(int)Math.min((pn-1)*ps,rows.size()),to=(int)Math.min(from+ps,rows.size());
+        List<MatchInfo> pageRows=rows.subList(from,to);
+        Set<Long> teamIds=pageRows.stream().flatMap(m->java.util.stream.Stream.of(m.getHomeTeamId(),m.getAwayTeamId())).filter(Objects::nonNull).collect(Collectors.toSet());
+        Set<Long> leagueIds=pageRows.stream().map(MatchInfo::getLeagueId).filter(Objects::nonNull).collect(Collectors.toSet());
+        Map<Long,FootballTeam> tm=teamIds.isEmpty()?Map.of():batch(teams.selectBatchIds(teamIds),FootballTeam::getId);
+        Map<Long,FootballLeague> lm=leagueIds.isEmpty()?Map.of():batch(leagues.selectBatchIds(leagueIds),FootballLeague::getId);
+        List<DetailMatch> result=pageRows.stream().map(m->{FootballTeam home=tm.get(m.getHomeTeamId()),away=tm.get(m.getAwayTeamId());PlayerMatchContext c=contexts.get(m.getId());
+            FootballMatchPlayerStat s=c==null?null:c.stat();FootballMatchPlayerAppearance a=c==null?null:c.appearance();Long owner=s==null?detailTeamId:s.getTeamId();
+            return new DetailMatch(m.getId(),m.getLeagueId(),name(lm.get(m.getLeagueId())),m.getRoundName(),m.getMatchTime(),m.getMatchStatus(),m.getVenue(),
+                    m.getHomeTeamId(),teamName(home),home==null?null:home.getLogoUrl(),m.getHomeScore(),m.getAwayTeamId(),teamName(away),away==null?null:away.getLogoUrl(),m.getAwayScore(),
+                    owner,a==null?null:Objects.equals(a.getStartedFlag(),1),s==null?null:s.getMinutes(),s==null?null:s.getGoals(),s==null?null:s.getAssists(),s==null?null:s.getOfficialRating());}).toList();
+        return PageResult.of(result,rows.size(),pn,ps);
+    }
     private RosterPlayer rosterPlayer(FootballTeamSeasonPlayer r,FootballPlayer p,FootballPlayerCompetitionStat s,FootballTeam loan,boolean followed){return new RosterPlayer(r.getPlayerId(),p==null?null:p.getPlayerName(),p==null?null:p.getPlayerNameEn(),p==null?null:p.getAvatarUrl(),r.getPosition(),r.getShirtNumber(),Objects.equals(r.getCaptainFlag(),1),Objects.equals(r.getLoanFlag(),1),r.getLoanFromTeamId(),teamName(loan),r.getSquadRole(),s==null?0:nz(s.getAppearances()),s==null?0:nz(s.getStarts()),s==null?0:nz(s.getMinutes()),s==null?0:nz(s.getGoals()),s==null?0:nz(s.getAssists()),s==null?null:s.getRating(),followed);}
     private List<CareerGroup> groups(List<FootballPlayerCompetitionStat> rows,Function<FootballPlayerCompetitionStat,Long> key,Function<Long,String> name){Map<Long,List<FootballPlayerCompetitionStat>> grouped=rows.stream().collect(Collectors.groupingBy(key,LinkedHashMap::new,Collectors.toList()));return grouped.entrySet().stream().map(e->new CareerGroup(e.getKey(),name.apply(e.getKey()),sum(e.getValue(),FootballPlayerCompetitionStat::getAppearances),sum(e.getValue(),FootballPlayerCompetitionStat::getStarts),sum(e.getValue(),FootballPlayerCompetitionStat::getMinutes),sum(e.getValue(),FootballPlayerCompetitionStat::getGoals),sum(e.getValue(),FootballPlayerCompetitionStat::getAssists),average(e.getValue()))).toList();}
     private int sum(List<FootballPlayerCompetitionStat> rows,Function<FootballPlayerCompetitionStat,Integer> f){return rows.stream().map(f).filter(Objects::nonNull).mapToInt(Integer::intValue).sum();}
@@ -189,4 +328,5 @@ public class FootballDetailService {
     private static List<Integer> years(String s){if(!StringUtils.hasText(s))return List.of();List<Integer> out=new ArrayList<>();for(String v:s.split(","))try{out.add(Integer.valueOf(v.trim()));}catch(NumberFormatException ignored){}return out;}
     private static String name(FootballLeague x){return x==null?null:x.getLeagueName();} private static String teamName(FootballTeam x){return x==null?null:x.getTeamName();}
     private record Scope(FootballSeason season){}
+    private record PlayerMatchContext(Long playerId,FootballMatchPlayerStat stat,FootballMatchPlayerAppearance appearance){}
 }

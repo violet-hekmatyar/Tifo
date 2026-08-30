@@ -7,6 +7,8 @@ import com.southstand.football.detail.vo.FootballDetailVO.Honor;
 import com.southstand.football.detail.vo.FootballDetailVO.RosterPlayer;
 import com.southstand.football.detail.vo.FootballDetailVO.TeamOverview;
 import com.southstand.football.detail.vo.FootballDetailVO.TeamStats;
+import com.southstand.football.detail.vo.FootballDetailVO.ContentSummary;
+import com.southstand.football.detail.vo.FootballDetailVO.DetailMatch;
 import com.southstand.football.schedule.service.FootballQueryService;
 import com.southstand.football.team.vo.TeamDetailVO;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -43,4 +45,16 @@ public class FootballTeamController {
 
     @GetMapping("/{teamId}/honors")
     public Result<java.util.List<Honor>> honors(@PathVariable Long teamId,@RequestParam(required=false) String honorType){return Result.success(footballDetailService.teamHonors(teamId,honorType));}
+
+    @GetMapping("/{teamId}/matches")
+    public Result<PageResult<DetailMatch>> matches(@PathVariable Long teamId,@RequestParam(required=false) String status,
+            @RequestParam(defaultValue="1") long pageNum,@RequestParam(defaultValue="20") long pageSize){
+        return Result.success(footballDetailService.teamMatches(teamId,status,pageNum,pageSize));
+    }
+
+    @GetMapping("/{teamId}/contents")
+    public Result<PageResult<ContentSummary>> contents(@PathVariable Long teamId,@RequestParam(required=false) String contentType,
+            @RequestParam(defaultValue="1") long pageNum,@RequestParam(defaultValue="20") long pageSize){
+        return Result.success(footballDetailService.teamContents(teamId,contentType,pageNum,pageSize));
+    }
 }

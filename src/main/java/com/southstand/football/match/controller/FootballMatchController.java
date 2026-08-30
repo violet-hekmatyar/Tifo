@@ -8,6 +8,8 @@ import com.southstand.football.schedule.service.FootballQueryService;
 import com.southstand.football.matchdata.dto.PlayerRatingRequest;
 import com.southstand.football.matchdata.service.MatchDataService;
 import com.southstand.football.matchdata.vo.MatchDataVO;
+import com.southstand.football.detail.service.MatchOverviewService;
+import com.southstand.football.detail.vo.MatchOverviewVO;
 import jakarta.validation.Valid;
 import java.util.List;
 import java.time.LocalDate;
@@ -17,6 +19,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.beans.factory.annotation.Autowired;
 
 @RestController
 @RequestMapping("/api/app/football/matches")
@@ -24,10 +27,20 @@ public class FootballMatchController {
 
     private final FootballQueryService footballQueryService;
     private final MatchDataService matchDataService;
+    private final MatchOverviewService matchOverviewService;
+
+    @Autowired
+    public FootballMatchController(FootballQueryService footballQueryService,MatchDataService matchDataService,
+                                   MatchOverviewService matchOverviewService) {
+        this.footballQueryService = footballQueryService;
+        this.matchDataService = matchDataService;
+        this.matchOverviewService = matchOverviewService;
+    }
 
     public FootballMatchController(FootballQueryService footballQueryService,MatchDataService matchDataService) {
         this.footballQueryService = footballQueryService;
         this.matchDataService = matchDataService;
+        this.matchOverviewService = null;
     }
 
     @GetMapping("/important")
@@ -81,6 +94,9 @@ public class FootballMatchController {
 
     @GetMapping("/{matchId}/ratings")
     public Result<List<MatchDataVO.RatingSummary>> ratings(@PathVariable Long matchId,@RequestParam(required=false)Long teamId){return Result.success(matchDataService.ratings(matchId,teamId));}
+
+    @GetMapping("/{matchId}/overview")
+    public Result<MatchOverviewVO> overview(@PathVariable Long matchId){return Result.success(matchOverviewService.overview(matchId));}
 
     @org.springframework.web.bind.annotation.PostMapping("/{matchId}/players/{playerId}/ratings")
     public Result<MatchDataVO.RatingResult> rate(@PathVariable Long matchId,@PathVariable Long playerId,@Valid @org.springframework.web.bind.annotation.RequestBody PlayerRatingRequest request){return Result.success(matchDataService.submitRating(matchId,playerId,request.rating()));}

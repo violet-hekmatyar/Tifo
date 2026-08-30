@@ -16,7 +16,28 @@ public final class FootballDetailVO {
     public record CareerGroup(Long id,String name,Integer appearances,Integer starts,Integer minutes,Integer goals,Integer assists,BigDecimal averageRating){}
     public record Career(Integer totalAppearances,Integer totalStarts,Integer totalMinutes,Integer totalGoals,Integer totalAssists,Integer totalYellowCards,Integer totalRedCards,Integer totalShots,Integer totalShotsOnTarget,BigDecimal averageRating,Integer totalSaves,Integer teamCount,Integer seasonCount,List<CareerGroup> bySeason,List<CareerGroup> byTeam){}
     public record Match(Long matchId,Long leagueId,Long homeTeamId,String homeTeamName,Long awayTeamId,String awayTeamName,Integer homeScore,Integer awayScore,String matchStatus,LocalDateTime matchTime){}
-    public record ContentSummary(Long contentId,String contentType,String title,String summary,String coverUrl,LocalDateTime publishTime){}
-    public record TeamOverview(Long teamId,String teamName,String teamNameEn,String logoUrl,Long leagueId,String leagueName,Long seasonId,String seasonName,String city,String stadium,Integer foundedYear,String description,Boolean followed,Standing standing,TeamStats seasonStats,List<RosterPlayer> topScorers,List<RosterPlayer> topAssists,List<Match> recentMatches,Match nextMatch,List<ContentSummary> recentContents){}
-    public record PlayerOverview(Long playerId,String playerName,String playerNameEn,String avatarUrl,String position,String nationality,LocalDate birthDate,Integer age,Integer height,Integer weight,String preferredFoot,Long currentTeamId,String currentTeamName,String currentTeamLogoUrl,Integer shirtNumber,Boolean captain,Boolean followed,List<PlayerStats> seasonStats,Career career,List<ContentSummary> recentContents){}
+    public record ContentSummary(Long contentId,String contentType,String title,String summary,String coverUrl,
+                                 LocalDateTime publishTime,Integer likeCount,Integer commentCount,Integer favoriteCount){}
+    public record TeamLink(Long teamId,String teamName,String logoUrl,String teamType,Integer shirtNumber){}
+    public record CompetitionStanding(Long leagueId,String leagueName,Long seasonId,String seasonName,Long stageId,
+                                      Integer rank,Integer played,Integer won,Integer drawn,Integer lost,
+                                      Integer goalsFor,Integer goalsAgainst,Integer goalDifference,Integer points){}
+    public record Leaderboard(String rankType,String title,List<RosterPlayer> players){}
+    public record DetailMatch(Long matchId,Long leagueId,String leagueName,String roundName,LocalDateTime matchTime,
+                              String matchStatus,String venue,Long homeTeamId,String homeTeamName,String homeTeamLogoUrl,
+                              Integer homeScore,Long awayTeamId,String awayTeamName,String awayTeamLogoUrl,
+                              Integer awayScore,Long playerTeamId,Boolean starter,Integer minutes,Integer goals,
+                              Integer assists,BigDecimal officialRating){}
+    public record TeamOverview(Long teamId,String teamName,String teamNameEn,String logoUrl,Long leagueId,String leagueName,
+                               Long seasonId,String seasonName,String city,String stadium,Integer foundedYear,String description,
+                               Boolean followed,Standing standing,TeamStats seasonStats,List<RosterPlayer> topScorers,
+                               List<RosterPlayer> topAssists,List<Match> recentMatches,Match nextMatch,
+                               List<ContentSummary> recentContents,List<CompetitionStanding> competitionStandings,
+                               List<Leaderboard> leaderboards,List<Honor> honors){}
+    public record PlayerOverview(Long playerId,String playerName,String playerNameEn,String avatarUrl,String position,
+                                 String nationality,LocalDate birthDate,Integer age,Integer height,Integer weight,
+                                 String preferredFoot,Long currentTeamId,String currentTeamName,String currentTeamLogoUrl,
+                                 Integer shirtNumber,Boolean captain,Boolean followed,List<PlayerStats> seasonStats,
+                                 Career career,List<ContentSummary> recentContents,Boolean retired,String playerStatus,
+                                 TeamLink club,TeamLink nationalTeam,List<DetailMatch> recentMatches){}
 }

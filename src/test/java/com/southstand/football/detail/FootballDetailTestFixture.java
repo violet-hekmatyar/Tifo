@@ -15,6 +15,9 @@ import com.southstand.football.league.mapper.FootballLeagueMapper;
 import com.southstand.football.match.mapper.MatchInfoMapper;
 import com.southstand.football.player.entity.FootballPlayer;
 import com.southstand.football.player.mapper.FootballPlayerMapper;
+import com.southstand.football.player.mapper.TeamPlayerMapper;
+import com.southstand.football.matchdata.mapper.FootballMatchPlayerAppearanceMapper;
+import com.southstand.football.matchdata.mapper.FootballMatchPlayerStatMapper;
 import com.southstand.football.rank.entity.*;
 import com.southstand.football.rank.mapper.*;
 import com.southstand.football.team.entity.FootballTeam;
@@ -32,6 +35,7 @@ class FootballDetailTestFixture {
  final FootballPlayerTeamHistoryMapper histories=mock(FootballPlayerTeamHistoryMapper.class); final FootballPlayerCompetitionStatMapper playerStats=mock(FootballPlayerCompetitionStatMapper.class);
  final FootballTeamCompetitionStatMapper teamStats=mock(FootballTeamCompetitionStatMapper.class); final FootballStandingMapper standings=mock(FootballStandingMapper.class);
  final MatchInfoMapper matches=mock(MatchInfoMapper.class); final ContentRelationMapper relations=mock(ContentRelationMapper.class); final ContentMapper contents=mock(ContentMapper.class); final FollowRecordMapper follows=mock(FollowRecordMapper.class);
+ final TeamPlayerMapper teamPlayers=mock(TeamPlayerMapper.class); final FootballMatchPlayerAppearanceMapper matchAppearances=mock(FootballMatchPlayerAppearanceMapper.class); final FootballMatchPlayerStatMapper matchPlayerStats=mock(FootballMatchPlayerStatMapper.class);
  final FootballDetailService service;
  FootballDetailTestFixture(){
   when(teams.selectById(TEAM)).thenReturn(team());when(players.selectById(PLAYER)).thenReturn(player());when(leagues.selectById(LEAGUE)).thenReturn(league());when(seasons.selectById(SEASON)).thenReturn(season());
@@ -39,8 +43,9 @@ class FootballDetailTestFixture {
   when(playerStats.selectList(any(Wrapper.class))).thenReturn(List.of(playerStat()));when(teamStats.selectOne(any(Wrapper.class))).thenReturn(teamStat());when(standings.selectOne(any(Wrapper.class))).thenReturn(standing());
   when(histories.selectList(any(Wrapper.class))).thenReturn(List.of(history()));when(honors.selectList(any(Wrapper.class))).thenReturn(List.of(honor()));
   when(matches.selectList(any(Wrapper.class))).thenReturn(List.of());when(relations.selectList(any(Wrapper.class))).thenReturn(List.of());when(follows.selectList(any(Wrapper.class))).thenReturn(List.of());
+  when(teamPlayers.selectList(any(Wrapper.class))).thenReturn(List.of());when(matchAppearances.selectList(any(Wrapper.class))).thenReturn(List.of());when(matchPlayerStats.selectList(any(Wrapper.class))).thenReturn(List.of());
   when(teams.selectBatchIds(any(Collection.class))).thenReturn(List.of(team()));when(players.selectBatchIds(any(Collection.class))).thenReturn(List.of(player()));when(leagues.selectBatchIds(any(Collection.class))).thenReturn(List.of(league()));when(seasons.selectBatchIds(any(Collection.class))).thenReturn(List.of(season()));
-  service=new FootballDetailService(teams,players,leagues,seasons,rosters,honors,histories,playerStats,teamStats,standings,matches,relations,contents,follows);
+  service=new FootballDetailService(teams,players,leagues,seasons,rosters,honors,histories,playerStats,teamStats,standings,matches,relations,contents,follows,teamPlayers,matchAppearances,matchPlayerStats);
  }
  FootballTeam team(){var x=new FootballTeam();x.setId(TEAM);x.setTeamName("测试球队");x.setStatus("ACTIVE");x.setIsDeleted(0);return x;}
  FootballPlayer player(){var x=new FootballPlayer();x.setId(PLAYER);x.setPlayerName("测试球员");x.setBirthDate(LocalDate.of(2000,1,1));x.setStatus("ACTIVE");x.setIsDeleted(0);return x;}
