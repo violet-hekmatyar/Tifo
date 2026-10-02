@@ -15,6 +15,8 @@ import com.southstand.interaction.entity.Comment;
 import com.southstand.interaction.entity.LikeRecord;
 import com.southstand.interaction.mapper.CommentMapper;
 import com.southstand.interaction.mapper.LikeRecordMapper;
+import com.southstand.football.matchdata.entity.FootballMatchPlayerStat;
+import com.southstand.football.matchdata.mapper.FootballMatchPlayerStatMapper;
 import com.southstand.interaction.vo.CommentVO;
 import com.southstand.interaction.vo.CommentLikeToggleVO;
 import com.southstand.interaction.vo.CreateCommentResponse;
@@ -40,6 +42,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class CommentService {
 
     public static final String TARGET_CONTENT = "CONTENT";
+    public static final String TARGET_PLAYER_RATING = "PLAYER_RATING";
     public static final String TARGET_COMMENT = "COMMENT";
     public static final String STATUS_ACTIVE = "ACTIVE";
     public static final String STATUS_CANCELLED = "CANCELLED";
@@ -51,6 +54,7 @@ public class CommentService {
     private final ContentService contentService;
     private final RecommendationBehaviorService recommendationBehaviorService;
     private final NotificationService notificationService;
+    private final FootballMatchPlayerStatMapper matchPlayerStatMapper;
 
     @Autowired
     public CommentService(CommentMapper commentMapper,
@@ -58,30 +62,39 @@ public class CommentService {
             LikeRecordMapper likeRecordMapper,
             ContentService contentService,
             RecommendationBehaviorService recommendationBehaviorService,
-            NotificationService notificationService) {
+            NotificationService notificationService,
+            FootballMatchPlayerStatMapper matchPlayerStatMapper) {
         this.commentMapper = commentMapper;
         this.contentMapper = contentMapper;
         this.likeRecordMapper = likeRecordMapper;
         this.contentService = contentService;
         this.recommendationBehaviorService = recommendationBehaviorService;
         this.notificationService = notificationService;
+        this.matchPlayerStatMapper = matchPlayerStatMapper;
     }
 
     public CommentService(CommentMapper commentMapper, ContentMapper contentMapper, LikeRecordMapper likeRecordMapper,
             ContentService contentService, RecommendationBehaviorService recommendationBehaviorService) {
-        this(commentMapper, contentMapper, likeRecordMapper, contentService, recommendationBehaviorService, null);
+        this(commentMapper, contentMapper, likeRecordMapper, contentService, recommendationBehaviorService, null, null);
+    }
+
+    public CommentService(CommentMapper commentMapper, ContentMapper contentMapper, LikeRecordMapper likeRecordMapper,
+            ContentService contentService, RecommendationBehaviorService recommendationBehaviorService,
+            NotificationService notificationService) {
+        this(commentMapper, contentMapper, likeRecordMapper, contentService, recommendationBehaviorService,
+                notificationService, null);
     }
 
     public CommentService(CommentMapper commentMapper,
             ContentMapper contentMapper,
             LikeRecordMapper likeRecordMapper,
             ContentService contentService) {
-        this(commentMapper, contentMapper, likeRecordMapper, contentService, null, null);
+        this(commentMapper, contentMapper, likeRecordMapper, contentService, null, null, null);
     }
 
     public PageResult<CommentVO> list(String targetType, Long targetId, String sort, Long parentId, long pageNum, long pageSize) {
         validateTargetType(targetType);
-        contentService.requireVisibleContent(targetId);
+        validateTarget(targetType, targetId);
         long safePageNum = pageNum <= 0 ? 1 : pageNum;
         long safePageSize = Math.min(Math.max(pageSize <= 0 ? 10 : pageSize, 1), 100);
         long actualParentId = parentId == null ? 0L : parentId;
@@ -121,7 +134,7 @@ public class CommentService {
         Long targetId = resolveTargetId(request);
         String contentText = resolveContentText(request);
         validateTargetType(targetType);
-        contentService.requireVisibleContent(targetId);
+        validateTarget(targetType, targetId);
         Long userId = CurrentUserHolder.get().getUserId();
         Long parentId = request.getParentId() == null ? 0L : request.getParentId();
 
@@ -164,9 +177,11 @@ public class CommentService {
                     .set("root_id", comment.getId()));
         }
 
-        contentMapper.update(null, new UpdateWrapper<Content>()
-                .eq("id", targetId)
-                .setSql("comment_count = comment_count + 1"));
+        if (TARGET_CONTENT.equals(targetType)) {
+            contentMapper.update(null, new UpdateWrapper<Content>()
+                    .eq("id", targetId)
+                    .setSql("comment_count = comment_count + 1"));
+        }
         if (parent != null) {
             commentMapper.update(null, new UpdateWrapper<Comment>()
                     .eq("id", rootId)
@@ -177,11 +192,11 @@ public class CommentService {
         response.setCommentId(comment.getId());
         response.setParentId(parentId);
         response.setCreateTime(comment.getCreateTime());
-        if (recommendationBehaviorService != null) {
+        if (TARGET_CONTENT.equals(targetType) && recommendationBehaviorService != null) {
             recommendationBehaviorService.recordInteractionSafely(userId, RecommendationBehaviorType.COMMENT,
                     RecommendationTargetType.CONTENT, targetId);
         }
-        if (notificationService != null) {
+        if (TARGET_CONTENT.equals(targetType) && notificationService != null) {
             if (parent == null) notificationService.notifyContentCommented(userId, targetId, comment.getId());
             else notificationService.notifyCommentReplied(userId, replyToUserId, comment.getId(), targetId);
         }
@@ -258,9 +273,11 @@ public class CommentService {
                 .eq("id", commentId)
                 .set("status", STATUS_DELETED)
                 .set("is_deleted", 1));
-        contentMapper.update(null, new UpdateWrapper<Content>()
-                .eq("id", comment.getTargetId())
-                .setSql("comment_count = GREATEST(comment_count - 1, 0)"));
+        if (TARGET_CONTENT.equals(comment.getTargetType())) {
+            contentMapper.update(null, new UpdateWrapper<Content>()
+                    .eq("id", comment.getTargetId())
+                    .setSql("comment_count = GREATEST(comment_count - 1, 0)"));
+        }
         if (comment.getParentId() != null && comment.getParentId() > 0) {
             Long rootId = comment.getRootId() == null ? comment.getParentId() : comment.getRootId();
             commentMapper.update(null, new UpdateWrapper<Comment>()
@@ -448,8 +465,22 @@ public class CommentService {
     }
 
     private void validateTargetType(String targetType) {
-        if (!TARGET_CONTENT.equals(targetType)) {
+        if (!TARGET_CONTENT.equals(targetType) && !TARGET_PLAYER_RATING.equals(targetType)) {
             throw new BusinessException(ErrorCode.PARAM_ERROR, "unsupported targetType");
+        }
+    }
+
+    private void validateTarget(String targetType, Long targetId) {
+        if (TARGET_CONTENT.equals(targetType)) {
+            contentService.requireVisibleContent(targetId);
+            return;
+        }
+        if (matchPlayerStatMapper == null) {
+            throw new BusinessException(ErrorCode.NOT_FOUND, "player rating target not found");
+        }
+        FootballMatchPlayerStat stat = matchPlayerStatMapper.selectById(targetId);
+        if (stat == null || Integer.valueOf(1).equals(stat.getIsDeleted())) {
+            throw new BusinessException(ErrorCode.NOT_FOUND, "player rating target not found");
         }
     }
 

@@ -17,6 +17,7 @@ import com.southstand.user.entity.SysUser;
 import com.southstand.user.mapper.SysUserMapper;
 import com.southstand.user.mapper.UserOnboardingMapper;
 import com.southstand.user.mapper.UserProfileMapper;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
@@ -97,5 +98,64 @@ class AuthServiceTests {
                 .isInstanceOf(BusinessException.class)
                 .extracting("errorCode")
                 .isEqualTo(ErrorCode.UNAUTHORIZED);
+    }
+
+    @Test
+    void meReturnsOnlySafelyMaskedPhone() throws Exception {
+        SysUserMapper userMapper = mock(SysUserMapper.class);
+        UserProfileMapper profileMapper = mock(UserProfileMapper.class);
+        AuthService authService = new AuthService(
+                userMapper,
+                profileMapper,
+                mock(UserOnboardingMapper.class),
+                mock(JwtTokenService.class),
+                mock(LoginFailCacheService.class)
+        );
+
+        SysUser user = new SysUser();
+        user.setId(77L);
+        user.setUsername("account_user");
+        user.setPhone("18512349583");
+        user.setPasswordHash("never-return-this");
+        user.setStatus("ACTIVE");
+        user.setIsDeleted(0);
+        when(userMapper.selectById(77L)).thenReturn(user);
+        when(profileMapper.selectOne(any())).thenReturn(null);
+
+        var result = authService.getUserInfo(77L);
+        assertThat(result.getPhoneMasked()).isEqualTo("+86 185****9583");
+        String json = new ObjectMapper().writeValueAsString(result);
+        assertThat(json).contains("+86 185****9583");
+        assertThat(json).doesNotContain("18512349583");
+        assertThat(json).doesNotContain("passwordHash");
+        assertThat(json).doesNotContain("never-return-this");
+    }
+
+    @Test
+    void phoneMaskHandlesMissingAndNonMainlandValuesWithoutEchoingInput() {
+        SysUserMapper userMapper = mock(SysUserMapper.class);
+        AuthService authService = new AuthService(
+                userMapper,
+                mock(UserProfileMapper.class),
+                mock(UserOnboardingMapper.class),
+                mock(JwtTokenService.class),
+                mock(LoginFailCacheService.class)
+        );
+
+        SysUser user = new SysUser();
+        user.setId(78L);
+        user.setUsername("masked_user");
+        user.setPhone("+1 202 555 0199");
+        user.setStatus("ACTIVE");
+        user.setIsDeleted(0);
+        when(userMapper.selectById(78L)).thenReturn(user);
+
+        assertThat(authService.getUserInfo(78L).getPhoneMasked()).isEqualTo("12****99");
+        user.setPhone("+86 18512349583");
+        assertThat(authService.getUserInfo(78L).getPhoneMasked()).isEqualTo("+86 185****9583");
+        user.setPhone("1234");
+        assertThat(authService.getUserInfo(78L).getPhoneMasked()).isEqualTo("****");
+        user.setPhone(null);
+        assertThat(authService.getUserInfo(78L).getPhoneMasked()).isNull();
     }
 }

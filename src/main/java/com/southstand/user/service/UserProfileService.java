@@ -212,15 +212,25 @@ public class UserProfileService {
 
     public PageResult<MyContentVO> myContents(Long pageNum, Long pageSize, String contentType) {
         SysUser user = requireActiveCurrentUser();
-        Page<Content> page = contentMapper.selectPage(new Page<>(safePageNum(pageNum), safePageSize(pageSize)),
-                new LambdaQueryWrapper<Content>()
-                        .eq(Content::getAuthorId, user.getId())
-                        .eq(Content::getIsDeleted, 0)
-                        .eq(!isBlank(contentType), Content::getContentType, contentType)
-                        .orderByDesc(Content::getPublishTime)
-                        .orderByDesc(Content::getCreateTime));
+        LambdaQueryWrapper<Content> query = myContentsQuery(user.getId(), contentType);
+        Page<Content> page = contentMapper.selectPage(new Page<>(safePageNum(pageNum), safePageSize(pageSize)), query);
         List<MyContentVO> records = page.getRecords().stream().map(this::toMyContent).toList();
-        return PageResult.of(records, page.getTotal(), page.getCurrent(), page.getSize());
+        long total = page.getTotal();
+        // Keep the endpoint correct when the MyBatis-Plus pagination interceptor is unavailable:
+        // selectPage can still return limited records while leaving Page.total at its default zero.
+        if (total == 0 && !records.isEmpty()) {
+            total = contentMapper.selectCount(myContentsQuery(user.getId(), contentType));
+        }
+        return PageResult.of(records, total, page.getCurrent(), page.getSize());
+    }
+
+    private LambdaQueryWrapper<Content> myContentsQuery(Long userId, String contentType) {
+        return new LambdaQueryWrapper<Content>()
+                .eq(Content::getAuthorId, userId)
+                .eq(Content::getIsDeleted, 0)
+                .eq(!isBlank(contentType), Content::getContentType, contentType)
+                .orderByDesc(Content::getPublishTime)
+                .orderByDesc(Content::getCreateTime);
     }
 
     public PageResult<MyFavoriteVO> myFavorites(Long pageNum, Long pageSize, String targetType) {

@@ -5,6 +5,7 @@ import com.southstand.content.vo.AuthorVO;
 import com.southstand.football.match.vo.MatchTeamVO;
 import com.southstand.interaction.vo.HotCommentVO;
 import java.time.LocalDateTime;
+import java.util.Map;
 import java.util.List;
 
 public class FeedCardVO {
@@ -16,6 +17,8 @@ public class FeedCardVO {
     private HomeCardPayload payload;
     private Long contentId;
     private String contentType;
+    private String displayType;
+    private Map<String, Object> displayData;
     private String title;
     private String summary;
     private String coverUrl;
@@ -64,6 +67,10 @@ public class FeedCardVO {
     public void setContentId(Long contentId) { this.contentId = contentId; }
     public String getContentType() { return contentType; }
     public void setContentType(String contentType) { this.contentType = contentType; }
+    public String getDisplayType() { return displayType; }
+    public void setDisplayType(String displayType) { this.displayType = displayType; }
+    public Map<String, Object> getDisplayData() { return displayData; }
+    public void setDisplayData(Map<String, Object> displayData) { this.displayData = displayData; }
     public String getTitle() { return title; }
     public void setTitle(String title) { this.title = title; }
     public String getSummary() { return summary; }

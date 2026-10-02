@@ -65,6 +65,39 @@ class FeedServiceTests {
     }
 
     @Test
+    void transferBriefIsReturnedOnlyForExplicitDisplayMarkerAndWhitelistedFields() {
+        FeedFixture fixture = fixture();
+        Content transfer = content(20009L, "NEWS", 20);
+        transfer.setCardType("TRANSFER_BRIEF");
+        transfer.setExtraJson("""
+                {"displayType":"TRANSFER_BRIEF","transferBrief":{
+                  "playerId":14000000000000067,"playerName":"黄云帆",
+                  "fromTeamId":13000000000000012,"fromTeamName":"尤文图斯",
+                  "toTeamId":13000000000000011,"toTeamName":"AC米兰",
+                  "feeLabel":"演示数据","durationLabel":"演示数据",
+                  "unapprovedField":"must not be exposed"}}
+                """);
+        fixture.contents = List.of(transfer);
+
+        FeedPageResult page = fixture.service().feed("news", null, null, 1, 10, null);
+
+        assertThat(page.getRecords()).hasSize(1);
+        var card = page.getRecords().get(0);
+        assertThat(card.getDisplayType()).isEqualTo("TRANSFER_BRIEF");
+        assertThat(card.getDisplayData()).containsKey("transferBrief");
+        @SuppressWarnings("unchecked")
+        var brief = (java.util.Map<String, Object>) card.getDisplayData().get("transferBrief");
+        assertThat(brief).containsEntry("playerName", "黄云帆")
+                .containsEntry("feeLabel", "演示数据")
+                .doesNotContainKey("unapprovedField");
+
+        transfer.setCardType("CONTENT_CARD");
+        FeedPageResult ordinaryPage = fixture.service().feed("news", null, null, 1, 10, null);
+        assertThat(ordinaryPage.getRecords().get(0).getDisplayType()).isNull();
+        assertThat(ordinaryPage.getRecords().get(0).getDisplayData()).isNull();
+    }
+
+    @Test
     void matchTabReturnsMatchCards() {
         FeedPageResult page = fixture().service().feed("match", null, null, 1, 10, null);
 

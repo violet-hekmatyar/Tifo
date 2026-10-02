@@ -3,6 +3,7 @@ package com.southstand.card.service;
 import com.southstand.card.config.HomeCardProperties;
 import com.southstand.card.vo.FeedCardVO;
 import java.util.ArrayList;
+import java.util.EnumMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -21,9 +22,14 @@ public class HomeFeedCompositionService {
     public List<FeedCardVO> compose(List<FeedCardVO> coreCards, List<FeedCardVO> auxiliaryCards,
                                     String requestId) {
         List<FeedCardVO> core = deduplicate(coreCards);
-        if (!properties.isEnabled() || auxiliaryCards == null || auxiliaryCards.isEmpty() || core.isEmpty()) {
+        if (core.isEmpty()) {
             attribute(core, requestId);
             return core;
+        }
+        if (!properties.isEnabled() || auxiliaryCards == null || auxiliaryCards.isEmpty()) {
+            List<FeedCardVO> arranged = arrangeRecommendPrefix(core);
+            attribute(arranged, requestId);
+            return arranged;
         }
         List<FeedCardVO> auxiliary = deduplicate(auxiliaryCards);
         Set<Long> discussionContentIds = new HashSet<>();
@@ -40,8 +46,75 @@ public class HomeFeedCompositionService {
                 result.add(auxiliary.get(auxiliaryIndex++)); coreSinceAux = 0;
             }
         }
+        result = arrangeRecommendPrefix(result);
         attribute(result, requestId);
         return result;
+    }
+
+    /**
+     * Give the first recommendation page a useful mix without changing which
+     * candidates exist or the relative order of cards of the same type. The
+     * complete sequence is arranged before FeedService paginates it, so page
+     * boundaries and exposure attribution remain stable.
+     */
+    private List<FeedCardVO> arrangeRecommendPrefix(List<FeedCardVO> cards) {
+        if (cards.size() < 2) return cards;
+
+        EnumMap<CardType, List<FeedCardVO>> byType = new EnumMap<>(CardType.class);
+        for (CardType type : CardType.values()) byType.put(type, new ArrayList<>());
+        for (FeedCardVO card : cards) {
+            CardType type = CardType.from(card.getCardType());
+            if (type != null) byType.get(type).add(card);
+        }
+
+        List<FeedCardVO> prefix = new ArrayList<>(10);
+        Set<String> selected = new HashSet<>();
+        appendNext(prefix, selected, byType.get(CardType.MATCH));
+        appendNext(prefix, selected, byType.get(CardType.CONTENT));
+        appendNext(prefix, selected, byType.get(CardType.RANKING));
+        List<FeedCardVO> discussions = byType.get(CardType.DISCUSSION);
+        if (discussions.isEmpty()) discussions = byType.get(CardType.HOT_COMMENT);
+        appendNext(prefix, selected, discussions);
+        appendNext(prefix, selected, byType.get(CardType.PLAYER_RATING));
+        appendNext(prefix, selected, byType.get(CardType.CONTENT));
+        appendNext(prefix, selected, byType.get(CardType.HOT_COMMENT));
+        appendNext(prefix, selected, byType.get(CardType.CONTENT));
+
+        for (FeedCardVO card : cards) {
+            if (prefix.size() >= 10) break;
+            if (selected.add(card.getCardKey())) prefix.add(card);
+        }
+        if (prefix.isEmpty()) return cards;
+
+        List<FeedCardVO> arranged = new ArrayList<>(cards.size());
+        arranged.addAll(prefix);
+        for (FeedCardVO card : cards) {
+            if (selected.add(card.getCardKey())) arranged.add(card);
+        }
+        return arranged;
+    }
+
+    private void appendNext(List<FeedCardVO> target, Set<String> selected, List<FeedCardVO> candidates) {
+        if (candidates == null || candidates.isEmpty() || target.size() >= 10) return;
+        for (FeedCardVO candidate : candidates) {
+            if (selected.add(candidate.getCardKey())) {
+                target.add(candidate);
+                return;
+            }
+        }
+    }
+
+    private enum CardType {
+        MATCH, CONTENT, RANKING, PLAYER_RATING, DISCUSSION, HOT_COMMENT;
+
+        private static CardType from(String raw) {
+            if (raw == null) return null;
+            try {
+                return valueOf(raw);
+            } catch (IllegalArgumentException ignored) {
+                return null;
+            }
+        }
     }
 
     private int maxAuxiliary(int coreCount) {

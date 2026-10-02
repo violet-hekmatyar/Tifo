@@ -49,7 +49,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/auth/register", "/api/auth/login").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/app/feed", "/api/app/feed/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/app/contents/**", "/api/app/comments", "/api/app/comments/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/app/search/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/app/search/**", "/api/app/publish/subjects").permitAll()
                         .requestMatchers(
                                 HttpMethod.GET,
                                 "/api/app/users/*/profile",

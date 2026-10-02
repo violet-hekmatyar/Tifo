@@ -185,6 +185,10 @@ public class FootballDetailService {
         requirePlayer(playerId);return relatedContents("PLAYER",playerId,contentType,pageNum,pageSize);
     }
 
+    public PageResult<ContentSummary> matchContents(Long matchId,String contentType,long pageNum,long pageSize){
+        requireMatch(matchId);return relatedContents("MATCH",matchId,contentType,pageNum,pageSize);
+    }
+
     public PageResult<DetailMatch> playerMatches(Long playerId,long pageNum,long pageSize){
         requirePlayer(playerId);
         if(matchPlayerStats==null||matchAppearances==null)return PageResult.of(List.of(),0,Math.max(1,pageNum),Math.min(100,Math.max(1,pageSize)));
@@ -321,6 +325,7 @@ public class FootballDetailService {
     private Long userId(){Authentication a=SecurityContextHolder.getContext().getAuthentication();return a!=null&&a.getPrincipal() instanceof LoginUserContext c?c.getUserId():null;}
     private FootballTeam requireTeam(Long id){FootballTeam t=teams.selectById(id);if(t==null||!ACTIVE.equals(t.getStatus())||!Objects.equals(t.getIsDeleted(),0))throw new BusinessException(ErrorCode.NOT_FOUND,"team not found");return t;}
     private FootballPlayer requirePlayer(Long id){FootballPlayer p=players.selectById(id);if(p==null||!ACTIVE.equals(p.getStatus())||!Objects.equals(p.getIsDeleted(),0))throw new BusinessException(ErrorCode.NOT_FOUND,"player not found");return p;}
+    private MatchInfo requireMatch(Long id){MatchInfo m=matches.selectById(id);if(m==null||!ACTIVE.equals(m.getStatus())||!Objects.equals(m.getIsDeleted(),0))throw new BusinessException(ErrorCode.NOT_FOUND,"match not found");return m;}
     private static <T> Map<Long,T> batch(List<T> rows,Function<T,Long> id){if(rows==null)return Map.of();return rows.stream().collect(Collectors.toMap(id,Function.identity(),(a,b)->a));}
     private static int nz(Integer v){return v==null?0:v;} private static BigDecimal ratio(Integer n,Integer d){return nz(d)==0?BigDecimal.ZERO:BigDecimal.valueOf(nz(n)*100.0/nz(d)).setScale(2,RoundingMode.HALF_UP);}
     private static String normalizePosition(String p){String x=p.toUpperCase();return switch(x){case "GK","GOALKEEPER"->"GOALKEEPER";case "DF","DEFENDER"->"DEFENDER";case "MF","MIDFIELDER"->"MIDFIELDER";case "FW","FORWARD"->"FORWARD";default->throw new BusinessException(ErrorCode.PARAM_ERROR,"invalid position");};}

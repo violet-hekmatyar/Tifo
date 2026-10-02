@@ -1,5 +1,7 @@
 package com.southstand.card.service;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.southstand.auth.security.LoginUserContext;
 import com.southstand.card.vo.FeedCardVO;
@@ -67,6 +69,9 @@ import org.springframework.util.StringUtils;
 
 @Service
 public class FeedService {
+
+    private static final ObjectMapper JSON = new ObjectMapper();
+    private static final TypeReference<Map<String, Object>> JSON_OBJECT = new TypeReference<>() {};
 
     private static final String ACTIVE = "ACTIVE";
     private static final String PUBLISHED = "PUBLISHED";
@@ -392,6 +397,11 @@ public class FeedService {
         card.setCardType(CARD_CONTENT);
         card.setContentId(content.getId());
         card.setContentType(content.getContentType());
+        Map<String, Object> transferDisplay = transferDisplay(content);
+        if (transferDisplay != null) {
+            card.setDisplayType("TRANSFER_BRIEF");
+            card.setDisplayData(Map.of("transferBrief", transferDisplay));
+        }
         card.setTitle(content.getTitle());
         card.setSummary(content.getSummary());
         card.setCoverUrl(content.getCoverUrl());
@@ -408,6 +418,32 @@ public class FeedService {
         card.setRecommendationHotScore(decimal(content.getHotScore()));
         card.setScore(contentScore(content, relations, user, personalized));
         return card;
+    }
+
+    private Map<String, Object> transferDisplay(Content content) {
+        if (!"TRANSFER_BRIEF".equals(content.getCardType())
+                || !StringUtils.hasText(content.getExtraJson())) {
+            return null;
+        }
+        try {
+            Map<String, Object> extra = JSON.readValue(content.getExtraJson(), JSON_OBJECT);
+            if (!"TRANSFER_BRIEF".equals(extra.get("displayType"))) return null;
+            Object rawBrief = extra.get("transferBrief");
+            if (!(rawBrief instanceof Map<?, ?> brief)) return null;
+            for (String required : List.of("playerId", "playerName", "fromTeamId", "fromTeamName", "toTeamId", "toTeamName")) {
+                if (brief.get(required) == null) return null;
+            }
+            Map<String, Object> safe = new LinkedHashMap<>();
+            for (String key : List.of(
+                    "playerId", "playerName", "playerMeta", "playerAvatarUrl",
+                    "fromTeamId", "fromTeamName", "fromTeamLogoUrl",
+                    "toTeamId", "toTeamName", "toTeamLogoUrl", "feeLabel", "durationLabel")) {
+                if (brief.containsKey(key)) safe.put(key, brief.get(key));
+            }
+            return safe;
+        } catch (Exception ignored) {
+            return null;
+        }
     }
 
     private FeedCardVO toMatchCard(MatchInfo match, UserContext user, MatchBatch batch) {

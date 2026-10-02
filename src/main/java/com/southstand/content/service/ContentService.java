@@ -14,10 +14,12 @@ import com.southstand.content.entity.Content;
 import com.southstand.content.entity.ContentBlock;
 import com.southstand.content.entity.ContentMedia;
 import com.southstand.content.entity.ContentRelation;
+import com.southstand.content.entity.PublishSubject;
 import com.southstand.content.mapper.ContentBlockMapper;
 import com.southstand.content.mapper.ContentMapper;
 import com.southstand.content.mapper.ContentMediaMapper;
 import com.southstand.content.mapper.ContentRelationMapper;
+import com.southstand.content.mapper.PublishSubjectMapper;
 import com.southstand.content.vo.ArticleBlockVO;
 import com.southstand.content.vo.AuthorVO;
 import com.southstand.content.vo.ContentDetailVO;
@@ -67,6 +69,7 @@ public class ContentService {
     private final ContentBlockMapper contentBlockMapper;
     private final ContentMediaMapper contentMediaMapper;
     private final ContentRelationMapper contentRelationMapper;
+    private final PublishSubjectMapper publishSubjectMapper;
     private final LikeRecordMapper likeRecordMapper;
     private final FavoriteRecordMapper favoriteRecordMapper;
     private final SysUserMapper sysUserMapper;
@@ -80,6 +83,7 @@ public class ContentService {
             ContentBlockMapper contentBlockMapper,
             ContentMediaMapper contentMediaMapper,
             ContentRelationMapper contentRelationMapper,
+            PublishSubjectMapper publishSubjectMapper,
             LikeRecordMapper likeRecordMapper,
             FavoriteRecordMapper favoriteRecordMapper,
             SysUserMapper sysUserMapper,
@@ -92,6 +96,7 @@ public class ContentService {
         this.contentBlockMapper = contentBlockMapper;
         this.contentMediaMapper = contentMediaMapper;
         this.contentRelationMapper = contentRelationMapper;
+        this.publishSubjectMapper = publishSubjectMapper;
         this.likeRecordMapper = likeRecordMapper;
         this.favoriteRecordMapper = favoriteRecordMapper;
         this.sysUserMapper = sysUserMapper;
@@ -370,6 +375,16 @@ public class ContentService {
                 if (match == null || Integer.valueOf(1).equals(match.getIsDeleted())) {
                     throw new BusinessException(ErrorCode.NOT_FOUND, "match not found");
                 }
+            } else if ("TOPIC".equals(type) || "HOT_EVENT".equals(type)) {
+                PublishSubject subject = publishSubjectMapper.selectOne(new QueryWrapper<PublishSubject>()
+                        .eq("id", relation.getRelationId())
+                        .eq("subject_type", type)
+                        .eq("status", STATUS_ACTIVE)
+                        .eq("is_deleted", 0)
+                        .last("LIMIT 1"));
+                if (subject == null) {
+                    throw new BusinessException(ErrorCode.NOT_FOUND, "publish subject not found");
+                }
             } else {
                 throw new BusinessException(ErrorCode.PARAM_ERROR, "unsupported relation type");
             }
@@ -572,6 +587,15 @@ public class ContentService {
             }
             if ("MATCH".equals(relationType)) {
                 return "match-" + relationId;
+            }
+            if ("TOPIC".equals(relationType) || "HOT_EVENT".equals(relationType)) {
+                PublishSubject subject = publishSubjectMapper.selectOne(new QueryWrapper<PublishSubject>()
+                        .eq("id", relationId)
+                        .eq("subject_type", relationType)
+                        .eq("status", STATUS_ACTIVE)
+                        .eq("is_deleted", 0)
+                        .last("LIMIT 1"));
+                return subject == null ? null : subject.getName();
             }
         } catch (RuntimeException ignored) {
             return null;

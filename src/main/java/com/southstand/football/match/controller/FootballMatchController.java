@@ -10,6 +10,8 @@ import com.southstand.football.matchdata.service.MatchDataService;
 import com.southstand.football.matchdata.vo.MatchDataVO;
 import com.southstand.football.detail.service.MatchOverviewService;
 import com.southstand.football.detail.vo.MatchOverviewVO;
+import com.southstand.football.detail.service.FootballDetailService;
+import com.southstand.football.detail.vo.FootballDetailVO;
 import jakarta.validation.Valid;
 import java.util.List;
 import java.time.LocalDate;
@@ -28,19 +30,22 @@ public class FootballMatchController {
     private final FootballQueryService footballQueryService;
     private final MatchDataService matchDataService;
     private final MatchOverviewService matchOverviewService;
+    private final FootballDetailService footballDetailService;
 
     @Autowired
     public FootballMatchController(FootballQueryService footballQueryService,MatchDataService matchDataService,
-                                   MatchOverviewService matchOverviewService) {
+                                   MatchOverviewService matchOverviewService, FootballDetailService footballDetailService) {
         this.footballQueryService = footballQueryService;
         this.matchDataService = matchDataService;
         this.matchOverviewService = matchOverviewService;
+        this.footballDetailService = footballDetailService;
     }
 
     public FootballMatchController(FootballQueryService footballQueryService,MatchDataService matchDataService) {
         this.footballQueryService = footballQueryService;
         this.matchDataService = matchDataService;
         this.matchOverviewService = null;
+        this.footballDetailService = null;
     }
 
     @GetMapping("/important")
@@ -94,6 +99,15 @@ public class FootballMatchController {
 
     @GetMapping("/{matchId}/ratings")
     public Result<List<MatchDataVO.RatingSummary>> ratings(@PathVariable Long matchId,@RequestParam(required=false)Long teamId){return Result.success(matchDataService.ratings(matchId,teamId));}
+
+    @GetMapping("/{matchId}/contents")
+    public Result<PageResult<FootballDetailVO.ContentSummary>> contents(@PathVariable Long matchId,
+            @RequestParam(required=false) String contentType,
+            @RequestParam(defaultValue="1") long pageNum,
+            @RequestParam(defaultValue="10") long pageSize){
+        if(footballDetailService==null) throw new IllegalStateException("football detail service unavailable");
+        return Result.success(footballDetailService.matchContents(matchId,contentType,pageNum,pageSize));
+    }
 
     @GetMapping("/{matchId}/overview")
     public Result<MatchOverviewVO> overview(@PathVariable Long matchId){return Result.success(matchOverviewService.overview(matchId));}

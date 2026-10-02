@@ -16,6 +16,7 @@ import com.southstand.content.entity.Content;
 import com.southstand.content.mapper.ContentMapper;
 import com.southstand.content.mapper.ContentMediaMapper;
 import com.southstand.content.mapper.ContentRelationMapper;
+import com.southstand.content.mapper.PublishSubjectMapper;
 import com.southstand.content.service.ContentService;
 import com.southstand.content.vo.CreatePostResponse;
 import com.southstand.football.player.mapper.FootballPlayerMapper;
@@ -76,6 +77,7 @@ class ContentServiceTests {
                 mock(com.southstand.content.mapper.ContentBlockMapper.class),
                 mock(ContentMediaMapper.class),
                 mock(ContentRelationMapper.class),
+                mock(PublishSubjectMapper.class),
                 mock(LikeRecordMapper.class),
                 mock(FavoriteRecordMapper.class),
                 mock(SysUserMapper.class),

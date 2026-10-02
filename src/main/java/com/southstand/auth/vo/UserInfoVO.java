@@ -6,6 +6,7 @@ public class UserInfoVO {
     private String username;
     private String nickname;
     private String avatarUrl;
+    private String phoneMasked;
     private String roleType;
     private String status;
     private Boolean onboardingCompleted;
@@ -41,6 +42,14 @@ public class UserInfoVO {
 
     public void setAvatarUrl(String avatarUrl) {
         this.avatarUrl = avatarUrl;
+    }
+
+    public String getPhoneMasked() {
+        return phoneMasked;
+    }
+
+    public void setPhoneMasked(String phoneMasked) {
+        this.phoneMasked = phoneMasked;
     }
 
     public String getRoleType() {

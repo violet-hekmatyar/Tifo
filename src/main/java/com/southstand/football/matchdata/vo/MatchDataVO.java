@@ -14,6 +14,6 @@ public final class MatchDataVO {
     public record PlayerStat(Long playerId,String playerName,String avatarUrl,Long teamId,String teamName,String position,Integer shirtNumber,Boolean starter,Boolean captain,Integer minutes,Integer goals,Integer assists,Integer shots,Integer shotsOnTarget,Integer passes,Integer successfulPasses,BigDecimal passAccuracy,Integer keyPasses,Integer tackles,Integer interceptions,Integer saves,Integer yellowCards,Integer redCards,BigDecimal officialRating,BigDecimal userRatingAverage,Integer userRatingCount,BigDecimal currentUserRating){}
     public record RatingRequest(BigDecimal rating){}
     public record RatingResult(Long matchId,Long playerId,BigDecimal myRating,BigDecimal averageRating,Integer ratingCount,LocalDateTime updatedAt){}
-    public record RatingSummary(Long playerId,String playerName,Long teamId,BigDecimal officialRating,BigDecimal averageRating,Integer ratingCount,BigDecimal currentUserRating,Map<String,Integer> distribution){}
+    public record RatingSummary(Long playerId,String playerName,String avatarUrl,Long teamId,BigDecimal officialRating,BigDecimal averageRating,Integer ratingCount,BigDecimal currentUserRating,Map<String,Integer> distribution,Long ratingTargetId){}
     public record ManOfTheMatch(Long playerId,String playerName,Long teamId,BigDecimal rating,String ratingSource,Integer ratingCount){}
 }

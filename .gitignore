@@ -15,3 +15,5 @@ Thumbs.db
 *password*
 *secret*
 *密码*
+runtime-uploads/
+backend.log

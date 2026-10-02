@@ -175,6 +175,7 @@ public class AuthService {
         UserInfoVO vo = new UserInfoVO();
         vo.setId(user.getId());
         vo.setUsername(user.getUsername());
+        vo.setPhoneMasked(maskPhone(user.getPhone()));
         vo.setRoleType(user.getRoleType());
         vo.setStatus(user.getStatus());
         vo.setOnboardingCompleted(Integer.valueOf(1).equals(user.getOnboardingCompleted()));
@@ -184,5 +185,30 @@ public class AuthService {
             vo.setMainTeamId(profile.getMainTeamId());
         }
         return vo;
+    }
+
+    static String maskPhone(String phone) {
+        if (!StringUtils.hasText(phone)) {
+            return null;
+        }
+        String trimmed = phone.trim();
+        String digits = trimmed.replaceAll("[^0-9]", "");
+        boolean mainlandNumber = digits.length() == 11
+                && !trimmed.startsWith("+")
+                && !trimmed.startsWith("00");
+        if (digits.length() == 13 && trimmed.startsWith("+86")) {
+            digits = digits.substring(2);
+            mainlandNumber = true;
+        } else if (digits.length() == 15 && trimmed.startsWith("0086")) {
+            digits = digits.substring(4);
+            mainlandNumber = true;
+        }
+        if (mainlandNumber) {
+            return "+86 " + digits.substring(0, 3) + "****" + digits.substring(7);
+        }
+        if (digits.length() >= 7 && digits.length() <= 15) {
+            return digits.substring(0, 2) + "****" + digits.substring(digits.length() - 2);
+        }
+        return "****";
     }
 }

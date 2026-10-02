@@ -136,7 +136,7 @@ public class MatchDataService {
         List<FootballUserPlayerRating> ratingRows=ratingRows(matchId);Map<Long,RatingAggregate> aggregates=aggregate(ratingRows);Long userId=optionalUserId();
         return appeared.stream().sorted(Comparator.comparing(FootballMatchPlayerAppearance::getTeamId).thenComparing(FootballMatchPlayerAppearance::getShirtNumber,Comparator.nullsLast(Integer::compareTo))).map(ap->{
             FootballPlayer p=playerMap.get(ap.getPlayerId());FootballMatchPlayerStat s=statMap.get(ap.getPlayerId());RatingAggregate ag=aggregates.get(ap.getPlayerId());
-            return new RatingSummary(ap.getPlayerId(),p==null?null:p.getPlayerName(),ap.getTeamId(),s==null?null:s.getOfficialRating(),ag==null?null:ag.average(),ag==null?0:ag.count(),myRating(ratingRows,ap.getPlayerId(),userId),ag==null?emptyDistribution():ag.distribution());
+            return new RatingSummary(ap.getPlayerId(),p==null?null:p.getPlayerName(),p==null?null:p.getAvatarUrl(),ap.getTeamId(),s==null?null:s.getOfficialRating(),ag==null?null:ag.average(),ag==null?0:ag.count(),myRating(ratingRows,ap.getPlayerId(),userId),ag==null?emptyDistribution():ag.distribution(),s==null?null:s.getId());
         }).toList();
     }
 
