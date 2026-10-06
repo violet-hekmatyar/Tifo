@@ -362,7 +362,6 @@ CREATE TABLE football_standing (
   update_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   is_deleted TINYINT NOT NULL DEFAULT 0,
   UNIQUE KEY uk_standing_scope_team (league_id, season_id, stage_id, group_code, team_id),
-  UNIQUE KEY uk_standing_scope_rank (league_id, season_id, stage_id, group_code, rank_no),
   KEY idx_standing_scope (league_id, season_id, stage_id, group_code)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 

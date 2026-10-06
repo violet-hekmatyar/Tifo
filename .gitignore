@@ -17,3 +17,8 @@ Thumbs.db
 *密码*
 runtime-uploads/
 backend.log
+
+# scripts/data-sync 运行时产物：API 响应缓存与请求时间戳日志
+scripts/data-sync/cache/
+scripts/data-sync/request_log.json
+__pycache__/

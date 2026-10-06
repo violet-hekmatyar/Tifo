@@ -36,7 +36,6 @@ CREATE TABLE IF NOT EXISTS football_standing (
   update_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   is_deleted TINYINT NOT NULL DEFAULT 0,
   UNIQUE KEY uk_standing_scope_team (league_id,season_id,stage_id,group_code,team_id),
-  UNIQUE KEY uk_standing_scope_rank (league_id,season_id,stage_id,group_code,rank_no),
   KEY idx_standing_scope (league_id,season_id,stage_id,group_code)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -79,13 +78,24 @@ BEGIN
   END IF;
 END$$
 DELIMITER ;
+-- uk_standing_scope_rank 已废弃：重复名次会导致整批导入失败，约束源数据质量不该由 DB 承担。
+-- 由 V020__standings_drop_rank_unique.sql 负责删除，这里只兜底防止被旧的 add-if-missing 复活。
+DROP PROCEDURE IF EXISTS t15_drop_index_if_exists;
+DELIMITER $$
+CREATE PROCEDURE t15_drop_index_if_exists(IN p_table VARCHAR(64), IN p_index VARCHAR(64))
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.statistics WHERE table_schema=DATABASE() AND table_name=p_table AND index_name=p_index) THEN
+    SET @ddl=CONCAT('ALTER TABLE `',p_table,'` DROP INDEX `',p_index,'`');
+    PREPARE stmt FROM @ddl; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+  END IF;
+END$$
+DELIMITER ;
 CALL t15_add_index_if_missing('football_season','uk_league_season_code','league_id,season_code',TRUE);
 CALL t15_add_index_if_missing('football_season','idx_season_league','league_id',FALSE);
 CALL t15_add_index_if_missing('football_season','idx_season_current','league_id,current_flag',FALSE);
 CALL t15_add_index_if_missing('football_competition_stage','idx_stage_league_season','league_id,season_id',FALSE);
 CALL t15_add_index_if_missing('football_competition_stage','idx_stage_group','season_id,group_code',FALSE);
 CALL t15_add_index_if_missing('football_standing','uk_standing_scope_team','league_id,season_id,stage_id,group_code,team_id',TRUE);
-CALL t15_add_index_if_missing('football_standing','uk_standing_scope_rank','league_id,season_id,stage_id,group_code,rank_no',TRUE);
 CALL t15_add_index_if_missing('football_standing','idx_standing_scope','league_id,season_id,stage_id,group_code',FALSE);
 CALL t15_add_index_if_missing('football_player_competition_stat','uk_player_stat_scope','league_id,season_id,stage_id,player_id,team_id',TRUE);
 CALL t15_add_index_if_missing('football_player_competition_stat','idx_player_stat_scope','league_id,season_id,stage_id',FALSE);
@@ -93,3 +103,5 @@ CALL t15_add_index_if_missing('football_player_competition_stat','idx_player_sta
 CALL t15_add_index_if_missing('football_team_competition_stat','uk_team_stat_scope','league_id,season_id,stage_id,team_id',TRUE);
 CALL t15_add_index_if_missing('football_team_competition_stat','idx_team_stat_scope','league_id,season_id,stage_id',FALSE);
 DROP PROCEDURE t15_add_index_if_missing;
+CALL t15_drop_index_if_exists('football_standing','uk_standing_scope_rank');
+DROP PROCEDURE t15_drop_index_if_exists;
