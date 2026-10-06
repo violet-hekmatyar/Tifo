@@ -67,10 +67,38 @@
 - 注销账号、修改密码
 - **完整杯赛淘汰树**（后续独立必做专项：轮次 / 对阵节点 / 主客场聚合 / 晋级关系模型与树形查询接口，当前比赛列表契约不含轮次字段）
 
+## 真实数据（football-data.org 同步）
+
+赛事数据来自 football-data.org 免费套餐，由 `scripts/data-sync/sync_football_data.py` 生成幂等 SQL 后导入；操作手册见 [scripts/data-sync/RUNBOOK_2026-01-01_to_2026-10-01.md](scripts/data-sync/RUNBOOK_2026-01-01_to_2026-10-01.md)。
+
+| 项 | 内容 |
+|---|---|
+| 赛事（8 个） | 英超 `2021`、西甲 `2014`、德甲 `2002`、意甲 `2019`、法甲 `2015`、欧冠 `2001`、世界杯 `2000`、欧洲杯 `2018` |
+| 比赛时间范围 | **2026-01-01 ~ 2026-10-01**（跨 2025/26、2026/27 两个赛季；世界杯 2026-06~07 在内） |
+| 生成 | `py -3 sync_football_data.py --date-from 2026-01-01 --date-to 2026-10-01 --out ..\sql\seed_football_data_2026.sql`（约 75~85 次请求，请求间隔 ≥ 6.5 秒） |
+| 主键 | 直接用 football-data 全局 ID（英超 2021、阿森纳 57…），与演示数据 ID 段不冲突 |
+
+| 表 | 导入量 | 说明 |
+|---|---:|---|
+| `football_league` | **8** | 中英双名、队徽、国家、排序 |
+| `football_season` | **14** | 5 大联赛 + 欧冠各 2 个赛季，世界杯 / 欧洲杯各 1 个 |
+| `football_competition_stage` | **25** | 中文阶段名：常规赛 / 联赛阶段 / 小组赛 / 32强 / 附加赛 / 16强 / 8强 / 4强 / 三四名 / 决赛 |
+| `football_team` | **192** | 含队徽、国家、主场、建队年（国家队 55 支队徽为 SVG） |
+| `football_player` | **4050** | 其中 **2937 人（72.5%）带真实头像**（TheSportsDB，见 `scripts/data-sync/player_photos.py`），其余用本地首字母头像兜底 |
+| `team_player` / `football_team_season_player` | **4530 / 5428** | 阵容；后者是 App 球队/球员详情实际读的表 |
+| `football_standing` / `football_team_competition_stat` | **312 / 312** | 积分榜 / 球队榜（由积分榜派生场次、进失球） |
+| `football_player_competition_stat` | **1296** | 射手榜（每赛季前 100 名） |
+| `match_info` | **1403** | 其中 **172 场标记「重要」**（欧冠/世界杯/欧洲杯淘汰赛 + 联赛前 6 对阵） |
+
+- 免费套餐不提供：比赛事件、首发阵容、出场统计、战报、比赛场地、球衣号、球员身高/体重/身价 —— 这些字段为空；需要事件时按短时间段单独跑 `--with-events`。
+- 采集与匹配均带离线自检：`sync_football_data.py --self-test`、`selftest_football_sync.py`、`player_photos.py --self-test`。
+
 ## 演示数据
 
 - 演示球队 / 球员 / 比赛 / 内容均有独立来源标记与保留 ID 范围，转会快讯等演示卡片在响应中明确标注"演示"
 - 初始化：`scripts/windows/init-demo-data.ps1`（非破坏性增量）；校验与回滚脚本见 `scripts/sql/`
+- **与真实数据并存时**：用 `scripts/sql/retire-demo-data.sql` 退役演示赛事与演示账号（软删、可回滚，配 `validate-retired-demo-data.sql` 校验），
+  否则 App 会同时列出演示联赛与真实赛事；内容/互动域（帖子、评论等）不在退役范围内
 
 ## 技术栈（简要）
 
@@ -85,8 +113,8 @@ MyBatis-Plus + Spring Security/JWT + Knife4j(OpenAPI 3)
 # 构建（需本机具备 MySQL 8 与 Redis 7，配置见 application*.yml）
 mvn clean package -DskipTests
 
-# 启动
-java -jar target\south-stand-server-0.1.0-SNAPSHOT.jar
+# 启动（构建产物为 target\south-stand-server.jar）
+java -jar target\south-stand-server.jar
 
 # 验证
 curl http://127.0.0.1:8080/api/public/health
