@@ -187,7 +187,7 @@ public class AuthService {
         return vo;
     }
 
-    static String maskPhone(String phone) {
+    public static String maskPhone(String phone) {
         if (!StringUtils.hasText(phone)) {
             return null;
         }

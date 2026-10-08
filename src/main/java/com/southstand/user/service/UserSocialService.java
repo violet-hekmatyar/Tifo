@@ -95,7 +95,7 @@ public class UserSocialService {
     }
 
     public UserPublicProfileVO publicProfile(Long targetUserId) {
-        SysUser target = requireVisibleUser(targetUserId);
+        SysUser target = requireExistingUser(targetUserId);
         Long viewerId = currentUserIdOrNull();
         return toPublicProfile(target, profileOf(target.getId()), viewerId);
     }
@@ -387,6 +387,14 @@ public class UserSocialService {
 
     private boolean isVisibleUser(SysUser user) {
         return user != null && ACTIVE.equals(user.getStatus()) && Integer.valueOf(NOT_DELETED).equals(user.getIsDeleted());
+    }
+
+    private SysUser requireExistingUser(Long userId) {
+        SysUser user = sysUserMapper.selectById(userId);
+        if (user == null || !Integer.valueOf(NOT_DELETED).equals(user.getIsDeleted())) {
+            throw new BusinessException(ErrorCode.NOT_FOUND, "user not found");
+        }
+        return user;
     }
 
     private UserProfile profileOf(Long userId) {

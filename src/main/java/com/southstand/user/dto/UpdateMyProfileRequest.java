@@ -6,6 +6,15 @@ public class UpdateMyProfileRequest {
     private String avatarUrl;
     private String bio;
     private Long mainTeamId;
+    private String username;
+
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
+    }
 
     public String getNickname() {
         return nickname;

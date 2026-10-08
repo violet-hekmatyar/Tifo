@@ -28,6 +28,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -37,7 +38,9 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class OnboardingService {
 
-    private static final int OPTION_LIMIT = 6;
+    private static final int PLAYER_OPTION_LIMIT = 60;
+    private static final int TEAM_OPTION_PER_LEAGUE = 8;
+    private static final List<String> LEAGUE_COUNTRIES = List.of("England", "Spain", "Germany", "Italy", "France");
 
     private final FootballTeamMapper footballTeamMapper;
     private final FootballPlayerMapper footballPlayerMapper;
@@ -70,18 +73,13 @@ public class OnboardingService {
         Set<Long> followedTeams = followService.findActiveTargetIds(userId, FollowService.TYPE_TEAM);
         Set<Long> followedPlayers = followService.findActiveTargetIds(userId, FollowService.TYPE_PLAYER);
 
-        List<FootballTeam> teams = footballTeamMapper.selectList(new LambdaQueryWrapper<FootballTeam>()
-                .eq(FootballTeam::getStatus, FollowService.STATUS_ACTIVE)
-                .eq(FootballTeam::getIsDeleted, 0)
-                .orderByDesc(FootballTeam::getFollowerCount)
-                .orderByAsc(FootballTeam::getId)
-                .last("LIMIT " + OPTION_LIMIT));
+        List<FootballTeam> teams = selectPreferredTeams();
         List<FootballPlayer> players = footballPlayerMapper.selectList(new LambdaQueryWrapper<FootballPlayer>()
                 .eq(FootballPlayer::getStatus, FollowService.STATUS_ACTIVE)
                 .eq(FootballPlayer::getIsDeleted, 0)
                 .orderByDesc(FootballPlayer::getFollowerCount)
                 .orderByAsc(FootballPlayer::getId)
-                .last("LIMIT " + OPTION_LIMIT));
+                .last("LIMIT " + PLAYER_OPTION_LIMIT));
 
         Map<Long, FootballTeam> teamMap = teams.stream().collect(Collectors.toMap(FootballTeam::getId, Function.identity()));
         teamMap.putAll(loadPlayerTeamMap(players));
@@ -161,6 +159,23 @@ public class OnboardingService {
         return response;
     }
 
+    private List<FootballTeam> selectPreferredTeams() {
+        List<FootballTeam> all = footballTeamMapper.selectList(new LambdaQueryWrapper<FootballTeam>()
+                .eq(FootballTeam::getStatus, FollowService.STATUS_ACTIVE)
+                .eq(FootballTeam::getIsDeleted, 0)
+                .orderByDesc(FootballTeam::getFollowerCount)
+                .orderByAsc(FootballTeam::getId));
+        Map<String, List<FootballTeam>> byCountry = all.stream()
+                .filter(team -> team.getCountry() != null && LEAGUE_COUNTRIES.contains(team.getCountry()))
+                .collect(Collectors.groupingBy(FootballTeam::getCountry));
+        List<FootballTeam> selected = new ArrayList<>();
+        for (String country : LEAGUE_COUNTRIES) {
+            List<FootballTeam> group = byCountry.getOrDefault(country, List.of());
+            selected.addAll(group.subList(0, Math.min(TEAM_OPTION_PER_LEAGUE, group.size())));
+        }
+        return selected;
+    }
+
     private Map<Long, FootballTeam> loadPlayerTeamMap(List<FootballPlayer> players) {
         if (players.isEmpty()) {
             return Map.of();
@@ -210,16 +225,14 @@ public class OnboardingService {
     }
 
     private String guessLeagueName(FootballTeam team) {
-        if ("Spain".equals(team.getCountry())) {
-            return "西甲";
-        }
-        if ("England".equals(team.getCountry())) {
-            return "英超";
-        }
-        if ("Germany".equals(team.getCountry())) {
-            return "德甲";
-        }
-        return "";
+        return switch (Objects.toString(team.getCountry(), "")) {
+            case "Spain" -> "西甲";
+            case "England" -> "英超";
+            case "Germany" -> "德甲";
+            case "Italy" -> "意甲";
+            case "France" -> "法甲";
+            default -> "";
+        };
     }
 
     private String toJsonArray(Set<Long> ids) {

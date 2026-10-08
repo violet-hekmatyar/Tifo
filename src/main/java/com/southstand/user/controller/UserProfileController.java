@@ -5,9 +5,12 @@ import com.southstand.common.result.PageResult;
 import com.southstand.file.dto.BindAvatarRequest;
 import com.southstand.file.service.FileBindingService;
 import com.southstand.file.vo.BindAvatarVO;
+import com.southstand.user.dto.ChangePasswordRequest;
+import com.southstand.user.dto.ChangePhoneRequest;
 import com.southstand.user.dto.UpdateMyProfileRequest;
 import com.southstand.user.service.UserProfileService;
 import com.southstand.user.service.UserSocialService;
+import com.southstand.user.vo.MyAccountVO;
 import com.southstand.user.vo.MyCommentVO;
 import com.southstand.user.vo.MyContentVO;
 import com.southstand.user.vo.MyFavoriteVO;
@@ -16,6 +19,7 @@ import com.southstand.user.vo.MyProfileUpdateVO;
 import com.southstand.user.vo.UserProfileVO;
 import com.southstand.user.vo.UserSummaryVO;
 import com.southstand.user.vo.UserStandVO;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -99,5 +103,22 @@ public class UserProfileController {
     @PostMapping("/avatar")
     public Result<BindAvatarVO> bindAvatar(@RequestBody BindAvatarRequest request) {
         return Result.success(fileBindingService.bindAvatar(request == null ? null : request.getFileId()));
+    }
+
+    @PutMapping("/password")
+    public Result<Void> changePassword(@RequestBody ChangePasswordRequest request) {
+        userProfileService.changePassword(request);
+        return Result.success(null);
+    }
+
+    @PutMapping("/phone")
+    public Result<MyAccountVO> changePhone(@RequestBody ChangePhoneRequest request) {
+        return Result.success(userProfileService.changePhone(request));
+    }
+
+    @DeleteMapping
+    public Result<Void> deactivateAccount() {
+        userProfileService.deactivateAccount();
+        return Result.success(null);
     }
 }

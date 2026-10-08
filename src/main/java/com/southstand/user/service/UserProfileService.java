@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.southstand.auth.security.CurrentUserHolder;
+import com.southstand.auth.service.AuthService;
 import com.southstand.common.enums.ErrorCode;
 import com.southstand.common.exception.BusinessException;
 import com.southstand.common.result.PageResult;
@@ -23,12 +24,15 @@ import com.southstand.interaction.entity.LikeRecord;
 import com.southstand.interaction.mapper.CommentMapper;
 import com.southstand.interaction.mapper.FavoriteRecordMapper;
 import com.southstand.interaction.mapper.LikeRecordMapper;
+import com.southstand.user.dto.ChangePasswordRequest;
+import com.southstand.user.dto.ChangePhoneRequest;
 import com.southstand.user.dto.UpdateMyProfileRequest;
 import com.southstand.user.entity.SysUser;
 import com.southstand.user.entity.UserProfile;
 import com.southstand.user.mapper.SysUserMapper;
 import com.southstand.user.mapper.UserProfileMapper;
 import com.southstand.user.vo.FollowStatsVO;
+import com.southstand.user.vo.MyAccountVO;
 import com.southstand.user.vo.MyCommentVO;
 import com.southstand.user.vo.MyContentVO;
 import com.southstand.user.vo.MyFavoriteVO;
@@ -45,11 +49,20 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class UserProfileService {
 
+    private static final String STATUS_DISABLED = "DISABLED";
+    private static final String DEACTIVATED_NICKNAME = "账号已注销";
+    private static final java.util.regex.Pattern USERNAME_PATTERN =
+            java.util.regex.Pattern.compile("[A-Za-z0-9_]{3,64}");
+
+    private final PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
     private final SysUserMapper sysUserMapper;
     private final UserProfileMapper userProfileMapper;
     private final FootballTeamMapper footballTeamMapper;
@@ -162,6 +175,20 @@ public class UserProfileService {
                 throw new BusinessException(ErrorCode.NOT_FOUND, "team not found");
             }
         }
+        String username = trimToNull(request.getUsername());
+        if (request.getUsername() != null) {
+            if (username == null || !USERNAME_PATTERN.matcher(username).matches()) {
+                throw new BusinessException(ErrorCode.PARAM_ERROR, "用户名只能包含 3-64 位字母、数字或下划线");
+            }
+            if (!username.equals(user.getUsername())) {
+                Long taken = sysUserMapper.selectCount(new LambdaQueryWrapper<SysUser>()
+                        .eq(SysUser::getUsername, username)
+                        .eq(SysUser::getIsDeleted, 0));
+                if (taken != null && taken > 0) {
+                    throw new BusinessException(ErrorCode.CONFLICT, "该用户名已被占用");
+                }
+            }
+        }
 
         UserProfile profile = profileOf(user.getId());
         if (profile == null) {
@@ -182,27 +209,41 @@ public class UserProfileService {
         } else {
             LambdaUpdateWrapper<UserProfile> update = new LambdaUpdateWrapper<UserProfile>()
                     .eq(UserProfile::getUserId, user.getId());
+            boolean profileChanged = false;
             if (request.getNickname() != null) {
                 update.set(UserProfile::getNickname, nickname);
                 profile.setNickname(nickname);
+                profileChanged = true;
             }
             if (request.getAvatarUrl() != null) {
                 update.set(UserProfile::getAvatarUrl, request.getAvatarUrl());
                 profile.setAvatarUrl(request.getAvatarUrl());
+                profileChanged = true;
             }
             if (request.getBio() != null) {
                 update.set(UserProfile::getBio, bio);
                 profile.setBio(bio);
+                profileChanged = true;
             }
             if (request.getMainTeamId() != null) {
                 update.set(UserProfile::getMainTeamId, request.getMainTeamId());
                 profile.setMainTeamId(request.getMainTeamId());
+                profileChanged = true;
             }
-            userProfileMapper.update(null, update);
+            if (profileChanged) {
+                userProfileMapper.update(null, update);
+            }
+        }
+
+        if (username != null && !username.equals(user.getUsername())) {
+            sysUserMapper.update(null, new LambdaUpdateWrapper<SysUser>()
+                    .eq(SysUser::getId, user.getId())
+                    .set(SysUser::getUsername, username));
         }
 
         MyProfileUpdateVO vo = new MyProfileUpdateVO();
         vo.setUserId(user.getId());
+        vo.setUsername(username == null ? user.getUsername() : username);
         vo.setNickname(profile.getNickname());
         vo.setAvatarUrl(defaultString(profile.getAvatarUrl(), ""));
         vo.setBio(defaultString(profile.getBio(), ""));
@@ -560,6 +601,77 @@ public class UserProfileService {
         }
         String trimmed = value.trim();
         return trimmed.isEmpty() ? null : trimmed;
+    }
+
+    public void changePassword(ChangePasswordRequest request) {
+        SysUser user = requireActiveCurrentUser();
+        if (request == null) {
+            throw new BusinessException(ErrorCode.PARAM_ERROR);
+        }
+        String oldPassword = request.getOldPassword();
+        String newPassword = request.getNewPassword();
+        if (isBlank(oldPassword) || isBlank(newPassword)) {
+            throw new BusinessException(ErrorCode.PARAM_ERROR, "请输入当前密码和新密码");
+        }
+        if (newPassword.length() < 6 || newPassword.length() > 64) {
+            throw new BusinessException(ErrorCode.PARAM_ERROR, "新密码长度需为 6-64 位");
+        }
+        if (!passwordEncoder.matches(oldPassword, user.getPasswordHash())) {
+            throw new BusinessException(ErrorCode.PARAM_ERROR, "当前密码不正确");
+        }
+        if (passwordEncoder.matches(newPassword, user.getPasswordHash())) {
+            throw new BusinessException(ErrorCode.PARAM_ERROR, "新密码不能与当前密码相同");
+        }
+        sysUserMapper.update(null, new LambdaUpdateWrapper<SysUser>()
+                .eq(SysUser::getId, user.getId())
+                .set(SysUser::getPasswordHash, passwordEncoder.encode(newPassword)));
+    }
+
+    public MyAccountVO changePhone(ChangePhoneRequest request) {
+        SysUser user = requireActiveCurrentUser();
+        String phone = request == null ? null : trimToNull(request.getPhone());
+        if (phone == null) {
+            throw new BusinessException(ErrorCode.PARAM_ERROR, "请输入手机号");
+        }
+        if (phone.length() > 32) {
+            throw new BusinessException(ErrorCode.PARAM_ERROR, "手机号长度不能超过 32 位");
+        }
+        if (!phone.equals(user.getPhone())) {
+            Long taken = sysUserMapper.selectCount(new LambdaQueryWrapper<SysUser>()
+                    .eq(SysUser::getPhone, phone)
+                    .eq(SysUser::getIsDeleted, 0));
+            if (taken != null && taken > 0) {
+                throw new BusinessException(ErrorCode.CONFLICT, "该手机号已被占用");
+            }
+        }
+        sysUserMapper.update(null, new LambdaUpdateWrapper<SysUser>()
+                .eq(SysUser::getId, user.getId())
+                .set(SysUser::getPhone, phone));
+
+        MyAccountVO vo = new MyAccountVO();
+        vo.setUserId(user.getId());
+        vo.setUsername(user.getUsername());
+        vo.setPhoneMasked(AuthService.maskPhone(phone));
+        return vo;
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public void deactivateAccount() {
+        SysUser user = requireActiveCurrentUser();
+        Long userId = user.getId();
+
+        userProfileMapper.update(null, new LambdaUpdateWrapper<UserProfile>()
+                .eq(UserProfile::getUserId, userId)
+                .set(UserProfile::getNickname, DEACTIVATED_NICKNAME)
+                .set(UserProfile::getAvatarUrl, "")
+                .set(UserProfile::getBio, "")
+                .set(UserProfile::getMainTeamId, null));
+
+        sysUserMapper.update(null, new LambdaUpdateWrapper<SysUser>()
+                .eq(SysUser::getId, userId)
+                .set(SysUser::getPhone, null)
+                .set(SysUser::getPasswordHash, passwordEncoder.encode(java.util.UUID.randomUUID().toString()))
+                .set(SysUser::getStatus, STATUS_DISABLED));
     }
 
     private boolean isBlank(String value) {

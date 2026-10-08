@@ -1,5 +1,6 @@
 package com.southstand.football.schedule.service;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.southstand.auth.security.CurrentUserHolder;
 import com.southstand.auth.security.LoginUserContext;
@@ -27,6 +28,13 @@ import com.southstand.football.player.mapper.FootballPlayerMapper;
 import com.southstand.football.player.mapper.TeamPlayerMapper;
 import com.southstand.football.player.vo.PlayerDetailVO;
 import com.southstand.football.player.vo.PlayerTeamVO;
+import com.southstand.football.match.vo.BracketLegVO;
+import com.southstand.football.match.vo.BracketStageVO;
+import com.southstand.football.match.vo.BracketTieVO;
+import com.southstand.football.rank.entity.FootballCompetitionStage;
+import com.southstand.football.rank.entity.FootballSeason;
+import com.southstand.football.rank.mapper.FootballCompetitionStageMapper;
+import com.southstand.football.rank.mapper.FootballSeasonMapper;
 import com.southstand.football.report.entity.MatchReport;
 import com.southstand.football.report.mapper.MatchReportMapper;
 import com.southstand.football.report.vo.MatchReportVO;
@@ -38,6 +46,9 @@ import java.time.LocalDateTime;
 import java.time.Period;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -59,6 +70,8 @@ public class FootballQueryService {
     private static final int NOT_DELETED = 0;
 
     private final FootballLeagueMapper leagueMapper;
+    private final FootballSeasonMapper seasonMapper;
+    private final FootballCompetitionStageMapper stageMapper;
     private final FootballTeamMapper teamMapper;
     private final FootballPlayerMapper playerMapper;
     private final TeamPlayerMapper teamPlayerMapper;
@@ -70,6 +83,8 @@ public class FootballQueryService {
 
     public FootballQueryService(
             FootballLeagueMapper leagueMapper,
+            FootballSeasonMapper seasonMapper,
+            FootballCompetitionStageMapper stageMapper,
             FootballTeamMapper teamMapper,
             FootballPlayerMapper playerMapper,
             TeamPlayerMapper teamPlayerMapper,
@@ -80,6 +95,8 @@ public class FootballQueryService {
             FollowRecordMapper followRecordMapper
     ) {
         this.leagueMapper = leagueMapper;
+        this.seasonMapper = seasonMapper;
+        this.stageMapper = stageMapper;
         this.teamMapper = teamMapper;
         this.playerMapper = playerMapper;
         this.teamPlayerMapper = teamPlayerMapper;
@@ -104,7 +121,7 @@ public class FootballQueryService {
         return page(matchInfoMapper.selectList(wrapper), pageNum, pageSize);
     }
 
-    public PageResult<MatchListVO> matches(Long leagueId, Long teamId, LocalDate date, String status, long pageNum, long pageSize) {
+    public PageResult<MatchListVO> matches(Long leagueId, Long teamId, Long seasonId, LocalDate date, String status, long pageNum, long pageSize) {
         QueryWrapper<MatchInfo> wrapper = activeMatchWrapper().orderByAsc("match_time");
         if (leagueId != null) {
             wrapper.eq("league_id", leagueId);
@@ -112,11 +129,136 @@ public class FootballQueryService {
         if (teamId != null) {
             wrapper.and(w -> w.eq("home_team_id", teamId).or().eq("away_team_id", teamId));
         }
+        if (seasonId != null) {
+            wrapper.eq("season", requireSeasonCode(seasonId));
+        }
         if (StringUtils.hasText(status)) {
             wrapper.eq("match_status", status);
         }
         applyDate(wrapper, date);
         return page(matchInfoMapper.selectList(wrapper), pageNum, pageSize);
+    }
+
+    public List<BracketStageVO> knockoutBracket(Long leagueId, Long seasonId) {
+        if (leagueId == null || seasonId == null) {
+            throw new BusinessException(ErrorCode.PARAM_ERROR, "leagueId and seasonId are required");
+        }
+        List<FootballCompetitionStage> stages = stageMapper.selectList(new LambdaQueryWrapper<FootballCompetitionStage>()
+                .eq(FootballCompetitionStage::getLeagueId, leagueId)
+                .eq(FootballCompetitionStage::getSeasonId, seasonId)
+                .eq(FootballCompetitionStage::getIsDeleted, NOT_DELETED)
+                .orderByAsc(FootballCompetitionStage::getSortOrder));
+        if (stages.isEmpty()) {
+            return List.of();
+        }
+        List<MatchInfo> matches = matchInfoMapper.selectList(activeMatchWrapper()
+                .eq("league_id", leagueId)
+                .eq("season", requireSeasonCode(seasonId))
+                .orderByAsc("match_time"));
+        Map<String, List<MatchInfo>> byRound = matches.stream()
+                .filter(match -> StringUtils.hasText(match.getRoundName()))
+                .collect(Collectors.groupingBy(MatchInfo::getRoundName));
+
+        List<BracketStageVO> result = new ArrayList<>();
+        List<BracketTieVO> previousTies = List.of();
+        for (FootballCompetitionStage stage : stages) {
+            List<MatchInfo> stageMatches = byRound.get(stage.getStageName());
+            if (stageMatches == null || stageMatches.isEmpty()) {
+                continue;
+            }
+            List<BracketTieVO> ties = buildTies(stage, stageMatches);
+            for (BracketTieVO previous : previousTies) {
+                for (BracketTieVO tie : ties) {
+                    if (tieIncludesTeam(tie, previous.getWinnerTeamId())) {
+                        previous.setParentTieKey(tie.getTieKey());
+                        break;
+                    }
+                }
+            }
+            BracketStageVO vo = new BracketStageVO();
+            vo.setStageId(stage.getId());
+            vo.setStageType(stage.getStageType());
+            vo.setStageName(stage.getStageName());
+            vo.setSortOrder(stage.getSortOrder());
+            vo.setTies(ties);
+            result.add(vo);
+            previousTies = ties;
+        }
+        return result;
+    }
+
+    private List<BracketTieVO> buildTies(FootballCompetitionStage stage, List<MatchInfo> matches) {
+        Map<String, List<MatchInfo>> grouped = new LinkedHashMap<>();
+        for (MatchInfo match : matches) {
+            Long home = match.getHomeTeamId();
+            Long away = match.getAwayTeamId();
+            if (home == null || away == null) {
+                continue;
+            }
+            String key = Math.min(home, away) + "-" + Math.max(home, away);
+            grouped.computeIfAbsent(key, ignored -> new ArrayList<>()).add(match);
+        }
+        List<BracketTieVO> ties = new ArrayList<>();
+        int index = 0;
+        for (List<MatchInfo> group : grouped.values()) {
+            List<MatchInfo> legs = group.stream()
+                    .sorted(Comparator.comparing(MatchInfo::getMatchTime,
+                            Comparator.nullsLast(Comparator.naturalOrder())))
+                    .toList();
+            MatchInfo firstLeg = legs.get(0);
+            Long homeTeamId = firstLeg.getHomeTeamId();
+            Long awayTeamId = firstLeg.getAwayTeamId();
+            int homeAggregate = 0;
+            int awayAggregate = 0;
+            List<BracketLegVO> legVOs = new ArrayList<>();
+            for (MatchInfo leg : legs) {
+                BracketLegVO legVO = new BracketLegVO();
+                legVO.setMatchId(leg.getId());
+                legVO.setHomeScore(leg.getHomeScore());
+                legVO.setAwayScore(leg.getAwayScore());
+                legVO.setMatchTime(leg.getMatchTime());
+                legVO.setMatchStatus(leg.getMatchStatus());
+                legVOs.add(legVO);
+                if (leg.getHomeScore() == null || leg.getAwayScore() == null) {
+                    continue;
+                }
+                if (Objects.equals(leg.getHomeTeamId(), homeTeamId)) {
+                    homeAggregate += leg.getHomeScore();
+                    awayAggregate += leg.getAwayScore();
+                } else {
+                    homeAggregate += leg.getAwayScore();
+                    awayAggregate += leg.getHomeScore();
+                }
+            }
+            BracketTieVO tie = new BracketTieVO();
+            tie.setTieKey("T" + stage.getId() + "-" + index++);
+            tie.setHomeTeam(toMatchTeamVO(teamMapper.selectById(homeTeamId), homeAggregate));
+            tie.setAwayTeam(toMatchTeamVO(teamMapper.selectById(awayTeamId), awayAggregate));
+            tie.setHomeAggregate(homeAggregate);
+            tie.setAwayAggregate(awayAggregate);
+            tie.setWinnerTeamId(homeAggregate == awayAggregate
+                    ? null
+                    : (homeAggregate > awayAggregate ? homeTeamId : awayTeamId));
+            tie.setLegs(legVOs);
+            ties.add(tie);
+        }
+        return ties;
+    }
+
+    private boolean tieIncludesTeam(BracketTieVO tie, Long teamId) {
+        if (teamId == null) {
+            return false;
+        }
+        return (tie.getHomeTeam() != null && teamId.equals(tie.getHomeTeam().getTeamId()))
+                || (tie.getAwayTeam() != null && teamId.equals(tie.getAwayTeam().getTeamId()));
+    }
+
+    private String requireSeasonCode(Long seasonId) {
+        FootballSeason season = seasonMapper.selectById(seasonId);
+        if (season == null || !Integer.valueOf(NOT_DELETED).equals(season.getIsDeleted())) {
+            throw new BusinessException(ErrorCode.NOT_FOUND, "season not found");
+        }
+        return season.getSeasonCode();
     }
 
     public PageResult<MatchListVO> followingTeamMatches(Long teamId, long pageNum, long pageSize) {

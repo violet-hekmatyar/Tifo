@@ -2,6 +2,7 @@ package com.southstand.football.match.controller;
 
 import com.southstand.common.result.PageResult;
 import com.southstand.common.result.Result;
+import com.southstand.football.match.vo.BracketStageVO;
 import com.southstand.football.match.vo.MatchDetailVO;
 import com.southstand.football.match.vo.MatchListVO;
 import com.southstand.football.schedule.service.FootballQueryService;
@@ -70,12 +71,21 @@ public class FootballMatchController {
     public Result<PageResult<MatchListVO>> matches(
             @RequestParam(required = false) Long leagueId,
             @RequestParam(required = false) Long teamId,
+            @RequestParam(required = false) Long seasonId,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
             @RequestParam(required = false) String status,
             @RequestParam(defaultValue = "1") long pageNum,
             @RequestParam(defaultValue = "10") long pageSize
     ) {
-        return Result.success(footballQueryService.matches(leagueId, teamId, date, status, pageNum, pageSize));
+        return Result.success(footballQueryService.matches(leagueId, teamId, seasonId, date, status, pageNum, pageSize));
+    }
+
+    @GetMapping("/knockout-bracket")
+    public Result<List<BracketStageVO>> knockoutBracket(
+            @RequestParam Long leagueId,
+            @RequestParam Long seasonId
+    ) {
+        return Result.success(footballQueryService.knockoutBracket(leagueId, seasonId));
     }
 
     @GetMapping("/{matchId}")

@@ -69,7 +69,9 @@
 
 ## 真实数据（football-data.org 同步）
 
-赛事数据来自 football-data.org 免费套餐，由 `scripts/data-sync/sync_football_data.py` 生成幂等 SQL 后导入；操作手册见 [scripts/data-sync/RUNBOOK_2026-01-01_to_2026-10-01.md](scripts/data-sync/RUNBOOK_2026-01-01_to_2026-10-01.md)。
+赛事数据来自 football-data.org 免费套餐，由 `scripts/data-sync/sync_football_data.py` 生成幂等 SQL 后导入。
+**逐字段的来源与可得性、更新/校验操作见 [docs/13_REAL_DATA_FOOTBALL_DATA.md](docs/13_REAL_DATA_FOOTBALL_DATA.md)**，
+一次完整采集的操作手册见 [scripts/data-sync/RUNBOOK_2026-01-01_to_2026-10-01.md](scripts/data-sync/RUNBOOK_2026-01-01_to_2026-10-01.md)。
 
 | 项 | 内容 |
 |---|---|

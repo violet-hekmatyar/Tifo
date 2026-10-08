@@ -22,3 +22,6 @@ backend.log
 scripts/data-sync/cache/
 scripts/data-sync/request_log.json
 __pycache__/
+
+# 本地密钥：JWT 签名密钥等，绝不入库
+.secrets/

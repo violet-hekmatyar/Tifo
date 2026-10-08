@@ -35,6 +35,7 @@
 | `10_AI_CODING_RULES.md` | Cursor/Codex/Copilot 辅助开发规范 | 开发 / AI | 每轮 AI Coding 前 |
 | `11_VALIDATION_AND_SMOKE_GUIDE.md` | 单元测试、接口测试、场景测试与验收计划 | 开发 / 测试 | 提交、联调、部署前 |
 | `12_CODEX_TASK_PLAN.md` | Codex 大任务路线图、任务边界和验收格式 | 开发 / AI | 每轮 Codex 任务拆分前 |
+| `13_REAL_DATA_FOOTBALL_DATA.md` | **真实数据源范围、逐字段能力矩阵、更新与校验数据库的操作** | 后端 / 数据 / AI | 写涉及赛事/球队/球员/榜单的查询或接口前 |
 
 ## 3. 推荐阅读路径
 
@@ -55,6 +56,7 @@
 -> 05_DATABASE_SCHEMA
 -> 06_API_SPEC
 -> 07_AUTH_SECURITY
+-> 13_REAL_DATA_FOOTBALL_DATA（涉及足球真实数据时）
 ```
 
 ### 3.3 使用 Cursor / Codex 开发
@@ -119,7 +121,7 @@ Codex 任务边界
 完整私信 IM
 WebSocket 实时比分
 复杂推荐算法
-第三方数据 API 正式接入
+第三方数据 API 正式接入（football-data.org 免费套餐已于 2026-10 接入，见 13_REAL_DATA_FOOTBALL_DATA）
 Elasticsearch
 Kafka
 ClickHouse
