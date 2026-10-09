@@ -1,0 +1,53 @@
+[安全] 已关闭公网可读的接口文档（本地调试可加 -AllowApiDocs）
+启动后端：绑定 127.0.0.1:8080
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+ :: Spring Boot ::                (v3.2.4)
+
+2026-10-09T09:28:52.879+08:00  INFO 52500 --- [south-stand-server] [           main] com.southstand.SouthStandApplication     : Starting SouthStandApplication v0.1.0-SNAPSHOT using Java 17.0.19 with PID 52500 (D:\Football-APP\target\south-stand-server.jar started by hekmatyar in D:\Football-APP)
+2026-10-09T09:28:52.904+08:00  INFO 52500 --- [south-stand-server] [           main] com.southstand.SouthStandApplication     : The following 1 profile is active: "dev"
+2026-10-09T09:28:54.246+08:00  INFO 52500 --- [south-stand-server] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Multiple Spring Data modules found, entering strict repository configuration mode
+2026-10-09T09:28:54.248+08:00  INFO 52500 --- [south-stand-server] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data Redis repositories in DEFAULT mode.
+2026-10-09T09:28:54.315+08:00  INFO 52500 --- [south-stand-server] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 50 ms. Found 0 Redis repository interfaces.
+2026-10-09T09:28:55.964+08:00  INFO 52500 --- [south-stand-server] [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port 8080 (http)
+2026-10-09T09:28:55.995+08:00  INFO 52500 --- [south-stand-server] [           main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2026-10-09T09:28:55.996+08:00  INFO 52500 --- [south-stand-server] [           main] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/10.1.19]
+2026-10-09T09:28:56.075+08:00  INFO 52500 --- [south-stand-server] [           main] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
+2026-10-09T09:28:56.077+08:00  INFO 52500 --- [south-stand-server] [           main] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 3060 ms
+ _ _   |_  _ _|_. ___ _ |    _ 
+| | |\/|_)(_| | |_\  |_)||_|_\ 
+     /               |         
+                        3.5.7 
+2026-10-09T09:28:59.048+08:00  INFO 52500 --- [south-stand-server] [           main] o.s.s.web.DefaultSecurityFilterChain     : Will secure any request with [org.springframework.security.web.session.DisableEncodeUrlFilter@731ab49b, org.springframework.security.web.context.request.async.WebAsyncManagerIntegrationFilter@23358740, org.springframework.security.web.context.SecurityContextHolderFilter@5d5cd210, org.springframework.security.web.header.HeaderWriterFilter@465d1345, org.springframework.web.filter.CorsFilter@2cdcfaa6, com.southstand.auth.security.JwtAuthenticationFilter@6d4a82, org.springframework.security.web.savedrequest.RequestCacheAwareFilter@6edb1e9c, org.springframework.security.web.servletapi.SecurityContextHolderAwareRequestFilter@75d7297d, org.springframework.security.web.authentication.AnonymousAuthenticationFilter@4ff0706c, org.springframework.security.web.session.SessionManagementFilter@2a6c751f, org.springframework.security.web.access.ExceptionTranslationFilter@114b2414, org.springframework.security.web.access.intercept.AuthorizationFilter@106802ea]
+2026-10-09T09:28:59.560+08:00  INFO 52500 --- [south-stand-server] [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port 8080 (http) with context path ''
+2026-10-09T09:28:59.582+08:00  INFO 52500 --- [south-stand-server] [           main] com.southstand.SouthStandApplication     : Started SouthStandApplication in 7.585 seconds (process running for 8.56)
+2026-10-09T09:31:10.644+08:00  INFO 52500 --- [south-stand-server] [0.1-8080-exec-1] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
+2026-10-09T09:31:10.645+08:00  INFO 52500 --- [south-stand-server] [0.1-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
+2026-10-09T09:31:10.646+08:00  INFO 52500 --- [south-stand-server] [0.1-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Completed initialization in 1 ms
+2026-10-09T09:31:10.774+08:00  INFO 52500 --- [south-stand-server] [0.1-8080-exec-1] c.s.common.config.RequestTimingFilter    : request_timing method=GET path=/api/public/health status=200 durationMs=96 traceId=102398f24870429da28826814044c062
+2026-10-09T09:31:10.876+08:00  INFO 52500 --- [south-stand-server] [0.1-8080-exec-2] c.s.common.config.RequestTimingFilter    : request_timing method=GET path=/api/public/health status=200 durationMs=0 traceId=7f34cd1612d74eb582211902c0248aa9
+2026-10-09T09:31:11.022+08:00  INFO 52500 --- [south-stand-server] [0.1-8080-exec-5] c.s.common.config.RequestTimingFilter    : request_timing method=GET path=/v3/api-docs status=200 durationMs=4 traceId=e26fb0f470b144ec978e024a36049f93
+2026-10-09T09:31:11.137+08:00  INFO 52500 --- [south-stand-server] [0.1-8080-exec-7] c.s.common.config.RequestTimingFilter    : request_timing method=GET path=/swagger-ui/index.html status=200 durationMs=2 traceId=320bd9db62ae44c088bb5067dac77735
+2026-10-09T09:31:21.407+08:00  INFO 52500 --- [south-stand-server] [0.1-8080-exec-1] c.s.common.config.RequestTimingFilter    : request_timing method=GET path=/v3/api-docs status=200 durationMs=2 traceId=d79bad36855c41628f6e84a4421b11ac
+2026-10-09T09:31:21.520+08:00  INFO 52500 --- [south-stand-server] [0.1-8080-exec-2] c.s.common.config.RequestTimingFilter    : request_timing method=GET path=/swagger-ui/index.html status=200 durationMs=2 traceId=0e538c2acee74697b148c195edf0d583
+2026-10-09T09:31:21.737+08:00  INFO 52500 --- [south-stand-server] [0.1-8080-exec-7] c.s.common.config.RequestTimingFilter    : request_timing method=GET path=/doc.html status=200 durationMs=1 traceId=131ef3c832eb4287a62d8e669ae93960
+2026-10-09T09:31:22.597+08:00  INFO 52500 --- [south-stand-server] [0.1-8080-exec-2] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2026-10-09T09:31:22.853+08:00  INFO 52500 --- [south-stand-server] [0.1-8080-exec-2] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection com.mysql.cj.jdbc.ConnectionImpl@28774379
+2026-10-09T09:31:22.855+08:00  INFO 52500 --- [south-stand-server] [0.1-8080-exec-2] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2026-10-09T09:31:22.892+08:00  INFO 52500 --- [south-stand-server] [0.1-8080-exec-2] c.s.common.config.RequestTimingFilter    : request_timing method=POST path=/api/auth/login status=200 durationMs=772 traceId=9ed74bf830464bcb90cab3346243c02d
+2026-10-09T09:34:31.290+08:00  INFO 52500 --- [south-stand-server] [.1-8080-exec-10] c.s.common.config.RequestTimingFilter    : request_timing method=POST path=/api/auth/login status=200 durationMs=511 traceId=f7d92fb777c347f68f71ed9ab4108d5e
+2026-10-09T09:34:31.492+08:00  INFO 52500 --- [south-stand-server] [0.1-8080-exec-1] c.s.common.config.RequestTimingFilter    : request_timing method=GET path=/api/auth/me status=200 durationMs=6 traceId=f39b7d2864ba41c39aa1a98171b04be1
+2026-10-09T09:34:31.687+08:00  INFO 52500 --- [south-stand-server] [0.1-8080-exec-3] c.s.common.config.RequestTimingFilter    : request_timing method=GET path=/api/app/notifications/unread-count status=200 durationMs=9 traceId=95d2d2602fca41b2af3123d2186d276c
+2026-10-09T09:34:31.807+08:00  INFO 52500 --- [south-stand-server] [0.1-8080-exec-2] c.s.common.config.RequestTimingFilter    : request_timing method=GET path=/api/app/users/me/stand status=200 durationMs=65 traceId=add9e8724c6b47bb8f7493622169a046
+2026-10-09T09:34:32.044+08:00  INFO 52500 --- [south-stand-server] [0.1-8080-exec-4] c.s.common.config.RequestTimingFilter    : request_timing method=GET path=/api/app/feed status=200 durationMs=251 traceId=ceaec414fa6f4eb3a8222b8201d268b5
+2026-10-09T09:34:32.351+08:00  INFO 52500 --- [south-stand-server] [0.1-8080-exec-6] c.s.common.config.RequestTimingFilter    : request_timing method=GET path=/api/public/files/2095432569920086017 status=200 durationMs=69 traceId=6cb35c999fd24818924d52745c9a33a9
+2026-10-09T09:34:32.352+08:00  INFO 52500 --- [south-stand-server] [0.1-8080-exec-5] c.s.common.config.RequestTimingFilter    : request_timing method=GET path=/api/public/files/2095432569920086017 status=200 durationMs=132 traceId=74a3da8dbe6642bf8ff40250fcfd80ef
+2026-10-09T09:34:33.967+08:00  INFO 52500 --- [south-stand-server] [0.1-8080-exec-7] c.s.common.config.RequestTimingFilter    : request_timing method=POST path=/api/app/recommendation/behaviors/batch status=200 durationMs=1204 traceId=3ff2bc29a30e46859e55784d147bacf7
+2026-10-09T09:35:17.061+08:00  INFO 52500 --- [south-stand-server] [0.1-8080-exec-2] c.s.common.config.RequestTimingFilter    : request_timing method=GET path=/api/public/health status=200 durationMs=1 traceId=26f04fd5d03a42fd8845d5faab60c4cf
+2026-10-09T09:35:17.106+08:00  INFO 52500 --- [south-stand-server] [0.1-8080-exec-6] c.s.common.config.RequestTimingFilter    : request_timing method=GET path=/api/public/health status=200 durationMs=1 traceId=2ade41e80fef4287bc24caaa489a08eb
+2026-10-09T09:35:27.077+08:00  INFO 52500 --- [south-stand-server] [0.1-8080-exec-7] c.s.common.config.RequestTimingFilter    : request_timing method=GET path=/api/public/health status=200 durationMs=0 traceId=9f45d62d526444f98be8c3dc0be115f3
