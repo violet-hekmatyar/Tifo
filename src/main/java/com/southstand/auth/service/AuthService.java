@@ -15,6 +15,7 @@ import com.southstand.infrastructure.cache.LoginFailCacheService;
 import com.southstand.user.entity.SysUser;
 import com.southstand.user.entity.UserOnboarding;
 import com.southstand.user.entity.UserProfile;
+import com.southstand.prediction.service.PredictionWalletService;
 import com.southstand.user.mapper.SysUserMapper;
 import com.southstand.user.mapper.UserOnboardingMapper;
 import com.southstand.user.mapper.UserProfileMapper;
@@ -37,6 +38,7 @@ public class AuthService {
     private final UserOnboardingMapper userOnboardingMapper;
     private final JwtTokenService jwtTokenService;
     private final LoginFailCacheService loginFailCacheService;
+    private final PredictionWalletService predictionWalletService;
     private final PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
     public AuthService(
@@ -44,13 +46,15 @@ public class AuthService {
             UserProfileMapper userProfileMapper,
             UserOnboardingMapper userOnboardingMapper,
             JwtTokenService jwtTokenService,
-            LoginFailCacheService loginFailCacheService
+            LoginFailCacheService loginFailCacheService,
+            PredictionWalletService predictionWalletService
     ) {
         this.sysUserMapper = sysUserMapper;
         this.userProfileMapper = userProfileMapper;
         this.userOnboardingMapper = userOnboardingMapper;
         this.jwtTokenService = jwtTokenService;
         this.loginFailCacheService = loginFailCacheService;
+        this.predictionWalletService = predictionWalletService;
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -96,6 +100,8 @@ public class AuthService {
         onboarding.setIsDeleted(0);
         userOnboardingMapper.insert(onboarding);
 
+        predictionWalletService.ensureWallet(user.getId(), "注册赠送初始本金 1,000 豆");
+
         return toUserInfo(user, profile);
     }
 
@@ -115,6 +121,7 @@ public class AuthService {
         }
 
         loginFailCacheService.clear(username);
+        predictionWalletService.ensureWallet(user.getId(), "登录补发初始本金 1,000 豆");
         sysUserMapper.update(null, new LambdaUpdateWrapper<SysUser>()
                 .eq(SysUser::getId, user.getId())
                 .set(SysUser::getLastLoginTime, LocalDateTime.now()));

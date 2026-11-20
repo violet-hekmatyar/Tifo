@@ -41,13 +41,13 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class MatchPredictionService {
 
-    public static final int INITIAL_BALANCE = 1000;
     private static final Set<Integer> ALLOWED_STAKES = Set.of(0, 10, 30, 50);
     private static final List<Integer> STAKE_OPTIONS = List.of(10, 30, 50);
 
     private final MatchPredictionMapper predictionMapper;
     private final MatchPredictionConsensusMapper consensusMapper;
     private final PredictionWalletMapper walletMapper;
+    private final PredictionWalletService walletService;
     private final PredictionBeanLogMapper beanLogMapper;
     private final PredictionTrajectoryMapper trajectoryMapper;
     private final PredictionMarketMapper marketMapper;
@@ -60,6 +60,7 @@ public class MatchPredictionService {
             MatchPredictionMapper predictionMapper,
             MatchPredictionConsensusMapper consensusMapper,
             PredictionWalletMapper walletMapper,
+            PredictionWalletService walletService,
             PredictionBeanLogMapper beanLogMapper,
             PredictionTrajectoryMapper trajectoryMapper,
             PredictionMarketMapper marketMapper,
@@ -71,6 +72,7 @@ public class MatchPredictionService {
         this.predictionMapper = predictionMapper;
         this.consensusMapper = consensusMapper;
         this.walletMapper = walletMapper;
+        this.walletService = walletService;
         this.beanLogMapper = beanLogMapper;
         this.trajectoryMapper = trajectoryMapper;
         this.marketMapper = marketMapper;
@@ -109,7 +111,7 @@ public class MatchPredictionService {
         if (!ALLOWED_STAKES.contains(stake)) {
             throw new BusinessException(ErrorCode.PARAM_ERROR, "看台挑战仅支持 10 / 30 / 50 豆或不参与");
         }
-        PredictionWallet wallet = walletForUpdate(userId);
+        PredictionWallet wallet = walletService.ensureWallet(userId, "首次参与预测赠送 1,000 豆");
         if (stake > wallet.getBalance()) {
             throw new BusinessException(ErrorCode.PARAM_ERROR, "看台豆余额不足");
         }
@@ -171,7 +173,8 @@ public class MatchPredictionService {
             lockReason = "本场判断已提交";
         }
 
-        Integer balance = userId == null ? null : walletForUpdate(userId).getBalance();
+        Integer balance = userId == null ? null
+                : walletService.ensureWallet(userId, "首次参与预测赠送 1,000 豆").getBalance();
 
         MatchPredictionVO.MyPrediction mine = prediction == null ? null : new MatchPredictionVO.MyPrediction(
                 prediction.getId(),
@@ -404,24 +407,10 @@ public class MatchPredictionService {
     }
 
     private void credit(long userId, long predictionId, int amount, String type, String remark) {
-        PredictionWallet wallet = walletForUpdate(userId);
+        PredictionWallet wallet = walletService.ensureWallet(userId, "首次参与预测赠送 1,000 豆");
         wallet.setBalance(wallet.getBalance() + amount);
         walletMapper.updateById(wallet);
         writeBeanLog(userId, predictionId, amount, wallet.getBalance(), type, remark);
-    }
-
-    private PredictionWallet walletForUpdate(long userId) {
-        PredictionWallet wallet = walletMapper.selectOne(Wrappers.<PredictionWallet>lambdaQuery()
-                .eq(PredictionWallet::getUserId, userId));
-        if (wallet != null) {
-            return wallet;
-        }
-        wallet = new PredictionWallet();
-        wallet.setUserId(userId);
-        wallet.setBalance(INITIAL_BALANCE);
-        walletMapper.insert(wallet);
-        writeBeanLog(userId, null, INITIAL_BALANCE, INITIAL_BALANCE, "INITIAL_GRANT", "首次参与预测赠送 1,000 豆");
-        return wallet;
     }
 
     private void writeBeanLog(long userId, Long predictionId, int change, int balance, String type, String remark) {
